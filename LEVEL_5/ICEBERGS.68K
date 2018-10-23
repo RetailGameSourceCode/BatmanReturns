@@ -1,0 +1,232 @@
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ BATMAN RETURNS CD-ROM						   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+; ROAD OBJECT - LEVEL 5 - "Icebergs"
+
+; --------------------------------------------------------------------------
+
+ICEB1_SETUP	LEA	OBJ_ICEB1,A6
+		BSR	O_MTR_SETUP
+	    	MOVE.W	#20,OBJ_CNT0(A1)
+		MOVE.L	#VIS_BHIT_CTRL1,OBJ_ADDR2(A1)
+		BRA	O_MTR_SETFIN
+
+ICEB2_SETUP	LEA	OBJ_ICEB2,A6
+		BSR	O_MTR_SETUP
+	    	MOVE.W	#40,OBJ_CNT0(A1)	;WAS 25
+	    	MOVE.L	#VIS_BHIT_CTRL2,OBJ_ADDR2(A1)
+	    	BRA	O_MTR_SETFIN
+
+ICEB3_SETUP	LEA	OBJ_ICEB3,A6
+		BSR	O_MTR_SETUP
+	    	MOVE.W	#50,OBJ_CNT0(A1)	;WAS 30
+	    	MOVE.L	#VIS_BHIT_CTRL3,OBJ_ADDR2(A1)
+	    	BRA	O_MTR_SETFIN
+
+; --------------------------------------------------------------------------
+
+ICEB_HIT	CMP.W	#ID_MAIN,OBJ_ID(A1)
+		BEQ.S	.car
+		CMP.W	#ID_SHOT,OBJ_ID(A1)
+		BNE.S	.miss_chk
+		MOVEM.L	D0-D7/A0-A6,-(SP)
+		EXG	A1,A2
+		ADDQ.W	#2,OBJ_DTOTAL(A1)
+		ADDQ.B	#2,OBJ_FLASH0(A1)
+		MOVE.W	OBJ_CNT0(A1),D0
+		CMP.W	OBJ_DTOTAL(A1),D0
+		BPL	.done
+
+		MOVE.L	A1,-(SP)
+		JSR	SCADD_SMALLOBJ
+		MOVE.L	(SP)+,A1
+
+		BRA.S	.blow_it
+.miss_chk	CMP.W	#ID_MISS,OBJ_ID(A1)
+		BNE	OBJ_DET_NEXT
+		MOVEM.L	D0-D7/A0-A6,-(SP)
+		EXG	A1,A2
+.blow_it	MOVE.W	#$40,OBJ_SPD(A1)
+		MOVE.L	OBJ_ADDR2(A1),A2
+		JSR	KILL_V1
+		MOVE.L	OBJ_ADDR6(A1),A0
+		CLR.W	RDDATA3(A0)
+		JSR	O_CLEAR_S
+		BRA.S	.done
+
+.car		MOVEM.L	D0-D7/A0-A6,-(SP)
+		EXG	A1,A2		
+
+		MOVE.W	#SFX_BASHICE_A,D0
+		JSR	CSFX_ONESHOT_V
+
+		MOVE.L	OBJ_SPD(A2),D7
+		BPL.S	.hit_calc
+		NEG.L	D7
+.hit_calc	SWAP	D7
+		ROL.L	#3,D7
+		ADD.W	D7,OBJ_BASH_AMT(A2)
+
+		ADDQ.B	#4,OBJ_FLASH1(A2)	;Rebound batski.
+		MOVE.W	OBJ_SPD(A2),D7
+		ASR.W	D7
+		NEG.W	D7
+		BMI.S	.neg
+		NEG.W	D7
+.neg		CMP.W	#-$40,D7
+		BMI.S	.set
+		MOVE.W	#-$40,D7
+.set		MOVE.W	D7,OBJ_SPD(A2)
+		ADDQ.W	#1,OBJ_CNT1(A1)
+		CMP.W	#1,OBJ_CNT1(A1)
+		BPL.S	.blow_it
+
+.done		MOVEM.L	(SP)+,D0-D7/A0-A6
+		JMP	OBJ_DET_ZXKILL
+
+; --------------------------------------------------------------------------
+
+ICEB_PRINT	MOVE.W	D0,D1
+		ADD.W	#$58,D1
+		CMP.W	#$180,D1
+		BMI.S	.alloc
+		ADD.W	#$200,D1
+.alloc		BSR	O_PR_A_XIT
+		MOVE.L	OBJ_ADDR0(A1),A0
+		MOVE.L	OBJGR_ANM0(A0),A0
+		BSR	O_CALC_PATCHZ
+		BSR	O_FLASH_CHECK_S
+		MOVE.L	OBJ_ADDR1(A1),A2
+		BSR	O_ALLOC_DEALL_S
+		MOVE.L	A0,OBJ_ADDR1(A1)
+		BRA	O_PR_DIFF0
+
+; --------------------------------------------------------------------------
+
+VIS_BHIT_CTRL1	DC.W	1-1
+		DC.L	VIS_BLK_HIT
+		DC.W	8,8-1,1,1
+		DC.L	VIS_ICEPIECE1
+
+VIS_BHIT_CTRL2	DC.W	1-1
+		DC.L	VIS_BLK_HIT
+		DC.W	12,12-1,1,1
+		DC.L	VIS_ICEPIECE1
+
+VIS_BHIT_CTRL3	DC.W	1-1
+		DC.L	VIS_BLK_HIT
+		DC.W	16,16-1,1,1
+		DC.L	VIS_ICEPIECE1
+
+VIS_ICEPIECE1	DC.W	0,0,0
+		DC.W	0,0,0
+		DC.W	$0000,$0000
+		DC.L	VIS_RTOBJ_MOVER
+		DC.L	VIS_PRN_ROTATEX
+		DC.L	VIS_ICEBIT1_GRS
+		DC.W	0			;SFX
+		DC.W	$2C0,$140		;Lie angles
+		DC.W	$2C0+$C0,$2C0-$C0	;Lie range.
+		DC.W	600,3			;Ydecay/Zdecay.
+		DC.W	$40,$C00		;Spin/Xrand.
+		DC.W	$1200			;Height range.
+		DC.L	0
+
+VIS_ICEBIT1_GRS
+		XYRATIO	100,100,100,100
+		OBJCNTR	0,0,0,0
+
+		OBJSCL	0,0,45,44,27,24,ICEBIT
+
+VIS_BLK_HIT	DC.W	$0000,$0000,$0000
+		DC.W	0,0,0-$400
+		DC.W	$100,$0600
+		DC.L	VIS_MOVE0
+		DC.L	VIS_PRN0X
+		DC.L	VIS_BLKHIT_GRS
+		DC.W	SFX_BERGBREAK_A	;SFX
+
+VIS_BLKHIT_GRS
+		XYRATIO	100,200,100,250
+		OBJCNTR	0,0,30,22
+		OBJSCL	-7,-4,0,0,44,27,ICBREK
+		OBJSCL	-16,-14,44,0,65,38,ICBREK
+		OBJSCL	-28,-22,0,39,91,46,ICBREK
+		XYRATIO	100,190,100,240
+		OBJCNTR	0,0,30,22
+		OBJSCL	-28,-22,0,39,91,46,ICBREK
+		OBJSCL	-28,-22,0,39,91,46,ICBREK
+		XYRATIO	100,210,100,260
+		OBJCNTR	0,0,30,22
+		OBJSCL	-28,-22,0,39,91,46,ICBREK
+
+; --------------------------------------------------------------------------
+
+OBJ_ICEB1
+		XYRATIO	100,150,100,180
+		OBJCNTR	0,0,61,52
+
+		DC.L	OBJ_ICEB1_SET
+		DC.L	OBJ_ICEB1_ANM0
+
+OBJ_ICEB1_ANM0	OBJSCL	0,0,0,0,61,52,IBERGA
+		
+OBJ_ICEB1_SET	DC.W	ID_ROADOBJ	;OBJ_ID
+		DC.L	SIGN_NEXT	;OBJ_MOVE_CTRL
+		DC.L	ICEB_PRINT	;OBJ_PRN_CTRL
+		DC.W	$40		;OBJ_ZSIZE
+		XYSIZE	55,52
+		DC.W	0		;OBJ_MASS
+		DC.L	ICEB_HIT	;OBJ_HIT_GOTO
+		DC.W	0		;OBJ_ZPOS
+		DC.L	0		;OBJ_XPOS
+		DC.L	0		;OBJ_YPOS
+
+; --------------------------------------------------------------------------
+
+OBJ_ICEB2
+		XYRATIO	100,140,100,180
+		OBJCNTR	0,0,90,37
+
+		DC.L	OBJ_ICEB2_SET
+		DC.L	OBJ_ICEB2_ANM0
+
+OBJ_ICEB2_ANM0	OBJSCL	0,0,0,0,90,37,IBERGB
+		
+OBJ_ICEB2_SET	DC.W	ID_ROADOBJ	;OBJ_ID
+		DC.L	SIGN_NEXT	;OBJ_MOVE_CTRL
+		DC.L	ICEB_PRINT	;OBJ_PRN_CTRL
+		DC.W	$50		;OBJ_ZSIZE
+		XYSIZE	84,37
+		DC.W	0		;OBJ_MASS
+		DC.L	ICEB_HIT	;OBJ_HIT_GOTO
+		DC.W	0		;OBJ_ZPOS
+		DC.L	0		;OBJ_XPOS
+		DC.L	0		;OBJ_YPOS
+
+; --------------------------------------------------------------------------
+
+OBJ_ICEB3
+		XYRATIO	100,150,100,180
+		OBJCNTR	0,0,121,46
+
+		DC.L	OBJ_ICEB3_SET
+		DC.L	OBJ_ICEB3_ANM0
+
+OBJ_ICEB3_ANM0	OBJSCL	0,0,0,0,121,46,IBERGC
+		
+OBJ_ICEB3_SET	DC.W	ID_ROADOBJ	;OBJ_ID
+		DC.L	SIGN_NEXT	;OBJ_MOVE_CTRL
+		DC.L	ICEB_PRINT	;OBJ_PRN_CTRL
+		DC.W	$50		;OBJ_ZSIZE
+		XYSIZE	115,46
+		DC.W	0		;OBJ_MASS
+		DC.L	ICEB_HIT	;OBJ_HIT_GOTO
+		DC.W	0		;OBJ_ZPOS
+		DC.L	0		;OBJ_XPOS
+		DC.L	0		;OBJ_YPOS
+
+; --------------------------------------------------------------------------
+
+

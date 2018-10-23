@@ -1,0 +1,133 @@
+BATMAN RETURNS
+TECHNICAL DESCRIPTION
+ 
+CD-ROM VERSION (DRIVING SEQUANCES)
+
+JOHN O'BRIEN 6/8/1992
+
+
+STAGE DISPLAY
+
+As these sections are being done through the use of a 3D engine, most of the
+on-screen display will composed of a BITMAP driven screen. This BITMAP will be
+made from a 32x24 charactor mapped screen (utilized through playfield A).
+Playfield B will be used to produce a multi-layered parallax effect (this
+will also use H_SCROLL). The effect will be used to show clouds and skylines
+fadeing into the distance.
+
+There will be an information panel at the bottom of the display, this will be
+4 chars high. The panel will be displayed using the WINDOW playfield. 
+
+
+VRAM USAGE 
+
+Some of the problems associated with non-bitmap machines are the constant
+downloading of data, having to double-buffer the display and having enough
+charactors available to do this in the first place. 
+
+The bitmap area for Batman is 32x24, which is 768 chars. If this were
+double-buffered if would come to 1536 chars. At 32 bytes per char it eats
+through useable VRAM at a rapid rate, 49152 bytes in all, leaving just
+16384 bytes for maps,sprites and various control data. Even forgeting about
+the memory problem trying to download data at a rate of 7K per VBL DMA would
+only allow us to update the display at 15 frames per second. What I am doing
+for Batman will allow for more charactors and a frame rate of 20 frames per
+second. 
+Firstly let us start with the charactor allocation. 768 chars are needed for
+the first frame and only 380 chars for the second frame. 
+  
+
+	  -----------------------------  
+ FRAME 1  : DMA1 : DMA2 : DMA3 : DLD1 :  The download process occurs over a
+ 	  :      :      :      :      :	 period of 3 VBL's.
+	  :      :      : DMA6 : DLD3 :
+	  :      :      :      :      :	 VBL1: Do DMA1.
+	  :      :      :      :------:  VBL2: Do DMA2, allow raster to get
+	  :      :      :      : DLD2 :        ahead of us then do DLD1.
+	  :      :      :      :      :	 VBL3: Do DMA3, swap screen maps, 
+	  :      :      :      : DLD4 :	       raster is behind us so do DLD2.
+	  :      :      :      :      :  VBL4: Do DMA4.
+	  -----------------------------  VBL5: Do DMA5, allow raster to get 
+					       ahead of us then do DLD3.
+	  -----------------------------	 VBL6: Do DMA6, swap screen maps,
+ FRAME 2  : DMA4 : DMA5 :/ / / / / / /:	       raster is behind us so do DLD4.
+ 	  :      :      : / / / / / / :	 VBLn: Cycles back to VBL1.
+	  :      :      :/ / / / / / /: 
+	  :      :      : Common with :
+	  :      :      :/  frame 1  /:
+	  :      :      : / / /	/ / / :
+	  :      :      :/ / / / / / /:
+	  :      :      : / / /	/ / / :
+	  :      :      :/ / / / / / /:
+	  -----------------------------
+
+There are two char. mapped screens (frame 1 and 2). They are mapped from top
+to bottom so they can be directly DMAed to. The sections that frame 1 and 2
+are split into co-inside with the download process as laid out in the VBL
+process list above.
+
+PLAYFIELD_A usage (bitmap): 1148 chars.
+PLAYFIELD_B usage (clouds):  256 chars.
+WINDOW usage (panel)      :  120 chars.
+SPRITE usage (car)	  :  280 chars.  
+			   ------	 
+			    1804 chars. 
+			   57728 bytes.
+
+The remaining 7808 bytes in VRAM will be used as map,scroll and attribute
+space.
+
+
+GENESIS WORKSPACE USAGE
+
+This area is limited for use from $FF0000 to $FFFD00, giving us 64768 bytes
+of available space.
+For Batman this space will contain all VRAM control funtions. It will also
+contain any other genesis specific funtions such as reading the joypads and
+any Z80/FM/PSG control.
+There is a buffer space allocated for the bitmap so that areas from the
+CD-WORDRAM can copied into it in preparation for download to VRAM as opposed
+to DMAing to VRAM. This is laid out this way so that after VBL-DMA when any
+access to VRAM is many times slower it can be done without tying up
+CD-WORDRAM.
+The Batmobile sprite graphics are also stored in this area saving on CD-WORDRAM
+access and thus speeding up the whole process. 
+
+ 
+CD-WORDRAM USAGE
+
+The WORDRAM is the graphic workspace of the cd system. It is being used to
+hold 3 creation screens, 2 192 line trace buffers, 1024 16x16 pixel stamps
+and 96 256x208 pixel maps.
+
+The creation screens are in continuous rotation and are used as follows.
+Screen 1 is the transfer screen. Over a period of 3 frames this screen gets
+accessed once every vblank, WORDRAM is unusable during this time. Screen 2
+is the current hardware screen. Access to this screen is only done through
+the line tracing hardware. Screen 3 is the "clear and direct access" screen.
+This screen is prepared through clearing and the downloading of non-scaled
+graphics.
+
+The stamp/map graphics are controled through a dynamic allocation system.
+When a graphic is allocated and downloaded (sets up map and stamps) the stamps
+used are controled through a stamp allocation table allowing for a non 
+contiguous system to be employed. When a graphic is deallocated it still
+remains in memory until that space has to be used by another graphic. This is
+done through an aging process where the oldest deallocated graphic is thrown
+away to make room for the new one.
+   
+The two 192 line trace buffers allow you to set one up while the hardware
+works from the other.
+ 
+
+CD-PROGRAM USAGE.
+
+There will be an area of 4k allocated to common level data (score etc) and 
+for inter level control such as a cd loader.
+
+The remaining ram will be used for the game. Each level will make full use
+of this ram. This allows $19000 bytes for program/data, $10000 for music and
+sfx and $50000 for graphics per level.
+    
+
+

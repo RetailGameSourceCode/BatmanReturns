@@ -1,0 +1,25 @@
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ 									   บ
+; บ CD-ROM BATMAN.							   บ
+; บ 									   บ
+; ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน
+; บ 									   บ
+; บ Writen by: JOBBEEE	 Date: 01-21-92					   บ
+; บ 									   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+		OPT	ae-,an-,c-,d-,e-,l+,s+,w+,ws-,v-
+		OPT	op+,os+,ow+,oz+,oaq+,osq+,omq+
+	
+		INCLUDE	\SOURCE\DEVBIOS\GENESIS.68K
+ 		INCLUDE	\SOURCE\DEVBIOS\CDBIOS.68K
+		INCLUDE	BATMAN.EQU
+
+		IF	PALVERSION
+   		INCLUDE	BIP_PAL.68K
+   		ELSE
+		INCLUDE	BAT_IP.68K
+		ENDIF
+
+
+

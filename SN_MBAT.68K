@@ -1,0 +1,41 @@
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ 									   บ
+; บ CD-ROM BATMAN.							   บ
+; บ 									   บ
+; ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน
+; บ 									   บ
+; บ Writen by: JOBBEEE	 Date: 01-21-92					   บ
+; บ 									   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+		OPT	ae-,an-,c-,d-,e-,l+,s+,w+,ws-,v-
+		OPT	op+,os+,ow+,oz+,oaq+,osq+,omq+
+	
+		INCLUDE	\SOURCE\DEVBIOS\GENESIS.68K
+ 		INCLUDE	\SOURCE\DEVBIOS\CDBIOS.68K
+  		INCLUDE	BATMAN.EQU
+
+; --------------------------------------------------------------------------
+		
+   		INCLUDE	BAT_IP.68K
+		
+; --------------------------------------------------------------------------
+
+		REGS	PC=SNASM_START
+		REGS	SSP=$FFFD00
+		REGS	SR=$2700
+
+SNASM_START	MOVE.L	#D_WAIT,(MVBL_ADDR).W
+		MOVE.W	#$2000,SR
+
+.bios_wait	TST.B	MCOM_SFLAG
+		BNE.S	.bios_wait
+		JMP	IP_START
+
+D_WAIT		BSET	#0,MIFL2
+		RTE
+
+; --------------------------------------------------------------------------
+
+
+

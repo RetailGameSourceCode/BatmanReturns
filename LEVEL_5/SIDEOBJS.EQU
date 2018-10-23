@@ -1,0 +1,413 @@
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ ROADSIDE OBJECTS							   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+SINDEX		=	0
+
+NULL_SIGN	SIGNSET	SIGN_NEXT
+		SIGNGRS
+
+; --------------------------------------------------------------------------
+		
+		XYRATIO	100,100,176,600
+
+SL_TUNSDW	SIGNSET	SIGN_NEXT
+		SIGNDET	SDFX1,$00,$80,0,-10,20,0,0,144
+		SIGNDET	SDFX1,$00,$80,400,10,20,0,0,144
+		SIGNGRS	
+
+; --------------------------------------------------------------------------
+
+		XYRATIO	124,400,100,440
+
+SL_NATUR3	SIGNSET	PARTIAL_SCALE,NATUR3_PDATA
+		SIGNGRS	NATUR1
+
+NATUR3_PDATA	DC.W	3-1
+		XYSIZE	0,26
+		XYSIZE	124,96
+		DC.L	NATUR3_SDATA	
+		XTOX	0,124	
+		YTOY	0,34
+		XTOX	0,19	
+		YTOY	34,96
+		XTOX	108,124	
+		YTOY	34,96
+NATUR3_SDATA	SCALER	2,0,124,96,NATUR1
+
+; --------------------------------------------------------------------------
+
+		XYRATIO	100,220,100,280
+
+SL_SIDE1L	SIGNSET	PRINT_BUILD_L,SIDE1L_PDATA
+		SIGNDET	SDFX0M_C,$00,$80,0,15,30,0,20,123
+		SIGNGRS	MACHN1
+SIDE1L_PDATA	XYSIZE	31,20
+		XYSIZE	31,123
+		SCALER	0,21,31,123,MACHN1
+		SCALER	31,21,33,123,MACHN1
+
+; --------------------------------------------------------------------------
+
+SL_SIDE1R	SIGNSET	PRINT_BUILD_R,SIDE1R_PDATA
+		SIGNDET	SDFX0M_C,$00,$80,400,-15,30,0,20,123
+		SIGNGRS	MACHN1
+SIDE1R_PDATA	
+		DC.L	400*$100-(31*XRATIO_TO/XRATIO_FROM)
+		YSIZE	20
+		XYSIZE	31,123
+		SCALERM	0,21,31,123,MACHN1
+		SCALERM	31,21,33,123,MACHN1
+
+; --------------------------------------------------------------------------
+
+SL_SIDE2L	SIGNSET	PRINT_AT,SIDE2L_PDATA
+		SIGNDET	SDFX0P_C,$00,$20,0,11,22,0,30,105
+		SIGNGRS	MACHN1
+
+SIDE2L_PDATA	XYSIZE	0,30
+		XYSIZE	22,105
+		SCALER	64,69,22,105,MACHN1
+
+; --------------------------------------------------------------------------
+
+SL_SIDE2R	SIGNSET	PRINT_AT,SIDE2R_PDATA
+		SIGNDET	SDFX0P_C,$00,$20,400,-11,22,0,30,105
+		SIGNGRS	MACHN1
+
+SIDE2R_PDATA	DC.L	400*$100-(22*XRATIO_TO/XRATIO_FROM)
+		YSIZE	30
+		XYSIZE	22,105
+		SCALERM	64,69,22,105,MACHN1
+
+; --------------------------------------------------------------------------
+
+SL_SIDE3L	SIGNSET	PRINT_AT,SIDE3L_PDATA
+		SIGNGRS	MACHN1
+
+SIDE3L_PDATA	XYSIZE	0,-10
+		XYSIZE	22,42
+		SCALER	64,21,22,42,MACHN1
+
+; --------------------------------------------------------------------------
+
+SL_SIDE3R	SIGNSET	PRINT_AT,SIDE3R_PDATA
+		SIGNGRS	MACHN1
+
+SIDE3R_PDATA	DC.L	400*$100-(22*XRATIO_TO/XRATIO_FROM)
+		YSIZE	-10
+		XYSIZE	22,42
+		SCALERM	64,21,22,42,MACHN1
+
+; --------------------------------------------------------------------------
+
+SL_SIDE4L	SIGNSET	PRINT_AT,SIDE4L_PDATA
+		SIGNGRS	MACHN1
+
+SIDE4L_PDATA	XYSIZE	0,-30
+		XYSIZE	22,42
+		SCALER	64,21,22,42,MACHN1
+
+; --------------------------------------------------------------------------
+
+SL_SIDE4R	SIGNSET	PRINT_AT,SIDE4R_PDATA
+		SIGNGRS	MACHN1
+
+SIDE4R_PDATA	DC.L	400*$100-(22*XRATIO_TO/XRATIO_FROM)
+		YSIZE	-40
+		XYSIZE	22,42
+		SCALERM	64,21,22,42,MACHN1
+
+; --------------------------------------------------------------------------
+
+		XYRATIO	124,400,100,370
+
+SL_CAVER1	SIGNSET	PARTIAL_SCALE,CAVER1_PDATA
+		SIGNGRS	CAVER1
+
+CAVER1_PDATA	DC.W	3-1
+		XYSIZE	0,26
+		XYSIZE	124,96
+		DC.L	CAVER1_SDATA	
+		XTOX	0,124	
+		YTOY	0,34
+		XTOX	0,19	
+		YTOY	34,96
+		XTOX	108,124	
+		YTOY	34,96
+CAVER1_SDATA	SCALER	2,0,124,96,CAVER1
+
+; --------------------------------------------------------------------------
+
+		XYRATIO	124,400,100,370
+
+SL_CAVER2	SIGNSET	PARTIAL_SCALE,CAVER2_PDATA
+		SIGNGRS	CAVER2
+
+CAVER2_PDATA	DC.W	3-1
+		XYSIZE	0,26
+		XYSIZE	124,96
+		DC.L	CAVER2_SDATA	
+		XTOX	0,124	
+		YTOY	0,34
+		XTOX	0,19	
+		YTOY	34,96
+		XTOX	108,124	
+		YTOY	34,96
+CAVER2_SDATA	SCALER	2,0,124,96,CAVER2
+
+; --------------------------------------------------------------------------
+
+		XYRATIO	124,400,100,370
+
+SL_NATUR1	SIGNSET	PARTIAL_SCALE,NATUR1_PDATA
+		SIGNGRS	NATUR1
+
+NATUR1_PDATA	DC.W	3-1
+		XYSIZE	0,26
+		XYSIZE	124,96
+		DC.L	NATUR1_SDATA	
+		XTOX	0,124	
+		YTOY	0,34
+		XTOX	0,19	
+		YTOY	34,96
+		XTOX	108,124	
+		YTOY	34,96
+NATUR1_SDATA	SCALER	2,0,124,96,NATUR1
+
+; --------------------------------------------------------------------------
+
+		XYRATIO	124,400,100,370
+
+SL_NATUR2	SIGNSET	PARTIAL_SCALE,NATUR2_PDATA
+		SIGNGRS	NATUR2
+
+NATUR2_PDATA	DC.W	3-1
+		XYSIZE	0,26
+		XYSIZE	124,96
+		DC.L	NATUR2_SDATA	
+		XTOX	0,124	
+		YTOY	0,34
+		XTOX	0,19	
+		YTOY	34,96
+		XTOX	108,124	
+		YTOY	34,96
+NATUR2_SDATA	SCALER	2,0,124,96,NATUR2
+
+; --------------------------------------------------------------------------
+
+		XYRATIO	124,400,100,370
+
+SL_WIRED1	SIGNSET	PARTIAL_SCALE,WIRED1_PDATA
+		SIGNGRS	WIRED1
+
+WIRED1_PDATA	DC.W	3-1
+		XYSIZE	0,18
+		XYSIZE	124,88
+		DC.L	WIRED1_SDATA	
+		XTOX	0,124	
+		YTOY	0,34
+		XTOX	0,19	
+		YTOY	34,88
+		XTOX	108,124	
+		YTOY	34,88
+WIRED1_SDATA	SCALERM	2,0,124,88,WIRED1
+
+; --------------------------------------------------------------------------
+
+		XYRATIO	124,400,100,370
+
+SL_WIRED2	SIGNSET	PARTIAL_SCALE,WIRED2_PDATA
+		SIGNGRS	WIRED2
+
+WIRED2_PDATA	DC.W	3-1
+		XYSIZE	0,18
+		XYSIZE	124,88
+		DC.L	WIRED2_SDATA	
+		XTOX	0,124	
+		YTOY	0,42
+		XTOX	0,19	
+		YTOY	42,88
+		XTOX	108,124	
+		YTOY	42,88
+WIRED2_SDATA	SCALERM	2,0,124,88,WIRED2
+
+; --------------------------------------------------------------------------
+
+		XYRATIO	124,400,100,370
+
+SL_WIRED3	SIGNSET	PARTIAL_SCALE,WIRED3_PDATA
+		SIGNGRS	WIRED3
+
+WIRED3_PDATA	DC.W	3-1
+		XYSIZE	0,18
+		XYSIZE	124,88
+		DC.L	WIRED3_SDATA	
+		XTOX	0,124	
+		YTOY	0,23
+		XTOX	0,15	
+		YTOY	23,88
+		XTOX	110,124	
+		YTOY	23,88
+WIRED3_SDATA	SCALERM	2,0,124,88,WIRED3
+
+; --------------------------------------------------------------------------
+
+		XYRATIO	124,400,100,370
+
+SL_WIRED4	SIGNSET	PARTIAL_SCALE,WIRED4_PDATA
+		SIGNGRS	WIRED4
+
+WIRED4_PDATA	DC.W	3-1
+		XYSIZE	0,18
+		XYSIZE	124,88
+		DC.L	WIRED4_SDATA	
+		XTOX	0,124	
+		YTOY	0,38
+		XTOX	0,19	
+		YTOY	38,88
+		XTOX	108,124	
+		YTOY	38,88
+WIRED4_SDATA	SCALERM	2,0,124,88,WIRED4
+
+; --------------------------------------------------------------------------
+
+		XYRATIO	100,120,100,120
+
+SL_CLOWNA	SIGNSET	PRINT_AT,CLOWNA_PDATA
+		SIGNGRS	RCLOWN
+
+CLOWNA_PDATA	
+		DC.L	200*$100-(143*XRATIO_TO/XRATIO_FROM/2)
+		DC.L	-90*$100
+		XYSIZE	143,96
+		SCALER	0,0,143,96,RCLOWN
+
+; --------------------------------------------------------------------------
+
+		XYRATIO	100,100,100,100
+
+SL_CAGEA	SIGNSET	PRINT_AT,CAGEA_PDATA
+		SIGNGRS	RBCAGE
+
+CAGEA_PDATA	DC.L	80*$100-(48*XRATIO_TO/XRATIO_FROM/2)
+		DC.L	-120*$100
+		XYSIZE	48,128
+		SCALER	0,0,48,128,RBCAGE
+
+; --------------------------------------------------------------------------
+
+		XYRATIO	100,100,100,100
+
+SL_CAGEB	SIGNSET	PRINT_AT,CAGEB_PDATA
+		SIGNGRS	RBCAGE
+
+CAGEB_PDATA	DC.L	200*$100-(48*XRATIO_TO/XRATIO_FROM/2)
+		DC.L	-150*$100
+		XYSIZE	48,128
+		SCALER	0,0,48,128,RBCAGE
+
+; --------------------------------------------------------------------------
+
+		XYRATIO	100,100,100,100
+
+SL_CAGEC	SIGNSET	PRINT_AT,CAGEC_PDATA
+		SIGNGRS	RBCAGE
+
+CAGEC_PDATA	DC.L	320*$100-(48*XRATIO_TO/XRATIO_FROM/2)
+		DC.L	-90*$100
+		XYSIZE	48,128
+		SCALER	0,0,48,128,RBCAGE
+
+; --------------------------------------------------------------------------
+
+		XYRATIO	100,100,100,100
+
+SL_CAGED	SIGNSET	PRINT_AT,CAGED_PDATA
+		SIGNGRS	RBCAGE
+
+CAGED_PDATA	DC.L	300*$100-(48*XRATIO_TO/XRATIO_FROM/2)
+		DC.L	-120*$100
+		XYSIZE	48,128
+		SCALER	0,0,48,128,RBCAGE
+
+; --------------------------------------------------------------------------
+
+		XYRATIO	100,100,100,100
+
+SL_CAGEE	SIGNSET	PRINT_AT,CAGEE_PDATA
+		SIGNGRS	RBCAGE
+
+CAGEE_PDATA	DC.L	60*$100-(48*XRATIO_TO/XRATIO_FROM/2)
+		DC.L	-90*$100
+		XYSIZE	48,128
+		SCALER	0,0,48,128,RBCAGE
+
+; --------------------------------------------------------------------------
+
+		XYRATIO	100,100,100,100
+
+SL_DUCKA	SIGNSET	PRINT_AT,DUCKA_PDATA
+		SIGNGRS	RDUCKS
+
+DUCKA_PDATA	DC.L	200*$100-(55*XRATIO_TO/XRATIO_FROM/2)
+		DC.L	-120*$100
+		XYSIZE	55,96
+		SCALERM	0,0,55,96,RDUCKS
+
+; --------------------------------------------------------------------------
+
+		XYRATIO	100,100,100,100
+
+SL_DUCKB	SIGNSET	PRINT_AT,DUCKB_PDATA
+		SIGNGRS	RDUCKS
+
+DUCKB_PDATA	DC.L	60*$100-(55*XRATIO_TO/XRATIO_FROM/2)
+		DC.L	-90*$100
+		XYSIZE	55,96
+		SCALERM	0,0,55,96,RDUCKS
+
+; --------------------------------------------------------------------------
+
+		XYRATIO	100,100,100,100
+
+SL_DUCKC	SIGNSET	PRINT_AT,DUCKC_PDATA
+		SIGNGRS	RDUCKS
+
+DUCKC_PDATA	DC.L	300*$100-(55*XRATIO_TO/XRATIO_FROM/2)
+		DC.L	-100*$100
+		XYSIZE	55,96
+		SCALER	0,0,55,96,RDUCKS
+
+; --------------------------------------------------------------------------
+
+		XYRATIO	100,100,100,100
+
+SL_DUCKD	SIGNSET	PRINT_AT,DUCKD_PDATA
+		SIGNGRS	RDUCKS
+
+DUCKD_PDATA	DC.L	70*$100-(55*XRATIO_TO/XRATIO_FROM/2)
+		DC.L	-120*$100
+		XYSIZE	55,96
+		SCALER	0,0,55,96,RDUCKS
+
+; --------------------------------------------------------------------------
+
+		XYRATIO	100,100,100,100
+
+SL_DUCKE	SIGNSET	PRINT_AT,DUCKE_PDATA
+		SIGNGRS	RDUCKS
+
+DUCKE_PDATA	DC.L	320*$100-(55*XRATIO_TO/XRATIO_FROM/2)
+		DC.L	-120*$100
+		XYSIZE	55,96
+		SCALER	0,0,55,96,RDUCKS
+
+; --------------------------------------------------------------------------
+
+SGR_LIST	SIGNLIST
+
+; --------------------------------------------------------------------------
+
+
+

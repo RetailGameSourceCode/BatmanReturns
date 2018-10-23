@@ -1,0 +1,121 @@
+
+BXSIZE		=	256
+BYSIZE		=	192
+BSPRY		=	16
+
+		LEA	BACKGR+$344,A0
+		LEA	BACKAT+96+((BXSIZE*BYSIZE)/256),A1
+		MOVE.W	#(BYSIZE/BSPRY)-1,D5
+.m2		MOVE.W	#(BXSIZE/8)-1,D6
+		MOVE.L	A0,A3
+.m1		MOVE.W	#BSPRY-1,D7
+		MOVE.L	A3,A2
+.m0		MOVE.B	(A2)+,D0
+		LSL.B	#4,D0
+		OR.B	(A2)+,D0
+		LSL.W	#4,D0
+		OR.B	(A2)+,D0
+		LSL.W	#4,D0
+		OR.B	(A2)+,D0
+		LSL.L	#4,D0
+		OR.B	(A2)+,D0
+		LSL.L	#4,D0
+		OR.B	(A2)+,D0
+		LSL.L	#4,D0
+		OR.B	(A2)+,D0
+		LSL.L	#4,D0
+		OR.B	(A2)+,D0
+		MOVE.L	D0,(A1)+
+		LEA	BXSIZE-8(A2),A2
+   		DBRA	D7,.m0
+		LEA	8(A3),A3
+   		DBRA	D6,.m1
+		LEA	BXSIZE*BSPRY(A0),A0
+   		DBRA	D5,.m2
+
+		
+		LEA	BACKAT+96+((BXSIZE*BYSIZE)/256),A1
+		MOVE.L	A1,A2
+		LEA	((BXSIZE*BYSIZE)/2)(A1),A0
+
+		MOVE.W	#((BXSIZE*BYSIZE)/512),D4
+		MOVEQ	#0,D5
+		BRA.S	.next
+
+.zero_chk	MOVE.L	A2,A3
+		MOVE.W	#(BSPRY*4)-1,D7
+.zlp		TST.L	(A3)+
+		DBNE	D7,.zlp
+		BNE.S	.comp_start
+		MOVE.W	#$7F8,(A0)+
+		LEA	BSPRY*16(A2),A2
+		BRA.S	.next
+
+.found		MOVE.W	D5,D7
+		SUB.W	D6,D7
+		LSL.W	#3,D7
+		ADD.W	#(IMG_BACKGR_VRAM/$20)-8,D7
+		ADD.W	#IMG_BACKGR_PDAT,D7
+		MOVE.W	D7,(A0)+
+		LEA	BSPRY*16(A2),A2
+		BRA.S	.next
+
+.comp_lp	MOVE.L	A2,A3
+		MOVE.L	A5,A4
+		MOVE.W	#(BSPRY*4)-1,D7
+.comp		CMP.L	(A3)+,(A4)+
+		DBNE	D7,.comp
+		BEQ.S	.found
+		LEA	BSPRY*16(A5),A5
+.comp_start	DBRA	D6,.comp_lp
+		MOVE.W	#(BSPRY*4)-1,D7
+.move_lp	MOVE.L	(A2)+,(A5)+
+		DBRA	D7,.move_lp
+		MOVE.W	D5,D7
+		LSL.W	#3,D7
+		ADD.W	#IMG_BACKGR_VRAM/$20,D7
+		ADD.W	#IMG_BACKGR_PDAT,D7
+		MOVE.W	D7,(A0)+
+		ADDQ.W	#1,D5
+
+.next		MOVE.L	A1,A5
+		MOVE.W	D5,D6
+		DBRA	D4,.zero_chk
+
+
+		LEA	BACKAT+96+((BXSIZE*BYSIZE)/2)+((BXSIZE*BYSIZE)/256),A0
+		LEA	((BXSIZE*BYSIZE)/512)(A0),A1
+		LEA	BACKAT,A2
+		MOVE.W	#(BYSIZE/32)-1,D6
+.mln_lp		MOVE.L	A0,A3
+		MOVE.W	#(BXSIZE/32)-1,D7
+.mlp0		MOVE.W	(A3)+,(A2)+
+		DBRA	D7,.mlp0
+		MOVE.W	#(BXSIZE/32)-1,D7
+.mlp1		MOVE.W	(A1)+,(A2)+
+		DBRA	D7,.mlp1
+		MOVE.W	#(BXSIZE/32)-1,D7
+.mlp2		MOVE.W	(A0)+,(A2)+
+		DBRA	D7,.mlp2
+		DBRA	D6,.mln_lp
+
+		LEA	BACKAT,A0
+		MOVE.W	D5,D0
+		MOVE.W	D5,D1
+		LSL.W	#8,D1
+		ADD.W	#96+((BXSIZE*BYSIZE)/256),D1
+
+PCAT		=	*
+
+; --------------------------------------------------------------------------
+
+		ORG	$FD0000
+BACKGR_DAT_A
+BACKAT		DS.B	$1000
+BACKGR		;INCBIN	BACKGR3A.BBM
+		INCBIN	LEV1.BBM     
+
+; --------------------------------------------------------------------------
+
+		ORG	PCAT		
+

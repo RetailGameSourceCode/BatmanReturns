@@ -1,0 +1,24 @@
+CD-ROM BATMAN. [snasm cd-rom development system]
+
+[snmake]
+
+T7:; 	BATMAN.68K 
+
+	SNASM68k $! /I SN_SWAIT.68K,T5:
+	SNASM68k $! /I SN_MBAT.68K,T7:,MAIN.SYM
+	SNASM68k $! /I SN_SBAT.68K,T5:,SUB.SYM
+
+!ifdef(Debugstr)
+	SNBUG68k /t5 SUB.SYM
+;	SNBUG68k /t4 MAIN.SYM
+!endif
+
+[eval]
+
+	SNBUG68k /v$$$ MAIN.SYM SUB.SYM
+
+[debug]
+
+	SNBUG68k /t5 SUB.SYM
+;	SNBUG68k /t4 MAIN.SYM
+

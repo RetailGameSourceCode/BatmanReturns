@@ -1,0 +1,202 @@
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ 									   บ
+; บ CD-ROM SYSTEM BOOT							   บ
+; บ 									   บ
+; ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน
+; บ 									   บ
+; บ DEVBIOS CD FILE EMULATION.									   บ
+; บ 									   บ
+; บ 									   บ
+; บ Writen by: JOBBEEE	 Updated: 01-21-92				   บ
+; บ 									   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+		OPT	ae-,an-,c-,d-,e-,l+,s+,w+,ws-,v-
+		OPT	op+,os+,ow+,oz+,oaq+,osq+,omq+
+
+		INCLUDE	GENESIS.EQU
+		INCLUDE	CDBIOS.EQU
+
+		ORG	0
+		
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ MAIN-CPU Initial program.						   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+		DC.B	"MEGACD"			;Flag command.
+     	  	DC.W	$0001				;Download MAIN.
+      	   	DC.L	IP_START,IP_END-IP_START	;Address,lenght.
+
+; --------------------------------------------------------------------------
+
+		OBJ	$FFFF0000
+
+IP_START	
+
+; --- USER's code starts here. ---------------------------------------------
+
+		MOVE.W	#$2000,SR
+
+		LEA	IP_COPY(PC),A0
+		LEA	$FFFFFC00.W,A1
+		MOVEQ	#(IP_END-IP_COPY)/2-1,D0
+.lp		MOVE.W	(A0)+,(A1)+
+		DBRA	D0,.lp
+		JMP	$FFFFFC00.W
+
+IP_COPY
+
+.mode_chk	BTST	#2,MMEM_MODE
+   		BNE.S	.mode_chk
+		BSET	#1,MMEM_MODE
+.dmna_chk	BTST	#1,MMEM_MODE
+    		BNE.S	.dmna_chk
+		
+		LEA	$200000,A0	
+		LEA	$FFFF0000.L,A1
+		MOVE.W	#$FC00/$20-1,D0
+.copy		MOVE.L	(A0)+,(A1)+
+		MOVE.L	(A0)+,(A1)+
+		MOVE.L	(A0)+,(A1)+
+		MOVE.L	(A0)+,(A1)+
+		MOVE.L	(A0)+,(A1)+
+		MOVE.L	(A0)+,(A1)+
+		MOVE.L	(A0)+,(A1)+
+		MOVE.L	(A0)+,(A1)+
+		DBRA	D0,.copy
+
+		BSET	#1,MMEM_MODE
+		JMP	$FFFF0000.L
+
+IP_END
+		OBJEND
+
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ SUB-CPU Initial program.						   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+		DC.B	"MEGACD"			;Flag command.
+     	  	DC.W	$0002				;Download MAIN.
+      	   	DC.L	SP_START,SP_END-SP_START	;Address,lenght.
+	
+; --------------------------------------------------------------------------
+
+		OBJ	$6000
+SP_START
+
+; - Application ID Area. ---------------------------------------------------
+
+AP_TEXT		DC.B	"MAIN___BOOT",0	;Module name, flag.
+		DC.W	$0000,0		;Version, type.
+		DC.L	0		;Ptr. to next module.
+		DC.L	0		;Module size.
+		DC.L	AP_USER-AP_TEXT	;User offset table.
+		DC.L	0		;Work ram size.
+AP_USER		DC.W	AP_INIT-AP_USER	;Initializiation routine.
+		DC.W	AP_MAIN-AP_USER	;Main routine.
+		DC.W	AP_VBL-AP_USER	;VBL interrupt routine.
+		DC.W	0		;User defined routine.
+		DC.W	0		;End flag.
+
+; - Application code area. -------------------------------------------------
+
+AP_INIT		
+
+AP_VBL		RTS
+
+AP_MAIN		MOVE.B	#3,$FFFF8004.W
+		MOVEQ	#20,D6
+		MOVEQ	#1,D7
+		LEA	CD_DIR(PC),A6
+		BSR	ROM_READ
+
+		LEA	FNAME0,A0
+		LEA	$7000(PC),A6
+		BSR.S	ROM_LOAD
+
+.mode_clr	BCLR	#2,SMEM_MODE
+		BNE.S	.mode_clr
+.ret_chk0	BTST	#0,SMEM_MODE
+	 	BNE.S	.ret_chk0
+
+		CLR.B	SCOM_SFLAG
+
+		LEA	FNAME1,A0
+		LEA	$80000,A6
+		BSR.S	ROM_LOAD
+
+		BSET	#0,SMEM_MODE
+.ret_chk1	BTST	#0,SMEM_MODE
+ 		BNE.S	.ret_chk1
+		
+		MOVEQ	#0,D7
+		DBRA	D7,*
+		DBRA	D7,*
+		DBRA	D7,*
+		DBRA	D7,*
+
+		JMP	$7000(PC)
+
+FNAME0		DC.B	"SUB_AP.BIN"
+FNAME1		DC.B	"MAI_AP.BIN"
+
+; --------------------------------------------------------------------------
+
+ROM_LOAD	LEA	CD_DIR(PC),A1
+		MOVEQ	#0,D0
+.next		LEA	(A1,D0.W),A1
+		MOVE.B	(A1),D0
+		LEA	32(A1),A2
+		MOVEQ	#0,D1
+		MOVE.B	(A2)+,D1
+		SUBQ.W	#3,D1
+		BCS.S	.next
+		MOVE.L	A0,A3
+.loop		CMPM.B	(A2)+,(A3)+
+		BNE.S	.next
+		DBRA	D1,.loop
+
+		MOVE.L	6(A1),D6
+		MOVE.L	14(A1),D7
+		MOVE.W	D7,D0
+		LSR.L	#8,D7
+		LSR.L	#3,D7
+		AND.W	#$7FF,D0
+		BEQ.S	ROM_READ
+		ADDQ.L	#1,D7
+
+ROM_READ	LEA	READ_DAT(PC),A0
+		MOVEM.L	D6-D7,(A0)
+		MOVE.W	#ROMREADN,D0
+		JSR	_CDBIOS		
+
+.next		MOVE.W	#CDCREAD,D0
+		JSR	_CDBIOS		
+		BCS.S	.next
+
+		MOVE.L	A6,A0
+		LEA	HEADER(PC),A1
+		MOVE.W	#CDCTRN,D0
+		JSR	_CDBIOS		
+		MOVE.L	A0,A6
+
+		MOVE.W	#CDCACK,D0
+		JSR	_CDBIOS		
+	
+		SUBQ.L	#1,D7
+		BNE.S	.next
+		RTS
+
+READ_DAT	DC.L	0,0
+HEADER		DC.B	0,0,0,0
+
+CD_DIR
+
+SP_END
+		OBJEND
+
+; --------------------------------------------------------------------------
+
+		DC.B	"MEGACD"			;Flag command.
+       	  	DC.W	$0003				;Run.
+

@@ -1,0 +1,144 @@
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ BATMAN RETURNS CD-ROM						   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+; ROAD OBJECT - LEVEL 5 - "BOUY"
+
+; --------------------------------------------------------------------------
+
+BOUY_SETUP	LEA	OBJ_BOUY,A6
+		BSR	O_MTR_SETUP
+		MOVE.W	#-50,OBJ_CNT0(A1)
+		MOVE.W	#10,D7
+		BSR	RANDOM_RANGE_U
+		MOVE.W	D7,OBJ_CNT2(A1)
+		MOVE.W	#2,OBJ_CNT3(A1)
+		BRA	O_MTR_SETFIN
+
+; --------------------------------------------------------------------------
+
+BOUY_HIT	CMP.W	#ID_SHOT,OBJ_ID(A1)
+		BEQ	OBJ_DET_ZXKILL
+		CMP.W	#ID_MISS,OBJ_ID(A1)
+		BEQ	OBJ_DET_ZXKILL
+		CMP.W	#ID_MAIN,OBJ_ID(A1)
+		BNE	OBJ_DET_NEXT
+
+		MOVEM.L	D0-D7/A0-A6,-(SP)
+
+		MOVE.L	OBJ_SPD(A1),D7
+		BPL.S	.hit_calc
+		NEG.L	D7
+.hit_calc	SWAP	D7
+		ROL.L	#3,D7
+		ADD.W	D7,OBJ_BASH_AMT(A1)
+
+		ADDQ.B	#4,OBJ_FLASH1(A1)	;Rebound batski.
+		MOVE.W	OBJ_SPD(A1),D7
+		ASR.W	D7
+		NEG.W	D7
+		BMI.S	.neg
+		ADD.W	#$10,D7
+		BRA.S	.set
+.neg		CMP.W	#-$50,D7
+		BMI.S	.set
+		MOVE.W	#-$50,D7
+.set		MOVE.W	D7,OBJ_SPD(A1)
+
+.sfx		MOVE.W	#SFX_BASHBOUY_A,D0
+		JSR	CSFX_ONESHOT_V
+		MOVEM.L	(SP)+,D0-D7/A0-A6
+		JMP	OBJ_DET_ZXKILL
+
+; --------------------------------------------------------------------------
+
+BOUY_MOVE	TST.W	OBJ_CNT2(A1)
+		BEQ.S	.go
+		SUBQ.W	#1,OBJ_CNT2(A1)
+		RTS
+
+.go		MOVE.W	OBJ_CNT3(A1),D1
+		MOVE.W	OBJ_CNT1(A1),D3
+		MOVE.W	OBJ_CNT0(A1),D2
+		BMI.S	.cangle_n
+.cangle_p	SUB.W	D1,D3
+		ADD.W	D3,D2
+		BPL.S	.cset
+     		BRA.S	.csfx
+.cangle_n	ADD.W	D1,D3
+		ADD.W	D3,D2
+		BMI.S	.cset
+
+.csfx		MOVE.W	#SFX_BOUYBELL_A,D0
+		JSR	CSFX_ONESHOT_V
+
+.cset		MOVE.W	D2,OBJ_CNT0(A1)
+		MOVE.W	D3,OBJ_CNT1(A1)
+
+.end		RTS
+
+; --------------------------------------------------------------------------
+
+BOUY_PRINT	MOVE.W	D0,D1
+		ADD.W	#$58,D1
+		CMP.W	#$180,D1
+		BMI.S	.alloc
+		ADD.W	#$200,D1
+.alloc		BSR	O_PR_A_XIT
+		BSR	O_CALC_PATCHZ
+		MOVE.L	OBJ_ADDR0(A1),A2
+		MOVE.L	OBJGR_ANM0(A2),A0
+		MOVE.L	OBJ_ADDR1(A1),A2
+		BSR	O_ALLOC_DEALL_S
+		MOVE.L	A0,OBJ_ADDR1(A1)
+		MOVE.W	OBJ_CNT0(A1),D2
+		AND.W	#$3FE,D2
+		BRA	O_PR_ROTATE
+
+; --------------------------------------------------------------------------
+
+EXITFLAG_SETUP	LEA	(A0,D6.W),A2
+		BSR	OBJECT_ALLOC
+		BNE.S	.error
+		MOVE.L	A1,D0
+		SUB.L	#OBJECT_DATA,D0
+		MOVE.W	D0,RDDATA3(A2)
+		MOVE.L	#SIGN_NEXT,OBJ_PRN_CTRL(A1)
+		MOVE.L	#EXITFLAG_CHECK,OBJ_MOVE_CTRL(A1)
+		MOVE.W	D2,OBJ_ZPOS(A1)
+		RTS
+.error		CLR.W	RDDATA3(A2)
+		ADDQ.L	#4,SP
+		RTS
+
+EXITFLAG_CHECK	CMP.W	#$100,OBJ_ZPOS(A1)
+		BPL.S	.end
+		TAS.B	OBJ_FLAG1(A1)
+		BNE.S	.end
+		ADDQ.W	#1,ECL_PAUSE
+.end		RTS
+
+; --------------------------------------------------------------------------
+
+		XYRATIO	100,240,100,240
+		OBJCNTR	0,0,0,0
+OBJ_BOUY
+		DC.L	OBJ_BOUY_SET
+		DC.L	OBJ_BOUY_ANM0
+
+OBJ_BOUY_ANM0	OBJSCL	0,0,64,112,54,128,BOUYAA
+
+OBJ_BOUY_SET	DC.W	ID_ROADOBJ	;OBJ_ID
+		DC.L	BOUY_MOVE	;OBJ_MOVE_CTRL
+		DC.L	BOUY_PRINT	;OBJ_PRN_CTRL
+		DC.W	$20		;OBJ_ZSIZE
+		XYSIZE	31,81
+		DC.W	0		;OBJ_MASS
+		DC.L	BOUY_HIT	;OBJ_HIT_GOTO
+		DC.W	0		;OBJ_ZPOS
+		DC.L	0		;OBJ_XPOS
+		DC.L	0		;OBJ_YPOS
+
+; --------------------------------------------------------------------------
+
+

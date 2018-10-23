@@ -1,0 +1,77 @@
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ BATMAN RETURNS CD-ROM						   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+; STANDARD ENEMY - LEVEL 2 - "Fire trail tanker"
+
+; --------------------------------------------------------------------------
+
+TANK_SETUP	LEA	OBJ_TANK
+		BRA	O_OBJECT_SETUP	 
+
+; --------------------------------------------------------------------------
+
+TANK_CLEAR	BRA	O_CLEAR_S
+
+; --------------------------------------------------------------------------
+
+TANK_MOVE
+		BRA	O_MOVER
+
+; --------------------------------------------------------------------------
+
+TANK_PRINT	
+		BRA	O_CAR_PRINT_S
+
+; --------------------------------------------------------------------------
+
+;54,63
+
+OBJ_TANK
+		XYRATIO	100,100,100,100
+		OBJCNTR	126,44,56,63
+
+		DC.L	OBJ_TANK_SET
+		DC.L	OBJ_TANK_ANM0
+		DC.L	OBJ_TANK_ANM1
+		DC.L	OBJ_TANK_SKID
+
+OBJ_TANK_ANM0	DC.L	OBJ_TANK_XVIEW,OBJ_TANK_YVIEW
+
+		OBJSCL	,,0,0,,,TANK
+		
+OBJ_TANK_ANM1	DC.L	OBJ_TANK_XVIEW,OBJ_TANK_YVIEW
+
+
+OBJ_TANK_XVIEW	DC.W	7*$20,$20
+		DC.L	$3000,$7800,-1
+OBJ_TANK_YVIEW	DC.W	5*$20
+		DC.W	$16,-1
+
+OBJ_TANK_SKID	DC.W	2
+		XSIZE	24
+		XSIZE	-24
+
+OBJ_TANK_SET	DC.W	ID_CAR		;OBJ_ID
+		DC.L	TANK_MOVE	;OBJ_MOVE_CTRL
+		DC.L	TANK_PRINT	;OBJ_PRN_CTRL
+		DC.W	$50		;OBJ_ZSIZE
+		RATIO	49,59,49	;OBJ_XSIZE
+		RATIO	49,59,51	;OBJ_YSIZE
+		DC.W	200		;OBJ_MASS
+		DC.L	HROUTINE_CAR	;OBJ_HIT_GOTO
+		DC.W	$80*15		;OBJ_ZPOS
+		DC.L	$100*200	;OBJ_XPOS
+		DC.L	$100*0		;OBJ_YPOS
+		DC.W	$40		;OBJ_SPD_MAXA
+		DC.W	$A0		;OBJ_SPD_MAXB
+		DC.W	40		;OBJ_SPD_INCFA
+		DC.W	30		;OBJ_SPD_INCFB
+		DC.W	20		;OBJ_SPD_DECF
+		DC.W	5		;OBJ_SPD_BRAKE
+		DC.W	13		;OBJ_TRACTION
+
+; --------------------------------------------------------------------------
+
+
+

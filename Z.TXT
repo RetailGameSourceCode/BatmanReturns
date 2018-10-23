@@ -1,0 +1,30 @@
+		IF	SOUND_INC
+		MOVE.W	#$100,Z80BusReq		;Z80 bus request on
+.z80w0		BTST.B	#0,Z80BusReq   		;wait for bus grant
+		BNE.S	.z80w0
+		ENDIF
+		
+		BSR	JOY0_READ		;Do joypads while Z80 halted.
+	 	MOVE.W	D0,MCOM_MDATA+MCOM_JOY0
+ 	  	BSR	JOY1_READ
+	   	MOVE.W	D0,MCOM_MDATA+MCOM_JOY1
+
+		IF	SOUND_INC
+		LEA	Z80Ram+$36,A4 		;A4-> Z80 Write Pointer
+		LEA	Z80Ram+$1C40,A5		;A5-> Z80 FIFO
+		MOVE.B	(A4),D1	      		;Read FIFO index from Z80 ram
+		AND.W	#$3F,D1			;mod 64
+		LEA	MAIN_SND_XBUFF,A3	;A3-> SUB to MAIN Xfer Buffer
+		MOVE.W	(A3)+,D2
+		BRA.S	.z80start
+
+.z80loop	MOVE.B	(A3)+,(A5,D1.W)		;write into FIFO
+		ADDQ.B	#1,D1	      		;inc write index
+		AND.W	#$3F,D1			;mod 64
+.z80start	DBRA	D2,.z80loop		
+
+		MOVE.B	D1,(A4)	      		;Done so update FIFO pointer
+
+		MOVE.W	#0,Z80BusReq  		;Release Z80 (bus req off)
+		ENDIF
+

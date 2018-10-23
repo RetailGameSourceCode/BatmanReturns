@@ -1,0 +1,1144 @@
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ BATMAN RETURNS CD-ROM						   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+		RSRESET
+PCOLOUR		RS.L	1
+PBGTYPE		RS.B	1
+PBGSIDES	RS.B	1
+PBGSIZE		RS.L	1
+PMAPX		RS.W	1
+PMAPY		RS.W	1
+PWIDTH		RS.L	1
+PHEIGHT		RS.W	1
+PGR		RS.L	1
+
+; --------------------------------------------------------------------------
+
+		RSRESET
+RDTURN		RS.W	1
+RDHILL		RS.W	1
+RDPATCH		RS.L	1
+RDLEFT		RS.L	1
+RDRIGHT		RS.L	1
+RDCALLOC	RS.L	1
+RDCDEALL	RS.L	1
+RDDATA0		RS.W	1
+RDDATA1		RS.W	1
+RDDATA2		RS.W	1
+RDDATA3		RS.W	1
+RDSTEP		RS.B	0
+RDMASK		EQU	RDSTEP*127
+RDSIZE		EQU	RDSTEP*128
+
+		RSRESET
+RCXPOS		RS.L	1
+RCYPOS		RS.L	1
+RCXFRACT	RS.W	1
+RCYFRACT	RS.W	1
+RCYMAX		RS.W	1
+RCYMIN		RS.W	1
+RCXMAX		RS.W	1
+RCXMIN		RS.W	1
+RCROOF		RS.L	1
+RCSTEP		RS.B	0
+RCSIZE		EQU	RCSTEP*(VIEW_PATCHES+2)
+
+; --------------------------------------------------------------------------
+
+		RSRESET
+SGR_PRINT	RS.L	1
+SGR_SDATA	RS.L	1
+SGR_DETECT_AMT	RS.W	1
+		RSRESET
+SGR_DET_ZOFF	RS.W	1
+SGR_DET_XPOS	RS.L	1
+SGR_DET_YPOS	RS.L	1
+SGR_DET_ZSIZE	RS.W	1
+SGR_DET_XSIZE	RS.L	1
+SGR_DET_YSIZE	RS.L	1
+SGR_DET_FX	RS.L	1
+SGR_DET_DLEN	RS.B	0
+
+RUPD_BALLOC_PNO	EQU	8	
+RUPD_PRINT_PNO	EQU	15	
+RUPD_FALLOC_PNO	EQU	56
+RUPD_NEWDAT_PNO	EQU	64
+RUPD_NEWAMT	EQU	32
+
+; --------------------------------------------------------------------------
+
+RIPPLE_DATA	DC.L	RDATA
+RPOS_OFF	DC.W	0
+
+YWAMT		DC.L	0
+YWVAL		DC.L	$1000
+
+RDATA	
+RAMT		=	(20*HILL_INTENSITY)/$2000
+
+		DC.W	RAMT,4*$00
+		DC.W	RAMT,4*$10
+		DC.W	RAMT,4*$20
+		DC.W	RAMT,4*$30
+		DC.W	RAMT,4*$40
+		DC.W	RAMT,4*$50
+		DC.W	RAMT,4*$60
+		DC.W	RAMT,4*$70
+
+		DC.W	RAMT,4*$80
+		DC.W	RAMT,4*$90
+		DC.W	RAMT,4*$A0
+		DC.W	RAMT,4*$B0
+		DC.W	RAMT,4*$C0
+		DC.W	RAMT,4*$D0
+		DC.W	RAMT,4*$E0
+		DC.W	RAMT,4*$F0
+
+
+WATER_RIPLE	IF	WAVES=NO
+		RTS
+		ENDIF
+
+		MOVE.L	#$40,D0
+		MOVE.L	YWAMT,D1
+		MOVE.L	YWVAL,D2
+		BMI.S	.calc
+		NEG.L	D0
+.calc		ADD.L	D0,D1
+		MOVE.L	D1,YWAMT
+		ADD.L	D1,D2
+		MOVE.L	D2,YWVAL
+		ADD.L	#$E00,D2
+		MOVE.L	D2,YWATER
+
+DO_RIPPLE	MOVE.L	RIPPLE_DATA,A1
+		MOVE.W	#-$100,D5			
+		MOVE.W	#$100,D5			
+;		MOVE.W	#0,D5			
+
+;		MOVE.W	OBJECT_DATA+OBJ_SPD,D5
+;		ASL.W	#2,D5
+;		SUB.W	#$100,D5
+
+		ADD.W	RPOS_OFF,D5
+		MOVE.W	D5,RPOS_OFF
+		LSR.W	#6,D5
+
+		LEA	ROAD_DATA,A0
+		LEA	SIN_LOOKUP,A4
+   		MOVEQ	#128-1,D7
+
+.loop		AND.W	#$3C,D5
+		MOVE.W	(A1,D5.W),D1
+		MOVE.W	2(A1,D5.W),D2
+		MULS	(A4,D2.W),D1
+		LSL.W	D1
+		SWAP	D1
+		BPL.S	.set
+		ADDQ.W	#1,D1
+.set		MOVE.W	D1,RDHILL(A0)
+		ADDQ.W	#4,D5
+		LEA	RDSTEP(A0),A0
+		DBRA	D7,.loop
+		RTS
+
+; --------------------------------------------------------------------------
+
+MOVERS
+		IF	LEVEL>3		;Land or water.
+     		BSR	.move
+		BRA	WATER_RIPLE
+		ENDIF
+
+.move		BSR	CALC_MOVEAMTS
+		
+		MOVE.L	BG_XPOS,D0
+		ADD.L	CTURN,D0
+		MOVE.L	D0,BG_XPOS
+		MOVE.L	BG_YPOS,D0
+ 		MOVE.L	CHILL,D1
+ 		ASR.L	#2,D1
+		ADD.L	CHILL,D1
+		SUB.L	D1,D0
+		MOVE.L	D0,BG_YPOS
+		
+		MOVE.W	ZMOVE,D0
+		ADD.W	ZVIEW,D0
+		MOVE.W	D0,ZVIEW
+		AND.W	#$7F,ZVIEW
+		
+		MOVE.W	#-$80*(RUPD_PRINT_PNO-1),D2
+		SUB.W	D0,D2
+		ADD.W	ZMOVE,D2
+
+		ASR.W	#7,D0
+		BMI	RUPD_BACKWARD
+		BNE.S	RUPD_FORWARD
+		RTS
+
+RUPD_INIT
+		MOVE.L	#ROAD_BLOCKS,RUPD_BADDR
+		MOVE.L	#ROAD_BLOCKS+4+(3*12),RUPD_FADDR
+
+		MOVE.W	#-$80*(RUPD_PRINT_PNO-1),D2
+		SUB.W	#$80*(64+16),D2
+
+		MOVEQ	#(64+16)-1,D7
+.llp		MOVEM.W	D2/D7,-(SP)
+		MOVEQ	#1,D0
+		BSR	RUPD_FORWARD
+		MOVEM.W	(SP)+,D2/D7
+		ADD.W	#$80,D2
+		DBRA	D7,.llp
+		RTS
+
+
+RUPD_FORWARD	
+		LEA	ROAD_DATA,A0
+		MOVE.W	D0,D5
+		MULU	#RDSTEP,D5
+		MOVE.W	RMAP_OFF,D6
+		MOVE.W	#RDMASK,D7
+		ADD.W	D6,D5
+		AND.W	D7,D5
+		MOVE.W	D5,RMAP_OFF
+		MOVEM.W	D0/D2/D6,-(SP)
+
+		MOVE.W	RUPD_COUNT,D1
+		ADD.W	D0,RUPD_COUNT
+		AND.W	#$1F,RUPD_COUNT
+		SUBQ.W	#1,D1
+		AND.W	#$1F,D1
+		ADD.W	D1,D0
+		SUB.W	#$20,D0
+		BCS.S	.done
+		NEG.W	D1
+		ADD.W	#$1F+RUPD_NEWDAT_PNO,D1
+		MULU	#RDSTEP,D1
+		ADD.W	D1,D6
+		AND.W	D7,D6
+
+		MOVE.L	RUPD_BADDR,A1
+		MOVE.W	RUPD_STAGE,D5
+		BSR	RUPD_FWDDAT
+		LEA	12(A1),A1
+		MOVE.L	A1,RUPD_BADDR
+		MOVE.L	RUPD_FADDR,A1
+		MOVE.W	STAGE_NO,D5
+		BSR	RUPD_FWDDAT
+		BSR	RUPD_SETDAT
+		MOVE.L	A1,RUPD_FADDR
+		BRA.S	.done
+
+.done_lp	MOVEM.W	D0/D2/D6,-(SP)
+		ADD.W	#$80*RUPD_BALLOC_PNO,D2
+		ADD.W	#RDSTEP*RUPD_BALLOC_PNO,D6
+		BSR	DEALL_SIGN
+		ADD.W	#$80*(RUPD_FALLOC_PNO-RUPD_BALLOC_PNO),D2
+		ADD.W	#RDSTEP*(RUPD_FALLOC_PNO-RUPD_BALLOC_PNO),D6
+		BSR	ALLOC_SIGN
+.done		MOVEM.W	(SP)+,D0/D2/D6
+		ADD.W	#RDSTEP,D6
+		ADD.W	#$80,D2
+		DBRA	D0,.done_lp
+		RTS
+
+RUPD_BACKWARD	
+		LEA	ROAD_DATA,A0
+		MOVE.W	D0,D5
+		MULS	#RDSTEP,D5
+		MOVE.W	RMAP_OFF,D6
+		MOVE.W	#RDMASK,D7
+		ADD.W	D6,D5
+		AND.W	D7,D5
+		MOVE.W	D5,RMAP_OFF
+		NEG.W	D0
+		MOVEM.W	D0/D2/D6,-(SP)
+
+		MOVE.W	RUPD_COUNT,D1
+		SUB.W	D0,RUPD_COUNT
+		AND.W	#$1F,RUPD_COUNT
+		SUBQ.W	#1,D1
+		AND.W	#$1F,D1
+		SUB.W	D0,D1
+		BCC.S	.done
+		ADD.W	D0,D1
+		ADD.W	#33,D1
+		MULU	#RDSTEP,D1
+		SUB.W	D1,D6
+		AND.W	D7,D6
+
+		MOVE.L	RUPD_FADDR,A1
+		BSR	RUPD_BWDDAT
+		MOVE.L	A1,RUPD_FADDR
+		MOVE.L	RUPD_BADDR,A1
+		BSR	RUPD_BWDDAT
+		MOVE.L	A1,RUPD_BADDR
+		BSR	RUPD_SETDAT
+		BRA.S	.done
+
+.done_lp	MOVEM.W	D0/D2/D6,-(SP)
+		ADD.W	#$80*(RUPD_FALLOC_PNO+1),D2
+		ADD.W	#RDSTEP*(RUPD_FALLOC_PNO+1),D6
+		BSR	DEALL_SIGN
+		ADD.W	#$80*(RUPD_BALLOC_PNO-RUPD_FALLOC_PNO),D2
+		ADD.W	#RDSTEP*(RUPD_BALLOC_PNO-RUPD_FALLOC_PNO),D6
+		BSR	ALLOC_SIGN
+.done		MOVEM.W	(SP)+,D0/D2/D6
+		SUB.W	#$80,D2
+		SUB.W	#RDSTEP,D6
+		DBRA	D0,.done_lp
+		RTS
+
+RUPD_FWDDAT	MOVE.L	(A1),D0		;Data or command
+		BMI.S	.command
+		RTS
+.goto		LEA	-4(A1,D1.W),A1
+		BRA.S	RUPD_FWDDAT
+.flag		MOVE.W	D1,ECL_FLAGWAIT	
+		BRA.S	RUPD_FWDDAT
+.command	ADDQ.L	#4,A1
+		MOVE.W	D0,D1		;[data part A]
+		SWAP	D0
+		MOVE.W	D0,D2
+		AND.W	#$FFF,D2	;[data part B]
+		BEQ.S	.cont
+		CMP.W	D5,D2
+		BNE.S	RUPD_FWDDAT
+		MOVE.W	D2,RUPD_STAGE
+.cont		ROL.W	#5,D0
+		AND.W	#$E,D0
+		JMP	.btab(PC,D0.W)
+.btab		BRA.S	RUPD_FWDDAT
+		BRA.S	RUPD_FWDDAT
+		BRA.S	.goto
+		BRA.S	RUPD_FWDDAT
+		BRA.S	.flag
+
+RUPD_BWDDAT	MOVE.L	-(A1),D0	;Data or command
+		BMI.S	.command
+		LEA	-8(A1),A1
+		RTS
+.goto		LEA	(A1,D1.W),A1
+		BRA.S	RUPD_BWDDAT
+.command	MOVE.W	D0,D1		;[data part A]
+		SWAP	D0
+		MOVE.W	D0,D2
+		AND.W	#$FFF,D2	;[data part B]
+		ROL.W	#5,D0
+		AND.W	#$E,D0
+		JMP	.btab(PC,D0.W)
+.btab		BRA.S	RUPD_BWDDAT
+		BRA.S	RUPD_BWDDAT
+		BRA.S	RUPD_BWDDAT
+		BRA.S	.goto
+		BRA.S	RUPD_BWDDAT
+		BRA.S	RUPD_BWDDAT
+
+RUPD_SETDAT	MOVE.W	(A1)+,D0
+		LEA	-2(A1,D0.W),A2	;Setup 32 road patches
+		BSR	RUPD_TURN
+		MOVE.W	(A1)+,D0
+		LEA	-4(A1,D0.W),A2
+		BSR	RUPD_HILL
+		MOVE.W	(A1)+,D0
+		LEA	-6(A1,D0.W),A2
+		LEA	RUPD_PATCH(PC),A3
+		BSR	RUPD_DO32
+		MOVE.W	(A1)+,D0
+		LEA	-8(A1,D0.W),A2
+		LEA	RUPD_LEFT(PC),A3
+		BSR	RUPD_DO32
+		MOVE.W	(A1)+,D0
+		LEA	-10(A1,D0.W),A2
+		LEA	RUPD_RIGHT(PC),A3
+		BSR	RUPD_DO32
+		MOVE.W	(A1)+,D0
+		LEA	-12(A1,D0.W),A2
+		LEA	RUPD_CONTROL(PC),A3
+		BRA	RUPD_DO32
+
+ALLOC_SIGN	AND.W	D7,D6
+		MOVEM.L	A0/D6/D7,-(SP)
+		MOVE.L	RDCALLOC(A0,D6.W),D0
+		BEQ.S	.patch
+		MOVE.L	D0,A1
+		JSR	(A1)
+		MOVEM.L	(SP),A0/D6/D7
+.patch		MOVE.L	RDPATCH(A0,D6.W),A1
+		MOVE.L	PGR(A1),A1
+		BSR	ALLOCATE
+		MOVEM.L	(SP)+,A0/D6/D7
+		MOVE.L	RDLEFT(A0,D6.W),D0
+		BSR.S	.start
+		MOVE.L	RDRIGHT(A0,D6.W),D0
+.start		BEQ.S	.end
+		MOVEM.L	A0/D6/D7,-(SP)
+		MOVE.L	D0,A0
+		MOVE.W	SGR_DETECT_AMT(A0),D0
+		ASL.W	#3,D0
+		MOVE.W	D0,D7
+		ADD.W	D0,D0
+		ADD.W	D7,D0
+		LEA	SGR_DETECT_AMT+2(A0,D0.W),A0
+		MOVE.W	(A0)+,D7
+		BRA.S	.first
+.loop		MOVE.L	(A0)+,A1
+		MOVE.W	D7,-(SP)
+		BSR	ALLOCATE
+		MOVE.W	(SP)+,D7
+.first		DBRA	D7,.loop
+		MOVEM.L	(SP)+,A0/D6/D7
+.end		RTS
+
+DEALL_SIGN	AND.W	D7,D6
+		MOVEM.L	A0/D6/D7,-(SP)
+		MOVE.L	RDCDEALL(A0,D6.W),D0
+		BEQ.S	.patch
+		MOVE.L	D0,A1
+		JSR	(A1)
+		MOVEM.L	(SP),A0/D6/D7
+.patch		MOVE.L	RDPATCH(A0,D6.W),A1
+		MOVE.L	PGR(A1),A1
+		BSR	DEALLOCATE
+		MOVEM.L	(SP)+,A0/D6/D7
+		MOVE.L	RDLEFT(A0,D6.W),D0
+		BSR.S	.start
+		MOVE.L	RDRIGHT(A0,D6.W),D0
+.start		BEQ.S	.end
+		MOVEM.L	A0/D6/D7,-(SP)
+		MOVE.L	D0,A0
+		MOVE.W	SGR_DETECT_AMT(A0),D0
+		ASL.W	#3,D0
+		MOVE.W	D0,D7
+		ADD.W	D0,D0
+		ADD.W	D7,D0
+		LEA	SGR_DETECT_AMT+2(A0,D0.W),A0
+		MOVE.W	(A0)+,D7
+		BRA.S	.first
+.loop		MOVE.L	(A0)+,A1
+		BSR	DEALLOCATE
+.first		DBRA	D7,.loop
+		MOVEM.L	(SP)+,A0/D6/D7
+.end		RTS
+
+RUPD_TURN	MOVEQ	#RUPD_NEWAMT-1,D5
+.next		MOVEQ	#0,D0
+		MOVE.B	(A2)+,D0
+		MOVE.B	(A2)+,D1
+		EXT.W	D1
+		MULS	#TURN_INTENSITY,D1
+		SWAP	D1
+		BPL.S	.loop
+		ADDQ.W	#1,D1
+.loop		MOVE.W	D1,RDTURN(A0,D6.W)
+		ADD.W	#RDSTEP,D6
+		AND.W	D7,D6
+		SUBQ.W	#1,D5
+		DBRA	D0,.loop
+		BPL.S	.next
+		SUB.W	#RDSTEP*RUPD_NEWAMT,D6
+		AND.W	D7,D6
+		RTS
+
+RUPD_HILL	MOVEQ	#RUPD_NEWAMT-1,D5
+.next		LEA	SIN_LOOKUP,A4
+		MOVEQ	#0,D0
+		MOVEQ	#0,D2
+		MOVE.B	(A2)+,D0
+		MOVE.B	(A2)+,D1
+		MOVE.B	(A2)+,D2
+		LSL.W	#2,D2
+		LEA	(A4,D2.W),A4
+		MOVEQ	#0,D2
+		MOVE.B	(A2)+,D2
+		LSL.W	#2,D2
+		EXT.W	D1
+		MULS	#HILL_INTENSITY,D1
+		ASL.L	#3,D1
+		SWAP	D1
+.loop		MOVE.W	(A4),D3
+		MULS	D1,D3
+		ADD.W	D3,D3
+		SWAP	D3
+		BPL.S	.skp
+		ADDQ.W	#1,D3
+.skp		MOVE.W	D3,RDHILL(A0,D6.W)
+		LEA	(A4,D2.W),A4
+		ADD.W	#RDSTEP,D6
+		AND.W	D7,D6
+		SUBQ.W	#1,D5
+		DBRA	D0,.loop
+		BPL.S	.next
+		SUB.W	#RDSTEP*RUPD_NEWAMT,D6
+		AND.W	D7,D6
+		RTS
+
+RUPD_PATCH	MOVE.W	D0,D2
+		LSL.W	#2,D2
+		MOVE.L	RUPD_PGRDATA,A4
+		LEA	(A4,D2.W),A5
+		ADD.W	(A5),A5
+		MOVE.L	A5,RDPATCH(A0,D6.W)
+		ADD.W	#RDSTEP,D6
+		AND.W	D7,D6
+		LEA	2(A4,D2.W),A5
+		ADD.W	(A5),A5
+		MOVE.L	A5,RDPATCH(A0,D6.W)
+		SUBQ.W	#1,D5
+		BRA	RUPD_NEXT
+
+RUPD_LEFT	ADD.W	D0,D0
+		MOVE.L	RUPD_SGRDATA,A4
+		LEA	(A4,D0.W),A4
+		ADD.W	(A4),A4
+		MOVE.L	A4,RDLEFT(A0,D6.W)
+		MOVEQ	#0,D0
+		BRA	RUPD_NEXT
+
+RUPD_RIGHT	ADD.W	D0,D0
+		MOVE.L	RUPD_SGRDATA,A4
+		LEA	(A4,D0.W),A4
+		ADD.W	(A4),A4
+		MOVE.L	A4,RDRIGHT(A0,D6.W)
+		MOVEQ	#0,D0
+		BRA	RUPD_NEXT
+
+RUPD_CONTROL	TST.B	D0
+		BNE.S	.set
+		CLR.L	RDCALLOC(A0,D6.W)
+		CLR.L	RDCDEALL(A0,D6.W)
+		BRA	RUPD_NEXT
+		
+.set		LEA	RDCALLOC(A0,D6.W),A4
+		MOVEQ	#0,D2
+		MOVE.B	(A2)+,D2
+		LSL.W	#8,D2
+		MOVE.B	(A2)+,D2
+		LSL.L	#8,D2
+		MOVE.B	(A2)+,D2
+		MOVE.L	D2,(A4)+
+		MOVEQ	#0,D2
+		MOVE.B	(A2)+,D2
+		LSL.W	#8,D2
+		MOVE.B	(A2)+,D2
+		LSL.L	#8,D2
+		MOVE.B	(A2)+,D2
+		MOVE.L	D2,(A4)+
+
+		SUBQ.W	#2,D0
+		MOVE.W	#4,D2
+		SUB.W	D0,D2
+		BRA.S	.dstart
+.dset		MOVE.B	(A2)+,(A4)+
+		MOVE.B	(A2)+,(A4)+
+.dstart		DBRA	D0,.dset
+		BRA.S	.cstart
+.cset		CLR.W	(A4)+
+.cstart		DBRA	D2,.cset
+		MOVEQ	#0,D0
+		BRA	RUPD_NEXT
+
+RUPD_DO32	MOVE.L	SP,A6
+		MOVEQ	#0,D0
+		MOVEQ	#32-1,D5
+RUPD_COMMAND	MOVEQ	#-1,D1
+RUPD_CREAD	TST.W	D1
+		DBMI	D1,.do
+.repeat		MOVE.B	(A2)+,D0
+		BMI.S	.command
+.do		JMP	(A3)
+.command	MOVE.W	D0,D1		
+		AND.B	#$1F,D1
+		EOR.B	D1,D0
+		LSL.B	#2,D0
+		BCS.S	.loop_cmd
+		BEQ.S	.do
+		BRA.S	.repeat
+.loop_cmd	BEQ.S	.next
+.for		MOVE.L	A2,-(SP)
+		MOVE.W	D1,-(SP)
+		BRA.S	RUPD_COMMAND
+.next		SUBQ.W	#1,(SP)
+		BMI.S	.nover
+		MOVE.L	2(SP),A2
+		BRA.S	RUPD_CREAD
+.nover		ADDQ.L	#6,SP
+		BRA.S	RUPD_CREAD
+RUPD_NEXT	ADD.W	#RDSTEP,D6
+		AND.W	D7,D6
+		DBRA	D5,RUPD_CREAD
+		SUB.W	#RDSTEP*32,D6
+		AND.W	D7,D6
+		MOVE.L	A6,SP
+		RTS
+
+; --------------------------------------------------------------------------
+
+CALC_MOVEAMTS	LEA	ROAD_DATA,A0	;Hill and turn movement amounts.
+		MOVE.W	RMAP_OFF,D6
+		MOVE.W	#RDMASK,D7
+		ADD.W	#RDSTEP*(RUPD_PRINT_PNO+1),D6
+	
+		MOVEQ	#0,D3
+		MOVEQ	#0,D4
+		MOVE.W	#$80,D1
+		SUB.W	ZVIEW,D1
+		MOVE.W	ZMOVE,D0
+		BPL.S	.floop
+
+		SUB.W	#$80,D1
+		BNE.S	.bloop
+		SUB.W	#RDSTEP,D6
+.bloop		SUB.W	D1,D0
+		BLE.S	.bcalc
+		ADD.W	D0,D1
+		BPL.S	.fdone
+.bcalc		MOVE.W	D1,D2
+		AND.W	D7,D6
+		MULS.W	RDHILL(A0,D6.W),D1
+		MULS.W	RDTURN(A0,D6.W),D2
+		ADD.L	D1,D3
+		ADD.L	D2,D4
+		SUB.W	#RDSTEP,D6
+		MOVE.W	#$FF80,D1
+		BRA.S	.bloop
+
+.floop		SUB.W	D1,D0
+		BPL.S	.fcalc
+		ADD.W	D0,D1
+		BGT.S	.fcalc
+.fdone		MOVE.L	D3,CHILL
+		MOVE.L	D4,CTURN
+		RTS
+.fcalc		MOVE.W	D1,D2
+		AND.W	D7,D6
+		MULS.W	RDHILL(A0,D6.W),D1
+		MULS.W	RDTURN(A0,D6.W),D2
+		ADD.L	D1,D3
+		ADD.L	D2,D4
+		ADD.W	#RDSTEP,D6
+		MOVE.W	#$80,D1
+		BRA.S	.floop
+
+; --------------------------------------------------------------------------
+
+PRINTS		CLR.W	BG_TYPE
+
+		MOVE.L	RSC_BUFFER_NEXT,RSC_BUFFER_AT
+		MOVE.L	RSC_BUFFER_NEXT,RSC_MAKE_AT
+		CLR.W	RSC_COUNT
+		MOVE.W	#ZSTEP,.pp_mod+2
+		
+		LEA	ROAD_DATA,A0
+ 		LEA	ROAD_CORD_DATA,A1
+		MOVEQ	#0,D0
+		MOVE.W	IMG_BADDR_NEXT,D0
+		LSL.L	#2,D0
+		ADD.L	#$802FC,D0
+		MOVE.L	D0,A2
+		MOVE.L	RSC_BUFFER_NEXT,A4
+	 
+		MOVE.W	#192,D2		;D2=Ypos+1
+
+		MOVE.L	XVIEW,A5	;A5=Xworld
+		MOVE.L	YVIEW,D5	;D5=Yworld
+		ADD.L	YWATER,D5
+	
+		MOVE.W	RMAP_OFF,D6	;D6=Map index
+		ADD.W	#RDSTEP*RUPD_PRINT_PNO,D6
+		AND.W	#RDMASK,D6
+		
+		MOVE.W	RDHILL(A0,D6.W),D0	;Ydiff for patch_0
+		MOVE.W	RDTURN(A0,D6.W),D1	;Xdiff for patch_0
+ 		MOVE.L	RDPATCH(A0,D6.W),A3	;Patch for patch_0
+		ADD.W	#RDSTEP,D6
+		AND.W	#RDMASK,D6
+
+		MOVE.W	RDHILL(A0,D6.W),D3
+		MULS	ZVIEW,D3		;D3=Ydiff
+		SUB.L	D3,D5			;D5=Yworld for patch_1
+		MOVE.W	#$80,D4
+		SUB.W	ZVIEW,D4
+		MULS.W	RDTURN(A0,D6.W),D4	;D4=Xdiff
+	
+		EXT.L	D0
+	 	ASL.L	#7,D0
+		EXT.L	D1
+	 	ASL.L	#7,D1
+		SUB.L	D4,D1
+
+	 	MOVE.L	A5,(A1)		;Patch_0 cord data.
+		SUB.L	D1,(A1)+
+		MOVE.L	D5,(A1)
+		SUB.L	D0,(A1)+
+		ASR.L	#7,D0
+		ASR.L	#7,D1
+    		MOVE.W	D1,(A1)+		;Set Xdiff.
+     		MOVE.W	D0,(A1)+		;Set Ydiff.
+      		MOVE.W	D2,(A1)+		;Set Ymax.
+		CLR.W	(A1)+			;Set Ymin.
+      		MOVE.W	#256,(A1)+		;Set Xmax.
+		CLR.W	(A1)+			;Set Xmin.
+		MOVE.L	PBGSIZE(A3),(A1)+	;Set Roof.
+
+		MOVE.W	#VIEW_PATCHES-2,D7	;D7=Patch count
+		MOVE.L	#$100,D0
+		SUB.W	ZVIEW,D0	
+		MOVE.L	D0,RDCALC_Z
+
+		MOVE.L	A5,(A1)+	;Set Wxpos.
+ 		MOVE.L	D5,(A1)+	;Set Wypos.
+		BRA.S	.start
+
+.next_patch	ADD.L	D4,A5
+		MOVE.L	A5,(A1)+	;Set Wxpos.
+ 		MOVE.L	D5,(A1)+	;Set Wypos.
+		MOVE.W	RDTURN(A0,D6.W),D0
+		ASL.W	#7,D0
+		EXT.L	D0
+		ADD.L	D0,D4
+.start		MOVE.L	D5,D0
+		MOVE.W	RDHILL(A0,D6.W),D3
+		MOVE.W	D3,D1
+		ASL.W	#7,D1
+		EXT.L	D1
+		ADD.L	D1,D5
+		MOVEM.L	D4-D7,-(SP)	;Xdiff/Ypos/Index/Counter
+		ASR.L	#7,D4
+		BSR.S	.print_patch
+		MOVEM.L	(SP)+,D4-D7
+		ADD.W	#ZSTEP,RDCALC_Z+2
+		ADD.W	#RDSTEP,D6
+		AND.W	#RDMASK,D6	;Data index.
+		DBRA	D7,.next_patch
+
+		MOVE.W	ZVIEW,D1	;Partial patch 
+		MOVE.W	D1,.pp_mod+2
+		ADD.L	D4,A5
+		ASR.L	#7,D4
+		ADD.W	RDTURN(A0,D6.W),D4
+		MOVE.W	RDHILL(A0,D6.W),D3
+		MOVE.L	A5,(A1)+	;Set Wxpos.
+ 		MOVE.L	D5,(A1)+	;Set Wypos.
+		MOVE.L	D5,D0
+		BSR.S	.print_patch
+
+		MOVE.L	RCXMAX-RCSTEP(A1),RCXMAX(A1)
+		MOVE.W	RCYMIN-RCSTEP(A1),RCYMIN(A1)
+		MOVE.W	D2,RCYMAX(A1)	;Set Ymax.
+		LEA	4(A2),A4
+		BRA	PRINT_BACKGND
+
+
+
+.print_patch	MOVE.W	D4,(A1)+	;Set Xdiff.
+   		MOVE.W	D3,(A1)+	;Set Ydiff.
+		MOVE.W	D2,(A1)+	;Set Ymax.
+
+		MOVE.W	RDCALC_Z+2,D1
+
+ 		MOVE.L	RDPATCH(A0,D6.W),A3
+		MOVE.L	PGR(A3),A6	;Set graphic allocation data
+
+		MOVE.L	PBGSIZE(A3),D5
+		BEQ.S	.pp_prev
+		IF	LEVEL<4
+		ADD.L	D0,D5
+		ELSE
+		ADD.L	YVIEW,D5
+		ENDIF
+		DIVS	D1,D5
+		ADD.W	#1+((RSHEIGHT+RSHEIGHT-RTILT*2)/2),D5
+		CMP.W	-RCSTEP(A1),D5
+	 	BPL.S	.pp_size_set
+.pp_prev   	MOVE.W	-RCSTEP(A1),D5
+.pp_size_set	MOVE.W	D5,(A1)+	;Set Ymin.
+
+		MOVE.B	BG_TYPE+1,D7
+		CMP.B	PBGTYPE(A3),D7
+		BCC.S	.pp_ready
+		MOVE.B	PBGTYPE(A3),BG_TYPE+1	;Set background print control
+		MOVE.W	D5,BG_SIZE
+
+.pp_ready	MOVE.L	-RCSTEP(A1),D7		;Calc wall clips
+		TST.B	PBGSIDES(A3)
+ 		BEQ.S	.pp_xmmset	
+.pp_xmin	MOVE.L	A5,D5
+   		DIVS	D1,D5
+		ADD.W	#256/2,D5
+     		CMP.W	D7,D5
+      	 	BMI.S	.pp_xmax
+		MOVE.W	D5,D7
+.pp_xmax	SWAP	D7
+		MOVE.L	A5,D5
+  		ADD.L	#RSWIDTH*$100,D5
+		DIVS	D1,D5
+		ADD.W	#256/2,D5
+		CMP.W	D7,D5
+	 	BPL.S	.pp_skp
+		MOVE.W	D5,D7
+.pp_skp		SWAP	D7
+.pp_xmmset	MOVE.L	D7,(A1)+		;Set Xmax/Xmin
+		MOVE.L	PBGSIZE(A3),(A1)+	;Set Roof.
+
+		MOVE.W	D2,D5
+		SUB.W	#((RSHEIGHT+RSHEIGHT-RTILT*2)/2)+1,D5
+		MULS	D5,D1		;Ypos(256-Zview+Zpatch)
+		SUB.L	D1,D0		;D0=256(Yworld)-Ypos(256-Zview+Zpatch)
+
+.pp_loop	CMP.W	RCYMIN-RCSTEP(A1),D2
+		BLE	.pp_done
+		MOVE.W	D2,D5
+		SUB.W	#((RSHEIGHT+RSHEIGHT-RTILT*2)/2)+1,D5
+		SUB.W	D3,D5		;D5=Ypos-(256(Yworld1-Yworld))/128
+		BEQ.S	.pp_done
+		MOVE.L	D0,D1
+		DIVS	D5,D1		;D1=Zfactor
+.pp_mod		CMP.W	#ZSTEP,D1
+		BCC.S	.pp_done
+
+.calc_line	
+;		TST.W	GR_ACTIVE(A6)
+;		BLE.S	.clr_line
+;		BRA.S	.pp_done
+
+		MOVE.W	D4,D5
+		MULS	D1,D5		;D5=Z(YDiff)
+		ADD.L	A5,D5		;+Xworld 
+		MOVE.L	D5,D6
+		ADD.L	#RSWIDTH*$100,D6
+		MOVE.W	D1,D7
+		ADD.W	RDCALC_Z+2,D7
+
+		DIVS	D7,D5		;D5=LXpos
+	 	DIVS	D7,D6		;D6=RXpos
+	 	SUB.W	D5,D6		;D6=Line width.
+		
+		MULU	PHEIGHT(A3),D1	
+		LSR.W	#4,D1
+		ADD.W	PMAPY(A3),D1	;D1=Mypos.
+		ADD.W	GR_MAP_YOFF(A6),D1
+
+		;MULS	#655,D7
+		;ASR.L	#8,D7
+
+;D1=Mypos D5=Sxpos D6=Swidth 
+
+.do_x		MOVE.L	PWIDTH(A3),D7	;D7=Graphic real width(*$800).	
+	   	DIVU	D6,D7		;D6=X step size.
+		SWAP	D1
+		MOVE.W	D7,D1			;D1=Mypos/Xstep
+		MOVE.W	PMAPX(A3),D7
+		ADD.W	GR_MAP_XOFF(A6),D7
+
+		ADD.W	#256/2,D5	;D5=Real Ixpos	
+	 	CMP.W	RCXMIN-RCSTEP(A1),D5
+		BPL.S	.x_pos
+.x_neg		SUB.W	RCXMIN-RCSTEP(A1),D5
+		ADD.W	D5,D6
+		BLE.S	.clr_line	;Not on-screen.
+		NEG.W	D5
+		MULU	D1,D5
+	 	LSR.L	#8,D5
+		ADD.W	D5,D7
+ 		MOVE.W	RCXMIN-RCSTEP(A1),D5	;D5=Ixpos.
+.x_pos		MOVE.W	D7,(A4)+		;Set map xpos.
+		MOVE.W	RCXMAX-RCSTEP(A1),D7	;D7=MaxIwidth
+		SUB.W	D5,D7		;D7=Maximum print width.
+		BLE.S	.cline		;Not on-screen.
+		CMP.W	D7,D6
+		BCS.S	.do_setup
+		MOVE.W	D7,D6		;D6=Print width.
+		BRA.S	.do_setup
+
+.pp_done
+		IF	LEVEL<4		;Land or water.
+		CMP.W	RCYMAX-RCSTEP(A1),D2	;Visibility check.
+		BEQ.S	.pp_ret
+		MOVE.W	RCYMAX-RCSTEP*2(A1),RCYMAX-RCSTEP(A1)
+		ENDIF
+		
+.pp_ret		RTS
+
+.cline		SUBQ.L	#2,A4
+.clr_line	SUBQ.W	#1,D2		;D2=Ypos-1
+		MOVE.L	PCOLOUR(A3),D7	;D7=Fill colour.		
+		JSR	ACCESS_REQ
+		BRA	.rsc_clrln
+
+;D1=Mypos/Xstep D5=Ixpos D6=Iwidth
+
+.do_setup	MOVE.L	D1,(A4)+	;Set map ypos/xstep.
+	
+		SUBQ.W	#1,D2		;D2=Ypos-1
+		MOVE.W	D2,D1
+	  	MOVE.W	D5,D7
+		AND.W	#7,D7
+		EOR.W	D7,D5
+		SWAP	D7
+		MOVE.W	D1,D7
+		SWAP	D1
+		MOVE.W	D5,D1
+		LSL.L	#3,D1		;Ixpos*MaxYchars(fixed to 24)
+		ADD.W	D1,D7
+		ADD.W	D1,D1
+		ADD.W	IMG_BADDR_NEXT,D1
+		ADD.L	D7,D1
+		AND.W	#$FFF8,D1
+		SWAP	D1
+     		MOVE.L	D1,(A4)+	;Set buff/boff
+		MOVE.W	D6,(A4)+	;Set h-dot.
+		ADDQ.W	#1,RSC_COUNT	;Lines to print.
+		
+		MOVE.L	PCOLOUR(A3),D7	;D7=Fill colour.		
+		ADD.W	D5,D6
+ 		LSR.W	#1,D6
+  		AND.W	#$FFFC,D6
+		JSR	ACCESS_REQ
+		JMP	.rsc_rjmp(PC,D6.W)
+.rsc_rjmp	NOP
+		NOP
+		MOVE.L	D7,1*$300(A2)
+		MOVE.L	D7,2*$300(A2)
+		MOVE.L	D7,3*$300(A2)
+		MOVE.L	D7,4*$300(A2)
+		MOVE.L	D7,5*$300(A2)
+		MOVE.L	D7,6*$300(A2)
+		MOVE.L	D7,7*$300(A2)
+		MOVE.L	D7,8*$300(A2)
+		MOVE.L	D7,9*$300(A2)
+		MOVE.L	D7,10*$300(A2)
+		MOVE.L	D7,11*$300(A2)
+		MOVE.L	D7,12*$300(A2)
+		MOVE.L	D7,13*$300(A2)
+		MOVE.L	D7,14*$300(A2)
+		MOVE.L	D7,15*$300(A2)
+		MOVE.L	D7,16*$300(A2)
+		MOVE.L	D7,17*$300(A2)
+		MOVE.L	D7,18*$300(A2)
+		MOVE.L	D7,19*$300(A2)
+		MOVE.L	D7,20*$300(A2)
+		MOVE.L	D7,21*$300(A2)
+		MOVE.L	D7,22*$300(A2)
+		MOVE.L	D7,23*$300(A2)
+		MOVE.L	D7,24*$300(A2)
+		MOVE.L	D7,25*$300(A2)
+		MOVE.L	D7,26*$300(A2)
+		MOVE.L	D7,27*$300(A2)
+		MOVE.L	D7,28*$300(A2)
+		MOVE.L	D7,29*$300(A2)
+		MOVE.L	D7,30*$300(A2)
+		MOVE.L	D7,31*$300(A2)
+
+		LSR.W	#1,D5
+   		NEG.W	D5
+		JMP	.rsc_ljmp(PC,D5.W)
+		
+.rsc_clrln	MOVE.L	D7,31*$300(A2)
+		MOVE.L	D7,30*$300(A2)
+		MOVE.L	D7,29*$300(A2)
+		MOVE.L	D7,28*$300(A2)
+		MOVE.L	D7,27*$300(A2)
+		MOVE.L	D7,26*$300(A2)
+		MOVE.L	D7,25*$300(A2)
+		MOVE.L	D7,24*$300(A2)
+		MOVE.L	D7,23*$300(A2)
+		MOVE.L	D7,22*$300(A2)
+		MOVE.L	D7,21*$300(A2)
+		MOVE.L	D7,20*$300(A2)
+		MOVE.L	D7,19*$300(A2)
+		MOVE.L	D7,18*$300(A2)
+		MOVE.L	D7,17*$300(A2)
+		MOVE.L	D7,16*$300(A2)
+		MOVE.L	D7,15*$300(A2)
+		MOVE.L	D7,14*$300(A2)
+		MOVE.L	D7,13*$300(A2)
+		MOVE.L	D7,12*$300(A2)
+		MOVE.L	D7,11*$300(A2)
+		MOVE.L	D7,10*$300(A2)
+		MOVE.L	D7,9*$300(A2)
+		MOVE.L	D7,8*$300(A2)
+		MOVE.L	D7,7*$300(A2)
+		MOVE.L	D7,6*$300(A2)
+		MOVE.L	D7,5*$300(A2)
+		MOVE.L	D7,4*$300(A2)
+		MOVE.L	D7,3*$300(A2)
+		MOVE.L	D7,2*$300(A2)
+		MOVE.L	D7,1*$300(A2)
+.rsc_ljmp	MOVE.L	D7,(A2)
+
+		SUBQ.W	#1,ACC_COUNT	;Access off.
+		
+		SUBQ.L	#4,A2		;A2=Image buffer line up.		
+		ADD.L	RDCALC_Z,D0  
+		BRA	.pp_loop
+ 		
+; --------------------------------------------------------------------------
+
+RSC_EXCEPTION	SUBQ.W	#1,RSC_BUSY
+		BEQ.S	RSC_DLD_OVER
+		
+RSC_LNSET	MOVE.L	A0,-(SP)
+		MOVE.L	RSC_PRINT_AT,A0
+RSC_LNSKP	ADDQ.W	#1,ACC_COUNT
+.access_wait	BTST	#0,SMEM_MODE
+		BNE.S	.access_wait
+		
+		MOVE.L	(A0)+,SWORD_RAM+RSC_TRACE_ADDR*4
+		MOVE.W	(A0)+,4+SWORD_RAM+RSC_TRACE_ADDR*4
+
+		MOVE.L	(A0)+,(SROT_BUFF).W
+		MOVE.W	(A0)+,(SROT_HDOT).W
+   		MOVE.L	#$10000+RSC_TRACE_ADDR,(SROT_VDOT).W ;Start trace.
+
+		SUBQ.W	#1,ACC_COUNT	;Access off.
+		MOVE.L	A0,RSC_PRINT_AT
+		MOVE.L	(SP)+,A0
+		RTE
+
+RSC_DLD_OVER	MOVE.L	#SCL_EXCEPTION,_LEVEL1+2	;Scale startup.
+		TST.W	SCL_BUSY
+		BNE	SCL_EXSTART
+		RTE
+
+; --------------------------------------------------------------------------
+
+RSC_PRINT_INIT	MOVE.W	RSC_COUNT,RSC_BUSY
+		BEQ.S	.end	
+		MOVE.W	SR,-(SP)
+		MOVE.L	A0,-(SP)
+		MOVE.W	#$2100,SR
+		MOVE.L	#RSC_EXCEPTION,_LEVEL1+2
+		MOVE.L	RSC_BUFFER_AT,A0
+		BRA.S	RSC_LNSKP	
+.end		RTS
+
+; --------------------------------------------------------------------------
+
+;A4=Iaddr+4 D2=lines
+
+PRINT_BACKGND	MOVE.W	D2,D3		;D2=lines to road/D3=lines to top
+		MOVE.L	A4,A5
+		
+		MOVE.L	XVIEW,D0
+	 	NEG.L	D0
+		ASR.L	#4,D0
+		ADD.L	BG_XPOS,D0
+		MOVE.L	D0,PX_XPOS
+
+		MOVE.L	BG_YPOS,D0
+		ADD.L	YVIEW,D0
+		DIVS	#$100+$80*30,D0
+		ADD.W	#96,D0		;Backgnd ypos 
+		CMP.W	D2,D0
+		BPL.S	.parlx_set
+		MOVE.W	D2,D0
+.parlx_set	MOVE.W	D0,PX_YPOS
+
+		MOVE.W	BG_TYPE,D0
+		BEQ.S	.type_0
+		SUBQ.W	#1,D0
+		BEQ.S	.type_1
+		MOVE.W	BG_SIZE,D1
+		BPL.S	.chk_bot
+		MOVEQ	#0,D1
+		BRA.S	.safe
+.chk_bot	SUB.W	D1,D3		;Clip to road.
+		BPL.S	.safe
+		ADD.W	D3,D1
+		MOVEQ	#0,D3
+.safe		MOVE.W	D3,D4
+		LSL.W	#2,D4	
+		NEG.W	D4
+		LEA	(A4,D4.W),A0
+		MOVEM.L	A0/D1,-(SP)
+		SUBQ.W	#1,D0
+		BEQ.S	.type_2
+
+.type_3		BSR	CLR_BY_LINE
+		MOVEM.L	(SP)+,A5/D3
+.type_1		MOVE.L	#BLACK,D0
+		BRA	FILL_BY_LINE
+.type_2		MOVE.L	#BLACK,D0
+		BSR	FILL_BY_LINE
+		MOVEM.L	(SP)+,A5/D3
+		MOVE.L	A5,A4
+		MOVE.W	D3,D2
+.type_0		BRA	CLR_BY_LINE
+
+; --------------------------------------------------------------------------
+
+;A5=Iaddr+4 D3=lines D0=fill value
+
+CLR_BY_LINE	MOVEQ	#0,D0
+FILL_BY_LINE	SUBQ.W	#1,D3
+		BPL.S	.cls
+		RTS
+
+.cls		MOVE.W	D3,D2
+		LSL.W	#2,D3
+		ADD.W	#$304,D3
+		MOVE.W	D3,.offset_mod+2
+		EXT.L	D2
+		DIVU	#12,D2
+		ADD.L	D2,D2
+ 		ADD.W	D2,D2
+		NEG.W	D2
+		ADD.W	#4*15+.loop-(.loop_mod+2),D2
+		MOVE.W	D2,.loop_mod+2
+		SWAP	D2
+ 		MOVE.W	.reg_mask_tab(PC,D2.W),.adjust_mod+2
+
+		MOVE.L	D0,D1
+		MOVE.L	D0,D2
+		MOVE.L	D0,D3
+		MOVE.L	D0,D4
+		MOVE.L	D0,D5
+		MOVE.L	D0,D6
+		MOVE.L	D0,A0
+		MOVE.L	D0,A1
+		MOVE.L	D0,A2
+		MOVE.L	D0,A3
+		MOVE.L	D0,A4
+		MOVEQ	#32,D7
+		JSR	ACCESS_REQ
+		BRA.S	.loop_mod
+
+.loop		MOVEM.L	D0-D6/A0-A4,-(A5)
+		MOVEM.L	D0-D6/A0-A4,-(A5)
+		MOVEM.L	D0-D6/A0-A4,-(A5)
+		MOVEM.L	D0-D6/A0-A4,-(A5)
+		MOVEM.L	D0-D6/A0-A4,-(A5)
+		MOVEM.L	D0-D6/A0-A4,-(A5)
+		MOVEM.L	D0-D6/A0-A4,-(A5)
+		MOVEM.L	D0-D6/A0-A4,-(A5)
+		MOVEM.L	D0-D6/A0-A4,-(A5)
+		MOVEM.L	D0-D6/A0-A4,-(A5)
+		MOVEM.L	D0-D6/A0-A4,-(A5)
+		MOVEM.L	D0-D6/A0-A4,-(A5)
+		MOVEM.L	D0-D6/A0-A4,-(A5)
+		MOVEM.L	D0-D6/A0-A4,-(A5)
+		MOVEM.L	D0-D6/A0-A4,-(A5)
+.adjust_mod	MOVEM.L	D0-D6/A0-A4,-(A5)
+.offset_mod	LEA	$600(A5),A5
+.loop_mod	DBRA	D7,.loop
+		JMP	ACCESS_OFF
+
+.reg_mask_tab	DC.W	%1000000000000000
+		DC.W	%1100000000000000
+		DC.W	%1110000000000000
+		DC.W	%1111000000000000
+		DC.W	%1111100000000000
+		DC.W	%1111110000000000
+		DC.W	%1111111000000000
+		DC.W	%1111111010000000
+		DC.W	%1111111011000000
+		DC.W	%1111111011100000
+		DC.W	%1111111011110000
+		DC.W	%1111111011111000
+
+; --------------------------------------------------------------------------
+	
+

@@ -1,0 +1,124 @@
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ BATMAN RETURNS CD-ROM						   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+BANIM_SET_A	BSR	OBJECT_ALLOC
+		BNE.S	.end
+		MOVE.L	#SIGN_NEXT,OBJ_MOVE_CTRL(A1)
+		MOVE.L	#BANIM_PRINT,OBJ_PRN_CTRL(A1)
+		MOVE.L	#BGR_SIGNAL,OBJ_ADDR0(A1)
+		MOVE.W	#200,OBJ_CNT1(A1)
+.end		RTS
+
+BANIM_PRINT	LEA	OBJ_ADDR0(A1),A4
+		MOVE.W	#8,D1
+		MOVE.W	OBJ_CNT1(A1),D3
+		MOVE.W	OBJ_CNT0(A1),D2
+		BMI.S	.cangle
+		NEG.W	D1
+.cangle		ADD.W	D1,D3
+		ADD.W	D3,D2
+		MOVE.W	D2,OBJ_CNT0(A1)
+		MOVE.W	D3,OBJ_CNT1(A1)
+		LSR.W	#5,D2
+		AND.W	#$3FE,D2
+		BRA	BACKANIM_PRINT
+
+; --------------------------------------------------------------------------
+
+BGR_SIGNAL	XYPOS	100,0
+		SCALER	76,76,35,96,CBACKG
+
+; --------------------------------------------------------------------------
+
+BACKANIM_PRINT	MOVE.L	(A4)+,A0
+		MOVE.L	(A4),A2
+
+		MOVE.W	#$1800,D0
+		MOVE.W	D0,D1
+		BSR	O_PR_ALLOC_ENT
+		BRA.L	.end
+		BRA.L	.end
+		BRA.L	.end
+		PEA	.ret
+		MOVEM.L	A0-A6/D0-D7,-(SP)
+		MOVE.L	8+SCL_GR(A0),D6
+		MOVE.L	8+SCL_GR(A2),D7
+		BRA	O_ALLOC_DEALL
+.ret		MOVE.L	A0,(A4)
+		BNE.S	.cont
+		MOVE.L	#SIGN_NEXT,$20(A6)		
+		RTS
+
+.cont		MOVEM.L	(A0)+,D4/D5
+		SUB.L	PX_XPOS,D4
+		ASR.L	#8,D4
+		AND.W	#$1FF,D4
+		SUB.W	#$80,D4
+		ASR.L	#8,D5
+		ADD.W	PX_YPOS,D5
+
+		MOVE.L	SCL_HEIGHT(A0),D7
+		SWAP	D7
+		ROL.L	#4,D7
+		ROL.L	D7
+		MOVE.L	SCL_WIDTH(A0),D6
+		SWAP	D6
+		ROL.L	#4,D6
+		ROL.L	D6
+		MOVE.W	D7,D3
+		SWAP	D3
+		MOVE.W	D6,D3
+
+		LEA	SIN_LOOKUP,A3
+		LEA	$100(A3),A4
+		
+		NEG.W	D2
+		AND.W	#$3FE,D2
+		MOVE	D7,D0
+		MOVE	D7,D1
+		MULS	(A3,D2.W),D0
+		MULS	(A4,D2.W),D1
+		SWAP	D0
+		SWAP	D1
+		SUB.W	D0,D4
+		SUB.W	D1,D5
+		NEG.W	D2
+		AND.W	#$3FE,D2
+		
+		MOVE.W	(A3,D2.W),D1
+		SWAP	D1
+		MOVE.W	(A4,D2.W),D1
+		MOVE.W	D7,D0
+		AND.W	#$1FE,D2
+		MULS	(A3,D2.W),D6
+		MULS	(A3,D2.W),D7
+		ADD.W	#$100,D2
+		AND.W	#$1FE,D2
+		MOVE.W	(A3,D2.W),D2
+		MULS	D2,D0
+		MULS	D3,D2
+		ADD.L	D0,D6
+		SWAP	D6
+		SUB.W	D6,D5
+		ROL.L	D6
+		SWAP	D6
+		ADD.L	D2,D7
+		SWAP	D7
+		SUB.W	D7,D4
+		ROL.L	D7
+		MOVE.W	D7,D6
+
+		LEA	ROAD_CORD_DATA+(33*RCSTEP),A5
+		MOVE.L	RCYMAX(A5),D7
+		MOVE.L	RCXMAX(A5),D0	;Clip co-ords.
+		LEA	SCALE_ROTATE,A4
+		MOVE.W	D4,(A6)+	
+		MOVE.W	D5,(A6)+
+		MOVEM.L	D0/D1/D2/D3/D6/D7/A0/A4,(A6)
+.end		RTS
+
+; --------------------------------------------------------------------------
+
+
+

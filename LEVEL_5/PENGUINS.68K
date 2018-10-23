@@ -1,0 +1,53 @@
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ BATMAN RETURNS CD-ROM						   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+; ROAD OBJECT - LEVEL 5 - "Rocket penguins"
+
+; --------------------------------------------------------------------------
+
+PENG_SETUP	LEA	OBJ_PENG,A6
+		BSR	O_MTR_SETUP
+		BRA	O_MTR_SETFIN
+
+; --------------------------------------------------------------------------
+
+PENG_MOVE	
+
+.end		RTS
+
+; --------------------------------------------------------------------------
+
+PENG_PRINT	BSR	O_PR_ALLOCX_XIT
+		BSR	O_CALC_PATCHZ
+		MOVE.L	OBJ_ADDR0(A1),A2
+		MOVE.L	OBJGR_ANM0(A2),A0
+		MOVE.L	OBJ_ADDR1(A1),A2
+		BSR	O_ALLOC_DEALL_S
+		MOVE.L	A0,OBJ_ADDR1(A1)
+		BRA	O_PR_SET0_W
+
+; --------------------------------------------------------------------------
+
+		XYRATIO	185,350,185,300
+		OBJCNTR	0,0,185,54
+OBJ_PENG
+		DC.L	OBJ_PENG_SET
+		DC.L	OBJ_PENG_ANM0
+
+OBJ_PENG_ANM0	OBJSCL	0,0,0,0,185,54,PENGNS
+
+OBJ_PENG_SET	DC.W	-1		;OBJ_ID
+		DC.L	PENG_MOVE	;OBJ_MOVE_CTRL
+		DC.L	PENG_PRINT	;OBJ_PRN_CTRL
+		DC.W	0		;OBJ_ZSIZE
+		XYSIZE	0,0
+		DC.W	0		;OBJ_MASS
+		DC.L	0		;OBJ_HIT_GOTO
+		DC.W	0		;OBJ_ZPOS
+		DC.L	0		;OBJ_XPOS
+		DC.L	-100*$100		;OBJ_YPOS
+
+; --------------------------------------------------------------------------
+
+

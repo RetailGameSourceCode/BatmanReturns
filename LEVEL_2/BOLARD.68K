@@ -1,0 +1,145 @@
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ BATMAN RETURNS CD-ROM						   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+; ROAD OBJECT - LEVEL 2 - "Bolard"
+
+; --------------------------------------------------------------------------
+
+BOLR_SETUP	LEA	OBJ_BOLR,A6
+		BSR	O_MTR_SETUP
+	    	BRA	O_MTR_SETFIN
+
+; --------------------------------------------------------------------------
+
+BOLR_HIT	CMP.W	#IDRANGE_CAR,OBJ_ID(A1)
+		BPL	OBJ_DET_NEXT
+		MOVEM.L	D0-D7/A0-A6,-(SP)
+		EXG	A2,A1
+		MOVE.W	DET_MOVE_Z,D0
+		BPL.S	.pos
+		MOVE.W	#-$20,D3
+		BRA.S	BOLR_SPIN
+.pos		ADD.W	OBJ_ZSIZE(A2),D0
+		MOVEQ	#0,D3	       
+       
+BOLR_SPIN	MOVE.L	OBJ_ADDR6(A1),A0
+		CLR.W	RDDATA3(A0)
+		BSR	O_CLEAR_S
+		
+		ADD.W	OBJ_ZPOS(A2),D0
+		MOVE.L	OBJ_XPOS(A1),D1
+		MOVE.L	OBJ_YPOS(A1),D2
+		ADD.W	OBJ_SPD(A2),D3
+		ASR.W	D3
+		ADD.W	OBJ_SPD(A2),D3
+		MOVEM.L	D0-D3/A1,-(SP)
+		LEA	VIS_BOLR1,A0
+		JSR	VIS_RTOBJ_SET
+		BNE.S	.skp1
+		MOVE.W	OBJ_XFORCE(A2),D0
+		ADD.W	D0,OBJ_CNT4(A1)
+.skp1		MOVEM.L	(SP),D0-D3/A1
+		LEA	VIS_BOLR2,A0
+		JSR	VIS_RTOBJ_SET
+		BNE.S	.skp2
+		MOVE.W	OBJ_XFORCE(A2),D0
+		ADD.W	D0,OBJ_CNT4(A1)
+.skp2		MOVEM.L	(SP)+,D0-D3/A1
+		LEA	VIS_BOLR3,A0
+		JSR	VIS_RTOBJ_SET
+		MOVE.W	OBJ_XFORCE(A2),D0
+		ADD.W	D0,OBJ_CNT4(A1)
+
+		CMP.W	#ID_MAIN,OBJ_ID(A2)
+		BNE.S	.done
+		JSR	SCADD_ROADOBJ
+
+.done		MOVEM.L	(SP)+,D0-D7/A0-A6
+		JMP	OBJ_DET_NEXT
+
+; --------------------------------------------------------------------------
+
+OBJ_BOLR
+		XYRATIO	100,150,100,180
+		OBJCNTR	0,0,104,32
+
+		DC.L	OBJ_BOLR_SET
+		DC.L	OBJ_BOLR_ANM0
+		DC.L	OBJ_BOLR_ANM0
+		DC.L	0
+
+OBJ_BOLR_ANM0	DC.L	OBJ_BOLR_XVIEW,OBJ_BOLR_YVIEW
+
+		OBJSCL	0,0,0,0,104,32,BOLARD
+		
+OBJ_BOLR_XVIEW	DC.W	0*$20,$20
+		DC.L	-1
+OBJ_BOLR_YVIEW	DC.W	5*$20
+		DC.W	-1
+
+OBJ_BOLR_SET	DC.W	ID_ROADOBJ	;OBJ_ID
+		DC.L	SIGN_NEXT	;OBJ_MOVE_CTRL
+		DC.L	O_CAR_PRINT_S	;OBJ_PRN_CTRL
+		DC.W	$18		;OBJ_ZSIZE
+		XYSIZE	100,32
+		DC.W	0		;OBJ_MASS
+		DC.L	BOLR_HIT	;OBJ_HIT_GOTO
+
+VIS_BOLR1	DC.W	0,0,0
+		DC.W	0,0,0
+		DC.W	$0000,$0000
+		DC.L	VIS_RTOBJ_MOVER
+		DC.L	VIS_PRN_ROTATEX
+		DC.L	VIS_BOLR_GRS1
+		DC.W	0			;SFX
+		DC.W	$000,$000		;Lie angles.
+		DC.W	$000,$000		;Lie range.
+		DC.W	600,15			;Ydecay/Zdecay.
+		DC.W	$8000!-$20,$8000!-$E00	;Spin/Xrand.
+		DC.W	0			;Height range.
+		DC.L	BHITGR_SFX
+	
+VIS_BOLR2	DC.W	0,0,0
+		DC.W	0,0,0
+		DC.W	$0000,$0000
+		DC.L	VIS_RTOBJ_MOVER
+		DC.L	VIS_PRN_ROTATEX
+		DC.L	VIS_BOLR_GRS2
+		DC.W	SFX_BLOCKHIT_A	;SFX
+		DC.W	$000,$200		;Lie angles.
+		DC.W	$100,$300		;Lie range.
+		DC.W	400,6			;Ydecay/Zdecay.
+		DC.W	$20,$0400		;Spin/Xrand.
+		DC.W	0			;Height range.
+		DC.L	BHITGR_SFX
+
+VIS_BOLR3	DC.W	0,0,0
+		DC.W	0,0,0
+		DC.W	$0000,$0000
+		DC.L	VIS_RTOBJ_MOVER
+		DC.L	VIS_PRN_ROTATEX
+		DC.L	VIS_BOLR_GRS3
+		DC.W	0			;SFX
+		DC.W	$000,$000		;Lie angles.
+		DC.W	$000,$000		;Lie range.
+		DC.W	600,15			;Ydecay/Zdecay.
+		DC.W	$8000!$20,$8000!$E00	;Spin/Xrand.
+		DC.W	0			;Height range.
+		DC.L	BHITGR_SFX
+
+BHITGR_SFX	DC.W	1
+		DC.W	SFX_BLOCKGND_A
+
+		OBJCNTR	0,0,40,11
+VIS_BOLR_GRS1	OBJSCLF	-20,0,52,43,40,40,BLSPN1
+
+		OBJCNTR	0,0,69,7
+VIS_BOLR_GRS2	OBJSCL	32,0,67,55,69,69,BLSPN2
+
+		OBJCNTR	0,0,40,11
+VIS_BOLR_GRS3	OBJSCL	50,0,52,43,40,40,BLSPN1
+
+; --------------------------------------------------------------------------
+
+

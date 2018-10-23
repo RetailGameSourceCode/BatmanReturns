@@ -1,0 +1,188 @@
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ BATMAN RETURNS CD-ROM						   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+DATA_AREA	EQU	$78000
+
+		RSRESET	DATA_AREA
+
+; - BAT_SP -----------------------------------------------------------------
+
+FRAME_CNT	RS.L	1
+FRAME_TRANS_NO	RS.W	1
+SRAM_DATA	RS.B	WRAM_DLEN
+
+; - Main -------------------------------------------------------------------
+
+CAMERA_Z	RS.W	1
+CAMERA_X	RS.L	1
+CAMERA_Y	RS.L	1
+CAMERA_VIBE	RS.L	1
+
+PAUSECD_RVAL	RS.W	1
+PAUSECD_FVAL	RS.W	1
+
+PAUSE_FLAG	RS.W	1
+PAUSE_KEY	RS.W	1	
+PAUSE_SHOW_FLAG	RS.W	1	
+PAUSE_SHOW_KEY	RS.W	1	
+PRP_Z_DATA	RS.B	6*6
+MESSAGE_CHEAT	RS.L	1
+
+STAGE_PCTRL	RS.W	1
+STAGE_PAUSE	RS.W	1
+STAGE_BONUS	RS.L	1
+STAGE_HEAL	RS.W	1
+STAGE_AUTO	RS.W	1
+STAGE_TONEXT	RS.W	1
+STAGE_GOTO	RS.W	1
+STAGE_CLIST	RS.L	1
+
+ECL_COUNT	RS.W	1
+ECL_ACTIVE	RS.W	1
+ECL_PAUSE	RS.W	1
+ECL_FLAGWAIT	RS.W	1
+ECL_HOLD	RS.W	1
+ECL_CMD_DATA	RS.L	1
+
+PTIME		RS.W	1
+PTEXT		RS.L	1
+
+SCORE_AMT	RS.L	1
+MISSTOT		RS.W	1
+
+TIMER_BCD	RS.W	1
+TIMER_TICK	RS.W	1
+TIMER_ADD	RS.W	1
+TIMER_HOLD	RS.W	1
+
+PFADER_TO	RS.W	1
+
+; - CAR CONTROL ------------------------------------------------------------
+
+JOY0		RS.W	1
+JOY1 		RS.W	1
+
+CHILL		RS.L	1
+CTURN		RS.L	1
+
+SHOT_PAUSE	RS.W	1
+SHOT_FLAG	RS.W	1
+SHOT_FCOUNT	RS.W	1
+
+MISS_FLAG	RS.W	1
+MISS_PAUSE	RS.W	1
+
+; - GR_READY ---------------------------------------------------------------
+
+GRR_DATA_START	RS.B	0
+CURRENT_AGE	RS.L	1
+STAMPS_FREE	RS.W	1
+MAPS_FREE	RS.W	1
+CDLD_WRITE	RS.W	1
+CDLD_READ	RS.W	1
+CDLD_COUNT	RS.W	1
+MAP_ALLOCATE	RS.L	MAP_MAX
+MAP_ALLOADDR	RS.L	MAP_MAX
+STAMP_LIST	RS.W	16*16
+CDLD_DATA	RS.B	CDLD_STEP*CDLD_MAX
+STAMP_ALLOCATE	RS.B	STAMP_MAX
+GRR_DATA_END	RS.B	0
+
+; - SCALE ------------------------------------------------------------------
+
+IMG_BADDR_PREV	RS.W	1
+IMG_BADDR	RS.W	1
+IMG_BADDR_NEXT	RS.W	1
+	
+SCL_TRC_AT	RS.W	1
+SCL_BUSY	RS.W	1
+SCL_SWAPIT	RS.W	1
+SCL_MAKE_AT	RS.L	1
+SCL_PRINT_AT	RS.L	1
+SCL_BUFFER	RS.B	$1400
+
+; - ROAD -------------------------------------------------------------------
+
+RSC_COUNT	RS.W	1
+RSC_BUSY	RS.W	1
+RSC_PRINT_AT	RS.L	1
+RSC_MAKE_AT 	RS.L	1
+RSC_BUFFER_NEXT	RS.L	1
+RSC_BUFFER_AT	RS.L	1
+RSC_BUFFER_0	RS.B	14*192
+RSC_BUFFER_1	RS.B	14*192
+
+PX_YPOS		RS.W	1
+PX_XPOS		RS.L	1
+BG_YPOS		RS.L	1
+BG_XPOS		RS.L	1
+BG_TYPE		RS.W	1
+BG_SIZE		RS.W	1
+
+YWATER		RS.L	1
+
+XVIEW		RS.L	1
+YVIEW		RS.L	1
+ZVIEW		RS.W	1
+ZMOVE		RS.W	1
+
+RDCALC_Z	RS.L	1
+ROAD_DATA	RS.B	RDSIZE
+ROAD_CORD_DATA	RS.B	RCSIZE
+
+RMAP_OFF	RS.W	1
+RUPD_COUNT	RS.W	1
+RUPD_FADDR	RS.L	1
+RUPD_BADDR	RS.L	1
+RUPD_PGRDATA	RS.L	1
+RUPD_SGRDATA	RS.L	1
+RUPD_STAGE	RS.W	1
+
+; - OBJECT -----------------------------------------------------------------
+
+OBJ_PRDOFF	RS.W	1
+OBJ_PRNEXTADDR	RS.L	1
+OBJ_PRLIST	RS.B	(OBJ_PRMAX+3)*6
+OBJ_PRDATA	RS.B	OBJ_PRMAX*OBJ_PRLEN
+
+OBJECT_DATA	RS.B	OBJECT_MAX*OBJ_DLEN
+OBJECT_DET_LIST	RS.L	OBJECT_MAX
+				  
+DET_HIT_DATA0	RS.L	1
+DET_HIT_DATA1	RS.L	1
+DET_HIT_FLAG	RS.W	1
+DET_MOVE_Z	RS.W	1
+DET_MOVE_X	RS.W	1
+DET_EDGE_L	RS.L	1
+DET_EDGE_R 	RS.L	1
+DET_LIMIT_L	RS.L	1
+DET_LIMIT_R	RS.L	1
+DET_XERROR	RS.L	1
+
+DAMCTRL_FLAG	RS.W	1
+
+FLASH_COPY_DATA	RS.B	FLASH_MAX*FLASH_DLEN
+
+; - VISUALS ----------------------------------------------------------------
+
+SEEDS		RS.W	3
+
+; - MISC. ------------------------------------------------------------------
+
+BANIM_OBJDATA	RS.L	1	
+
+HORN_TIME	RS.L	1	
+TUNNEL_SFX_FLAG	RS.W	1	
+
+SFX_FLAG_DATA	RS.B	128
+
+; --------------------------------------------------------------------------
+
+DATA_END	RS.B	0
+
+
+		IF	DATA_END>$80000
+		INFORM	3,"Data area too large (Size=$%h Over=$%h)",DATA_END-DATA_AREA,DATA_END-$80000
+		ENDIF
+

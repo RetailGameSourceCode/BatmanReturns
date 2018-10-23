@@ -1,0 +1,2852 @@
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ BATMAN RETURNS CD-ROM						   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+; --------------------------------------------------------------------------
+
+RD_EDGE_L 	EQU	0*$100
+RD_EDGE_R 	EQU	400*$100
+RD_LIMIT_L	EQU	-80*$100
+RD_LIMIT_R	EQU	480*$100
+
+; --------------------------------------------------------------------------
+	
+		RSRESET
+ID_NULL		RS.B	1	
+ID_CAR		RS.B	1
+ID_CAR_NONHIT	RS.B	1
+IDRANGE_ENEMY	RS.B	0	
+ID_MAIN		RS.B	1
+IDRANGE_CAR	RS.B	0	
+ID_SHOT		RS.B	1
+ID_MISS		RS.B	1
+IDRANGE_SHOT	RS.B	0	
+ID_BOTTLE	RS.B	1
+ID_DETECTAREA	RS.B	1
+IDRANGE_ESHOT	RS.B	0	
+ID_ROADOBJ	RS.B	1
+ID_NONADJ	RS.B	1
+
+HROUTINE_CAR	EQU	OBJ_HIT_NORM
+
+; --------------------------------------------------------------------------
+
+OBJECT_MAX	EQU	60
+
+OBJ_PRLEN	EQU	36
+OBJ_PRMAX	EQU	OBJECT_MAX
+
+		RSRESET
+OBJGR_SETUP	RS.L	1
+OBJGR_ANM0	RS.L	1
+OBJGR_ANM1	RS.L	1
+OBJGR_SKID	RS.L	1
+OBJGR_DAMAGE	RS.L	1
+OBJGR_EXTRA0	RS.L	1
+
+		RSRESET
+O_CLEAR		RS.B	1
+O_DEAD		RS.B	1
+O_DCTRL		RS.B	1
+O_SCRAPE	RS.B	1
+O_TIRE		RS.B	1
+O_SKID		RS.B	1
+O_CTRL		RS.B	1
+O_INIT		RS.B	1
+
+		RSRESET
+OBJ_FLAG0	RS.B	1
+OBJ_FLAG1	RS.B	1
+OBJ_FLAG2	RS.B	1
+OBJ_FLAG3	RS.B	1
+OBJ_MOVE_CTRL	RS.L	1
+OBJ_PRN_CTRL	RS.L	1
+
+OBJ_FX0_HANDLE	RS.W	1
+OBJ_FX0_SFXNUM	RS.W	1
+
+OBJ_FLASH0	RS.B	1
+OBJ_FLASH1	RS.B	1
+
+OBJ_ZPOS	RS.W	1
+OBJ_XPOS	RS.L	1
+OBJ_YPOS	RS.L	1  
+OBJ_ZSIZE	RS.W	1
+OBJ_XSIZE	RS.L	1
+OBJ_YSIZE	RS.L	1
+OBJ_MASS	RS.W	1
+
+OBJ_LOGIC_DATA	RS.L	1
+OBJ_LXMIN	RS.L	1
+OBJ_LXMAX	RS.L	1
+OBJ_LZMIN	RS.W	1
+OBJ_LZMAX	RS.W	1
+OBJ_LMSPD	RS.W	1
+OBJ_LCTRL	RS.B	1
+OBJ_LVAR	RS.B	1
+
+OBJ_CNT0	RS.W	1
+OBJ_CNT1	RS.W	1
+OBJ_CNT2	RS.W	1
+OBJ_CNT3	RS.W	1
+OBJ_CNT4	RS.W	1
+OBJ_CNT5	RS.W	1
+OBJ_CNT6	RS.W	1
+OBJ_CNT7	RS.W	1
+OBJ_ADDR0	RS.L	1
+OBJ_ADDR1	RS.L	1
+OBJ_ADDR2	RS.L	1
+OBJ_ADDR3	RS.L	1
+OBJ_ADDR4	RS.L	1
+OBJ_ADDR5	RS.L	1
+OBJ_ADDR6	RS.L	1
+OBJ_ADDR7	RS.L	1
+
+OBJ_SPD_MAXA	RS.W	1
+OBJ_SPD_MAXB	RS.W	1
+OBJ_SPD_INCFA	RS.W	1
+OBJ_SPD_INCFB	RS.W	1
+OBJ_SPD_DECF	RS.W	1
+OBJ_SPD_BRAKE	RS.W	1
+OBJ_TRACTION	RS.W	1
+
+OBJ_DAMAGE_DATA	RS.L	1
+OBJ_BASH_AMT	RS.W	1
+OBJ_SHOT_AMT	RS.W	1
+OBJ_DTOTAL	RS.W	1
+OBJ_ID		RS.W	1
+OBJ_HIT_GOTO	RS.L	1
+
+OBJ_SPD		RS.L	1
+OBJ_WHEEL	RS.W	1
+OBJ_XFORCE	RS.W	1
+OBJ_XINERTIA	RS.L	1
+
+OBJ_TOT		RS.B	0
+
+		RSRESET
+DAT_FLAG0	RS.B	1
+DAT_FLAG1	RS.B	1
+DAT_FLAG2	RS.B	1
+DAT_FLAG3	RS.B	1
+DAT_MOVE_CTRL	RS.L	1
+DAT_PRN_CTRL	RS.L	1
+
+DAT_ZPOS	RS.W	1
+DAT_XPOS	RS.L	1
+DAT_YPOS	RS.L	1  
+
+DAT_ADDR00	RS.L	0
+DAT_CNT00	RS.W	1
+DAT_CNT01	RS.W	1
+DAT_ADDR01	RS.L	0
+DAT_CNT02	RS.W	1
+DAT_CNT03	RS.W	1
+DAT_ADDR02	RS.L	0
+DAT_CNT04	RS.W	1
+DAT_CNT05	RS.W	1
+DAT_ADDR03	RS.L	0
+DAT_CNT06	RS.W	1
+DAT_CNT07	RS.W	1
+DAT_ADDR04	RS.L	0
+DAT_CNT08	RS.W	1
+DAT_CNT09	RS.W	1
+DAT_ADDR05	RS.L	0
+DAT_CNT10	RS.W	1
+DAT_CNT11	RS.W	1
+DAT_ADDR06	RS.L	0
+DAT_CNT12	RS.W	1
+DAT_CNT13	RS.W	1
+DAT_ADDR07	RS.L	0
+DAT_CNT14	RS.W	1
+DAT_CNT15	RS.W	1
+DAT_ADDR08	RS.L	0
+DAT_CNT16	RS.W	1
+DAT_CNT17	RS.W	1
+DAT_ADDR09	RS.L	0
+DAT_CNT18	RS.W	1
+DAT_CNT19	RS.W	1
+DAT_ADDR10	RS.L	0
+DAT_CNT20	RS.W	1
+DAT_CNT21	RS.W	1
+DAT_ADDR11	RS.L	0
+DAT_CNT22	RS.W	1
+DAT_CNT23	RS.W	1
+DAT_ADDR12	RS.L	0
+DAT_CNT24	RS.W	1
+DAT_CNT25	RS.W	1
+DAT_ADDR13	RS.L	0
+DAT_CNT26	RS.W	1
+DAT_CNT27	RS.W	1
+DAT_ADDR14	RS.L	0
+DAT_CNT28	RS.W	1
+DAT_CNT29	RS.W	1
+DAT_ADDR15	RS.L	0
+DAT_CNT30	RS.W	1
+DAT_CNT31	RS.W	1
+DAT_ADDR16	RS.L	0
+DAT_CNT32	RS.W	1
+DAT_CNT33	RS.W	1
+DAT_ADDR17	RS.L	0
+DAT_CNT34	RS.W	1
+DAT_CNT35	RS.W	1
+DAT_ADDR18	RS.L	0
+DAT_CNT36	RS.W	1
+DAT_CNT37	RS.W	1
+DAT_ADDR19	RS.L	0
+DAT_CNT38	RS.W	1
+DAT_CNT39	RS.W	1
+DAT_ADDR20	RS.L	0
+DAT_CNT40	RS.W	1
+DAT_CNT41	RS.W	1
+DAT_ADDR21	RS.L	0
+DAT_CNT42	RS.W	1
+DAT_CNT43	RS.W	1
+DAT_ADDR22	RS.L	0
+DAT_CNT44	RS.W	1
+DAT_CNT45	RS.W	1
+DAT_ADDR23	RS.L	0
+DAT_CNT46	RS.W	1
+DAT_CNT47	RS.W	1
+DAT_ADDR24	RS.L	0
+DAT_CNT48	RS.W	1
+DAT_CNT49	RS.W	1
+DAT_ADDR25	RS.L	0
+DAT_CNT50	RS.W	1
+DAT_CNT51	RS.W	1
+DAT_ADDR26	RS.L	0
+DAT_CNT52	RS.W	1
+DAT_CNT53	RS.W	1
+
+DAT_TOT		RS.B	0
+
+		IF	OBJ_TOT>DAT_TOT
+OBJ_DLEN	EQU	OBJ_TOT
+		ELSE
+OBJ_DLEN	EQU	DAT_TOT
+		ENDIF
+
+; --------------------------------------------------------------------------
+
+OBJECT_CTRL 	LEA	OBJECT_DATA,A1 		;Init new object controlers
+		MOVEQ	#OBJECT_MAX-1,D7
+.init_lp	TST.B	OBJ_FLAG0(A1)
+		BPL.S	.skp0
+		EOR.B	#$C0,OBJ_FLAG0(A1)
+.skp0		LEA	OBJ_DLEN(A1),A1
+		DBRA	D7,.init_lp
+
+		LEA	OBJECT_DATA+OBJ_DLEN,A1		;Object update.
+		MOVEQ	#OBJECT_MAX-2,D7
+.loop		TST.B	OBJ_FLAG0(A1)
+		BLE.S	.skp1
+		MOVEM.L	A1/D7,-(SP)
+		MOVE.L	OBJ_MOVE_CTRL(A1),A0
+		JSR	(A0)
+		MOVEM.L	(SP)+,A1/D7
+.skp1		LEA	OBJ_DLEN(A1),A1
+		DBRA	D7,.loop
+
+		LEA	OBJECT_DATA,A1		;Object update.
+		BRA	CAR_CONTROL
+
+OBJECT_PRINT	CLR.W	OBJ_PRDOFF 		;Set offset.
+		LEA	OBJ_PRLIST,A0
+		MOVE.W	#$7FFF,(A0)+		;Define end.
+		CLR.L	(A0)+
+		CLR.W	(A0)+			;Define start.
+		CLR.L	(A0)+
+		MOVE.L	A0,OBJ_PRNEXTADDR	;Set addr.
+		
+		LEA	OBJECT_DATA,A1		;Setup printable objects.
+		MOVEQ	#OBJECT_MAX-1,D7
+.loop		TST.B	OBJ_FLAG0(A1)
+		BEQ.S	.skp
+		MOVEM.L	A1/D7,-(SP)
+		MOVE.W	OBJ_ZPOS(A1),D0
+		SUB.W	ZMOVE,D0
+		MOVE.W	D0,OBJ_ZPOS(A1)
+		MOVE.L	OBJ_PRN_CTRL(A1),A0
+		JSR	(A0)
+		MOVEM.L	(SP)+,A1/D7
+.skp		LEA	OBJ_DLEN(A1),A1
+		DBRA	D7,.loop
+		RTS
+
+OBJECT_ALLOC	LEA	OBJECT_DATA-OBJ_DLEN,A1
+		MOVEQ	#OBJECT_MAX-1,D7
+.loop		LEA 	OBJ_DLEN(A1),A1
+		TST.B	OBJ_FLAG0(A1)
+		DBEQ	D7,.loop
+		BNE.S	.end
+		BSR.S	OBJECT_CLEAR
+		TAS	OBJ_FLAG0(A1)
+.end		RTS			;EQ=OK NE=Error
+
+OBJECT_CLEAR	MOVEQ	#(OBJ_DLEN/2)-1,D7
+.loop		CLR.W	(A1)+
+		DBRA	D7,.loop
+		LEA	-OBJ_DLEN(A1),A1
+		RTS
+
+; --------------------------------------------------------------------------
+
+OBJ_PR_ALLOCATE	CMP.W	#$80,D0
+		BLE.S	OPA_BEHIND
+		CMP.W	#$80*(VIEW_PATCHES+1),D0
+		BPL.S	OPA_FORWARD
+O_PR_ALLOC_ENT	CMP.W	#OBJ_PRMAX*OBJ_PRLEN,OBJ_PRDOFF
+		BPL.S	OPA_NODATA
+		MOVE.L	A5,-(SP)
+		MOVE.L	OBJ_PRNEXTADDR,A5	;D0=Zpos.
+		LEA	6(A5),A6
+		MOVE.L	A6,OBJ_PRNEXTADDR
+
+.loop		MOVE.L	-(A5),-(A6)
+		MOVE.W	-(A5),-(A6)
+		CMP.W	(A5),D1
+		BPL.S	.loop
+		MOVE.W	D1,(A6)+
+		MOVE.W	D0,(A6)+  		;Set zpos/offset.
+		MOVE.W	OBJ_PRDOFF,(A6)
+		LEA	OBJ_PRDATA,A6
+		ADD.W	OBJ_PRDOFF,A6
+		ADD.W	#OBJ_PRLEN,OBJ_PRDOFF	;Next data offset.
+		MOVE.L	(SP)+,A5
+		ADD.L	#12,(SP)
+
+OPA_BEHIND	RTS
+OPA_FORWARD	ADDQ.L	#4,(SP)
+		RTS
+OPA_NODATA	ADDQ.L	#8,(SP)
+		RTS
+
+; --------------------------------------------------------------------------
+
+;Sign hit standard.
+
+SDFX0_TREE	BSR	SDFX0_A
+		MOVE.W	#SFX_BASHTREE_A,D0
+		BRA	CSFX_ONESHOT_V
+SDFX0_POLE	BSR	SDFX0_A
+		MOVE.W	#SFX_BASHPOLE_A,D0
+		BRA	CSFX_ONESHOT_V
+SDFX0_POLEB	BSR	SDFX0_A
+		MOVE.W	#SFX_BASHPOLE_B,D0
+		BRA	CSFX_ONESHOT_V
+SDFX0_BLD	BSR	SDFX0_A
+		MOVE.W	#SFX_BASHBLD_A,D0
+		BRA	CSFX_ONESHOT_V
+
+; --------------------------------------------------------------------------
+
+SDFX0M_L	MOVE.L	#60*$100,D3
+		BRA.S	SDFX0M_GO
+
+SDFX0M_C	MOVE.L	#200*$100,D3
+		BRA.S	SDFX0M_GO
+
+SDFX0M_R	MOVE.L	#340*$100,D3
+		BRA.S	SDFX0M_GO
+
+SDFX0M_CR	MOVE.L	#200*$100,D3
+		BSR.S	SDFX0M_GO
+		MOVE.W	OBJ_SPD(A1),D3
+		BPL.S	.end
+		CMP.W	#-$95,D3
+		BMI.S	.end
+		MOVE.W	#-$95,OBJ_SPD(A1)
+.end		RTS
+
+SDFX0M_GO	BSR	HITX_GOTO
+		BSR.S	SDFX0_B
+		MOVE.W	#SFX_METWALL_A,D0
+		BRA	CSFX_ONESHOT_V
+
+SDFX0P_B	TST.W	OBJ_XFORCE(A1)
+		BMI.S	SDFX0P_R
+
+SDFX0P_L	MOVE.L	#60*$100,D3
+		BRA.S	SDFX0P_GO
+
+SDFX0P_C	MOVE.L	#200*$100,D3
+		BRA.S	SDFX0P_GO
+
+SDFX0P_R	MOVE.L	#340*$100,D3
+		BRA.S	SDFX0P_GO
+
+SDFX0P_CR	MOVE.L	#200*$100,D3
+		BSR.S	SDFX0P_GO
+		MOVE.W	OBJ_SPD(A1),D3
+		BPL.S	.end
+		CMP.W	#-$95,D3
+		BMI.S	.end
+		MOVE.W	#-$95,OBJ_SPD(A1)
+.end		RTS
+
+SDFX0P_GO	BSR	HITX_GOTO
+SDFX0P_GOX	BSR.S	SDFX0_B
+		MOVE.W	#SFX_METPIPE_A,D0
+		BRA	CSFX_ONESHOT_V
+
+; --------------------------------------------------------------------------
+
+SDFX0_A		BSR	HITX_CALC
+		
+SDFX0_B		ADDQ.B	#2,OBJ_FLASH1(A1)
+		
+		MOVE.L	A1,-(SP)	
+		MOVEQ	#0,D3
+		BSR	VIS_SET
+		MOVE.L	(SP)+,A1
+
+		CMP.W	#ID_MAIN,OBJ_ID(A1)
+		BEQ.S	.cont
+		MOVE.W	#$FFFF,OBJ_DTOTAL(A1)
+		BSET	#O_DEAD,OBJ_FLAG0(A1)
+		RTS
+
+.cont		MOVE.L	OBJ_SPD(A1),D7
+		BPL.S	.hit_calc
+		NEG.L	D7
+.hit_calc	SWAP	D7
+		ROL.L	#3,D7
+		ADD.W	D7,OBJ_BASH_AMT(A1)
+
+		BRA	HITZ_CALC
+
+; --------------------------------------------------------------------------
+
+;Sign hit tunnel.
+
+SDFX1		BSET	#O_SCRAPE,OBJ_FLAG0(A1)
+
+		LEA	VIS_TUNL_SPARK0,A0
+		TST.W	DET_MOVE_X
+		BMI	.skp
+		LEA	VIS_TUNR_SPARK0,A0
+.skp		MOVE.L	A1,-(SP)	
+		BSR	VIS_SET_S
+		MOVE.L	(SP)+,A1
+
+		MOVE.L	OBJ_XINERTIA(A1),D4
+		NEG.L	D4
+		ASR.L	#2,D4
+		MOVE.L	D4,OBJ_XINERTIA(A1)
+		MOVE.L	OBJ_SPD(A1),D0
+		ASR.L	#3,D0
+		SUB.L	D0,OBJ_SPD(A1)
+		RTS
+
+; --------------------------------------------------------------------------
+
+HITX_GOTO	SUB.L	OBJ_XPOS(A1),D3
+		ASL.L	#5,D3
+		MOVE.L	D3,OBJ_XINERTIA(A1)
+		RTS
+
+HITX_CALC	MOVE.L	DET_EDGE_R,D3		;Check sides.
+		ADD.L	DET_EDGE_L,D3
+		ASR.L	D3
+		CMP.L	OBJ_XPOS(A1),D3
+		BMI.S	.right
+
+.left		ASR.L	D3
+		ADD.L	DET_EDGE_L,D3
+		SUB.L	OBJ_XPOS(A1),D3
+		BRA.S	.set
+
+.right		ASR.L	D3
+		NEG.L	D3
+		ADD.L	DET_EDGE_R,D3
+		SUB.L	OBJ_XPOS(A1),D3
+
+.set 		ASL.L	#5,D3
+		MOVE.L	D3,OBJ_XINERTIA(A1)
+		RTS
+
+HITZ_CALC	MOVE.W	OBJ_SPD(A1),D3
+		ASR.W	D3
+		NEG.W	D3
+		BPL.S	.shzp
+		CMP.W	#-$28,D3
+		BMI.S	.shz
+		MOVE.W	#-$28,D3
+		BRA.S	.shz
+.shzp		ASR.W	D3
+		CMP.W	#$20,D3
+		BPL.S	.shz
+		MOVE.W	#$20,D3
+.shz		MOVE.W	D3,OBJ_SPD(A1)
+		RTS
+
+; --------------------------------------------------------------------------
+
+DETECT_MOVE	LEA	SIGN_DET_ZXADJ,A5	;Sign hit adjust routine.
+		BSR	DETECT_ZXY
+		ADD.W	D0,OBJ_ZPOS(A1)
+		ADD.L	D1,OBJ_XPOS(A1)
+		 
+		MOVE.W	DET_HIT_FLAG,D4
+		BEQ.S	.done
+		MOVEM.L	D0/D1/A1,-(SP)
+		CMP.W	#OBJ_HIT,D4
+		BCC.S	.object_hit
+.sign_hit	BSR.S	SIGN_HIT_CTRL
+		BRA.S	.ctrl_done
+.object_hit	BSR.S	OBJECT_HIT_CTRL
+.ctrl_done	MOVEM.L	(SP)+,D0/D1/A1
+.done		MOVE.W	D1,OBJ_XFORCE(A1)
+		RTS
+
+; - Sign hit. --------------------------------------------------------------
+
+SIGN_HIT_CTRL	LEA	VIS_CAR_BASHF,A0	;Graphic.
+		CMP.W	#SIGN_HIT_X,D4
+		BNE.S	.sign_str
+		LEA	VIS_CAR_BASHR,A0
+		TST.L	D1
+		BPL.S	.sign_str
+		LEA	VIS_CAR_BASHL,A0
+
+.sign_str	MOVE.L	DET_HIT_DATA0,A2
+		MOVE.W	SGR_DET_ZOFF(A2),D2
+		ADD.W	DET_HIT_DATA1,D2
+		LEA	SGR_DET_ZOFF-OBJ_ZPOS(A2),A2
+		BSR	SET_HPT			;D0=Zpos D1=Xpos D2=Ypos
+		MOVE.L	DET_HIT_DATA0,A2
+		MOVE.L	SGR_DET_FX(A2),A6
+		JMP	(A6)			;Graphic/sound FX.
+		
+; - Object hit. ------------------------------------------------------------
+
+OBJECT_HIT_CTRL	MOVE.L	DET_HIT_DATA1,A2
+		CMP.W	#OBJ_HIT_Z,D4
+		BNE.S	.bash_side
+
+.bash_back	CMP.W	#IDRANGE_ENEMY,OBJ_ID(A1)
+		BCC.S	.bb_ok
+		CMP.W	#ID_MAIN,OBJ_ID(A2)
+		BNE.S	.bb_ok
+		MOVE.W	OBJ_ZPOS(A2),D0
+		ADD.W	OBJ_ZSIZE(A2),D0
+		MOVE.W	D0,OBJ_ZPOS(A1)
+		CLR.W	-6(SP)
+		RTS
+
+.bb_ok		MOVE.W	OBJ_XFORCE(A1),D0
+		BPL.S	.bb_spd
+		NEG.W	D0
+.bb_spd		MOVE.L	OBJ_SPD(A1),D1
+		BPL.S	.bb_calc
+		NEG.L	D1
+.bb_calc	SWAP	D1
+		ROL.L	#5,D1
+		CMP.W	D1,D0
+		BPL.S	.hit_calc
+		MOVE.W	D1,D0
+		BRA.S	.hit_calc
+		
+.bash_side	MOVE.W	OBJ_XFORCE(A1),D0
+		BPL.S	.bs_right
+.bs_left	ADD.W	OBJ_XFORCE(A2),D0
+		BLE.S	.bs_bash
+		BRA.S	.bs_swap
+.bs_right	ADD.W	OBJ_XFORCE(A2),D0
+		BPL.S	.bs_bash
+.bs_swap	EXG	A1,A2
+.bs_bash	MOVE.W	OBJ_XFORCE(A1),D0
+		BPL.S	.hit_calc
+		NEG.W	D0
+
+.hit_calc	CMP.W	#IDRANGE_CAR,OBJ_ID(A2)
+		BCC	.obj_bvisuals
+		CMP.W	#ID_CAR_NONHIT,OBJ_ID(A2)
+		BEQ.S	.mass_type
+		LSR.W	#3,D0
+		ADD.W	D0,OBJ_BASH_AMT(A2)
+		ADDQ.B	#2,OBJ_FLASH1(A2)
+		
+.mass_type	MOVEQ	#0,D2
+		MOVE.B	OBJ_MASS(A2),D2
+		CMP.W	#OBJ_HIT_Z,DET_HIT_FLAG
+		BNE.S	.id_chk
+		MOVE.B	OBJ_MASS+1(A2),D2
+
+.id_chk		CMP.W	#ID_MAIN,OBJ_ID(A1)
+		BEQ.S	.id_main
+		CMP.W	#ID_MAIN,OBJ_ID(A2)
+		BNE.S	.id_car
+
+.id_hit		MOVE.L	OBJ_SPD(A2),D0		;Enemy hits main.		
+		ASR.L	D0
+		MOVE.L	D0,OBJ_SPD(A2)
+		BRA	.xforce
+
+.id_main  
+
+.id_car						;Enemy hits enemy.	
+		MOVE.L	OBJ_SPD(A1),D0
+		CMP.L	OBJ_SPD(A2),D0
+		BMI.S	.spd_skp
+		MOVE.L	OBJ_SPD(A2),OBJ_SPD(A1)
+.spd_skp	SWAP	D0
+		MULS	D2,D0
+		ASL.L	#8,D0
+		ADD.L	D0,OBJ_SPD(A2)
+
+.wheel_clr	CLR.W	OBJ_WHEEL(A2)
+
+.xforce		MOVE.W	OBJ_XFORCE(A1),D0
+		MOVE.W	D0,D1
+		EXT.L	D1
+		ASL.L	#8,D1
+		SUB.L	D1,OBJ_XINERTIA(A1)
+		MULS	D2,D0
+		ASL.L	#2,D0
+		ADD.L	D0,OBJ_XINERTIA(A2)
+
+.obj_bsfx	MOVE.W	#SFX_BASHOBJ_A,D0
+		BSR	RANDOM_NO
+		BPL.S	.sfx
+		MOVE.W	#SFX_BASHOBJ_B,D0
+.sfx		JSR	CSFX_ONESHOT_V
+
+.obj_bvisuals	CMP.W	#OBJ_HIT_X,DET_HIT_FLAG
+		BEQ.S	.obj_hitx
+
+.obj_hitz	LEA	VIS_CAR_BASHF,A0
+		BRA	.obj_bash
+
+.obj_hitx	TST.L	D0
+		BPL.S	.ohx_skp0
+		NEG.L	D0
+.ohx_skp0	TST.L	D1
+		BPL.S	.ohx_skp1
+		NEG.L	D1
+.ohx_skp1	ADD.L	D1,D0
+		CMP.L	#$200000,D0
+		BMI.S	.obj_spk		
+		LEA	VIS_CAR_BASHR,A0
+		TST.W	DET_MOVE_X
+		BPL.S	.obj_bash
+		LEA	VIS_CAR_BASHL,A0
+
+.obj_bash	BSR.S	SET_HIT_PT
+		MOVEM.L	A1/D0-D2,-(SP)
+		BSR	VIS_SET_S
+		MOVEM.L	(SP)+,A1/D0-D2
+		BRA.S	.obj_spark
+.obj_spk	BSR.S	SET_HIT_PT
+.obj_spark	LEA	VIS_CAR_SPARK0,A0
+		BRA	VIS_SET_S
+
+; --------------------------------------------------------------------------
+
+SET_HIT_PT	MOVE.W	OBJ_ZPOS(A2),D2
+SET_HPT		MOVE.W	OBJ_ZSIZE(A2),D3
+		MOVE.W	OBJ_ZPOS(A1),D0
+		MOVE.W	OBJ_ZSIZE(A1),D1
+		ADD.W	D0,D1
+		ADD.W	D2,D3
+		CMP.W	D0,D2
+		BMI.S	.set0
+		MOVE.W	D2,D0
+.set0		CMP.W	D3,D1
+		BMI.S	.set1
+		MOVE.W	D3,D1
+.set1		ADD.W	D1,D0
+		ASR.W	D0		;D0=Zpos
+
+		MOVE.L	OBJ_XPOS(A1),D1
+		MOVE.L	OBJ_XSIZE(A1),D2
+		MOVE.L	OBJ_XPOS(A2),D3
+		MOVE.L	OBJ_XSIZE(A2),D4
+		ASL.L	D1
+		SUB.L	D2,D1
+		ASR.L	D1
+		ADD.L	D1,D2
+		ASL.L	D3
+		SUB.L	D4,D3
+		ASR.L	D3
+		ADD.L	D3,D4
+		CMP.L	D1,D3
+		BMI.S	.set2
+		MOVE.L	D3,D1
+.set2		CMP.L	D4,D2
+		BMI.S	.set3
+		MOVE.L	D4,D2
+.set3		ADD.L	D2,D1
+		ASR.L	D1		;D1=Xpos
+
+		MOVE.L	OBJ_YPOS(A1),D2
+		MOVE.L	OBJ_YSIZE(A1),D3
+		MOVE.L	OBJ_YPOS(A2),D4
+		MOVE.L	OBJ_YSIZE(A2),D5
+		NEG.L	D3
+		ADD.L	D2,D3
+		NEG.L	D5
+		ADD.L	D4,D5
+		CMP.L	D4,D2
+		BMI.S	.set4
+		MOVE.L	D4,D2
+.set4		CMP.L	D3,D5
+		BMI.S	.set5
+		MOVE.L	D5,D3
+.set5		ADD.L	D3,D2
+		ASR.L	D2		;D2=Ypos
+
+		RTS
+
+; --------------------------------------------------------------------------
+
+DETECT_ALLOC	LEA	OBJECT_DET_LIST+(OBJECT_MAX*4),A0
+.loop		TST.L	-(A0)
+		BNE.S	.loop
+		MOVE.L	A1,(A0)
+		RTS
+
+DETECT_DEALL	LEA	OBJECT_DET_LIST+(OBJECT_MAX*4),A0
+		MOVEQ	#OBJECT_MAX-1,D7
+.loop		CMP.L	-(A0),A1
+		DBEQ	D7,.loop
+		BNE.S	.end
+		CLR.L	(A0)
+.end		RTS
+
+; --------------------------------------------------------------------------
+
+		RSRESET
+NO_HIT		RS.B	1
+SIGN_HIT	RS.B	0
+SIGN_HIT_X	RS.B	1
+SIGN_HIT_Z	RS.B	1
+OBJ_HIT		RS.B	0
+OBJ_HIT_X	RS.B	1
+OBJ_HIT_Z	RS.B	1
+
+DETECT_ZXY	CLR.W	DET_HIT_FLAG
+		MOVE.W	D0,DET_MOVE_Z
+		MOVE.W	D1,DET_MOVE_X
+	
+.go		MOVE.W	OBJ_ZPOS(A1),D4
+   
+		MOVEQ	#0,D6
+		MOVE.L	#$00800000+RDSTEP,D7
+
+		TST.W	D0
+	   	BMI	.dzn
+		EXT.L	D1
+	    	BMI	.dzpxn	
+		
+.dzpxp		LEA	SIGN_DET_RF,A6
+		BSR	SIGN_DETECT
+		LEA	OBJ_DET_RF,A6
+		BSR	OBJ_DETECT
+		RTS
+
+.dzpxn		NEG.L	D1
+		LEA	SIGN_DET_LF,A6
+		BSR	SIGN_DETECT
+		LEA	OBJ_DET_LF,A6
+		BSR	OBJ_DETECT
+		NEG.L	D1
+.end		RTS
+
+.dzn		ADD.W	OBJ_ZSIZE(A1),D4
+		MOVE.W	#$80,D6
+		MOVE.L	#$FF810000-RDSTEP,D7	;[$FF80!-RDSTEP]
+		NEG.W	D0
+		EXT.L	D1
+	    	BMI	.dznxn	
+		
+.dznxp		LEA	SIGN_DET_RB,A6
+		BSR	SIGN_DETECT
+		LEA	OBJ_DET_RB,A6
+		BSR	OBJ_DETECT
+		NEG.W	D0
+		RTS
+
+.dznxn		NEG.L	D1
+		LEA	SIGN_DET_LB,A6
+		BSR	SIGN_DETECT
+		LEA	OBJ_DET_LB,A6
+		BSR	OBJ_DETECT
+		NEG.W	D0
+		NEG.L	D1
+		RTS
+
+OBJDET_ZXY	CLR.W	DET_HIT_FLAG
+		MOVE.W	D0,DET_MOVE_Z
+		MOVE.W	D1,DET_MOVE_X
+
+.go		MOVE.W	OBJ_ZPOS(A1),D4
+
+		TST.W	D0
+	   	BMI	.dzn
+		EXT.L	D1
+	    	BMI	.dzpxn	
+		
+.dzpxp		LEA	OBJ_DET_RF,A6
+		BRA	OBJ_DETECT
+
+.dzpxn		NEG.L	D1
+		LEA	OBJ_DET_LF,A6
+		BSR	OBJ_DETECT
+		NEG.L	D1
+.end		RTS
+
+.dzn		ADD.W	OBJ_ZSIZE(A1),D4
+		NEG.W	D0
+		EXT.L	D1
+	    	BMI	.dznxn	
+		
+.dznxp		LEA	OBJ_DET_RB,A6
+		BSR	OBJ_DETECT
+		NEG.W	D0
+		RTS
+
+.dznxn		NEG.L	D1
+		LEA	OBJ_DET_LB,A6
+		BSR	OBJ_DETECT
+		NEG.W	D0
+		NEG.L	D1
+		RTS
+
+; - Detect moving objects. -------------------------------------------------
+
+;D0=Zmove D1=Xmove A1=Object A6=Detect dir control.
+
+OBJ_DETECT	TST.W	OBJ_ID(A1)
+		BPL.S	.cont
+		RTS
+	
+.cont		MOVEQ	#0,D2			;D0=Zmove D1=Xmove
+		MOVE.W	D0,D2
+		SWAP	D2
+		MOVE.L	D1,D3
+		BEQ.S	.skp1
+		DIVU	D1,D2			;D2=Zfactor
+		BVC.S	.skp1
+		MOVEQ	#-1,D2
+.skp1		TST.W	D0
+		BEQ.S	.skp2
+		DIVU	D0,D3			;D3=Xfactor
+.skp2		
+
+OBJ_DET_START	LEA	OBJECT_DET_LIST,A3
+		MOVEQ	#OBJECT_MAX-1,D7
+
+OBJ_DET_LOOP	CLR.L	DET_XERROR
+		MOVE.L	(A3)+,D6
+		BEQ	OBJ_DET_NEXT
+		CMP.L	D6,A1
+		BEQ	OBJ_DET_NEXT
+		MOVE.L	D6,A2
+		JMP	(A6)
+
+OBJ_HIT_NORM	CMP.W	#IDRANGE_CAR,OBJ_ID(A1)	;Standard routine.
+		BCS.S	OBJ_DET_ZXADJ
+		CMP.W	#IDRANGE_SHOT,OBJ_ID(A1)
+		BCS.S	OBJ_DET_ZXKILL
+		MOVE.W	#OBJ_HIT_Z,DET_HIT_FLAG
+		BRA	OBJ_HIT_SET
+
+; Zpos/Xpos total stop on hit.
+
+OBJ_DET_ZXKILL	ADD.W	OBJ_ZSIZE(A1),D5
+		ADD.W	OBJ_ZSIZE(A2),D5
+		BLE.S	OBJ_HIT_ON_Z
+
+		TST.L	DET_XERROR		;Stuck in object?
+		BNE.S	OBJ_HIT_STUCK
+
+.det_hit_on_x	MOVE.L	D6,D1			;Set Xmove
+		MOVE.W	D6,D0
+		MULU	D2,D0
+		SWAP	D0   			;Set Zmove
+		MOVE.W	#OBJ_HIT_X,DET_HIT_FLAG
+		BRA.S	OBJ_HIT_SET
+
+; Total stop on Zpos only.
+
+OBJ_DET_ZXADJ	ADD.W	OBJ_ZSIZE(A1),D5
+		ADD.W	OBJ_ZSIZE(A2),D5
+		BLE.S	OBJ_HIT_ON_Z
+
+		TST.L	DET_XERROR		;Stuck in object?
+		BNE.S	OBJ_HIT_STUCK
+
+.det_hit_on_x	MOVE.L	D6,D1			;Set Xmove
+		MOVE.W	#OBJ_HIT_X,DET_HIT_FLAG
+		BRA.S	OBJ_HIT_SET
+
+OBJ_HIT_ON_Z	MOVE.W	D4,D0			;Set Zmove
+		MOVE.W	D0,D1
+		MULU	D3,D1			;Set Xmove
+		MOVE.W	#OBJ_HIT_Z,DET_HIT_FLAG
+		BRA.S	OBJ_HIT_SET
+
+OBJ_HIT_STUCK	MOVE.W	#OBJ_HIT_Z,DET_HIT_FLAG
+		MOVE.W	D4,D0
+		CMP.W	#IDRANGE_ENEMY,OBJ_ID(A1)
+		BCC.S	.check
+
+		MOVE.W	D5,D0
+		CMP.W	#ID_MAIN,OBJ_ID(A2)
+		BNE.S	OBJ_HIT_SET
+		BSET	#O_DEAD,OBJ_FLAG0(A1)
+		MOVE.W	#$FFFF,OBJ_DTOTAL(A1)
+		BRA.S	OBJ_HIT_SET
+
+.check		CMP.W	#IDRANGE_ENEMY,OBJ_ID(A2)
+		BCC.S	OBJ_HIT_SET
+		CMP.W	#ID_MAIN,OBJ_ID(A1)
+		BNE.S	OBJ_HIT_SET
+		BSET	#O_DEAD,OBJ_FLAG0(A2)
+		MOVE.W	#$FFFF,OBJ_DTOTAL(A2)
+
+OBJ_HIT_SET	MOVE.L	A1,DET_HIT_DATA0
+		MOVE.L	A2,DET_HIT_DATA1
+
+OBJ_DET_NEXT	DBRA	D7,OBJ_DET_LOOP
+		RTS
+
+; --- Forward object movement ---
+
+OBJ_DET_RF	MOVE.L	OBJ_XPOS(A2),D4
+		SUB.L	OBJ_XPOS(A1),D4
+		ASL.L	D4
+		ADD.L	OBJ_XSIZE(A2),D4
+		ADD.L	OBJ_XSIZE(A1),D4
+		ASR.L	D4 
+		BGT	OBJ_DET_COMMONF
+		BRA	OBJ_DET_NEXT
+
+OBJ_DET_LF	MOVE.L	OBJ_XPOS(A1),D4
+		SUB.L	OBJ_XPOS(A2),D4
+		ASL.L	D4
+		ADD.L	OBJ_XSIZE(A1),D4
+		ADD.L	OBJ_XSIZE(A2),D4
+		ASR.L	D4 
+		BLE	OBJ_DET_NEXT
+		
+OBJ_DET_COMMONF	MOVE.L	D4,D5			;D5=Brx-Alx
+		SUB.L	OBJ_XSIZE(A1),D4
+		SUB.L	OBJ_XSIZE(A2),D4
+		MOVE.L	D4,D6			;D6=Blx-Arx	
+		BPL.S	.det_delimit0
+		MOVE.L	D5,DET_XERROR
+		MOVEQ	#0,D6			;Inside	object area.
+.det_delimit0	SUB.L	D1,D4			;Xmove check.
+		BPL	OBJ_DET_NEXT
+
+		MOVE.L	OBJ_YPOS(A1),D4		;Yrange check.
+		SUB.L	OBJ_YSIZE(A1),D4
+		SUB.L	OBJ_YPOS(A2),D4
+		BGT	OBJ_DET_NEXT
+		ADD.L	OBJ_YSIZE(A1),D4
+		ADD.L	OBJ_YSIZE(A2),D4
+		BLE	OBJ_DET_NEXT
+
+.det_zcheck	TST.L	D1
+		BEQ.S	.det_limset
+		LSR.L	D5
+		MULU	D2,D5			;*Zfactor
+		SWAP	D5
+		ROL.L	D5
+		CMP.W	D0,D5
+		BCS.S	.det_delimit1
+.det_limset	MOVE.W	D0,D5
+.det_delimit1	MOVE.W	OBJ_ZPOS(A2),D4		;Bzb
+		SUB.W	OBJ_ZPOS(A1),D4
+		SUB.W	OBJ_ZSIZE(A1),D4	;-Azf
+		CMP.W	D5,D4
+		BPL	OBJ_DET_NEXT
+	
+		MOVE.W	D6,D5
+		MULU	D2,D5			;*Zfactor
+		SWAP	D5
+		ADD.W	OBJ_ZPOS(A1),D5		;+Azb			
+		SUB.W	OBJ_ZPOS(A2),D5		
+		SUB.W	OBJ_ZSIZE(A2),D5	;-Bzf
+		BPL	OBJ_DET_NEXT
+		MOVE.L	OBJ_HIT_GOTO(A2),A0
+		JMP	(A0)
+
+; --- Backward object movement ---
+
+OBJ_DET_RB	MOVE.L	OBJ_XPOS(A2),D4
+		SUB.L	OBJ_XPOS(A1),D4
+		ASL.L	D4
+		ADD.L	OBJ_XSIZE(A2),D4
+		ADD.L	OBJ_XSIZE(A1),D4
+		ASR.L	D4 
+		BGT	OBJ_DET_COMMONB
+		BRA	OBJ_DET_NEXT
+
+OBJ_DET_LB	MOVE.L	OBJ_XPOS(A1),D4
+		SUB.L	OBJ_XPOS(A2),D4
+		ASL.L	D4
+		ADD.L	OBJ_XSIZE(A1),D4
+		ADD.L	OBJ_XSIZE(A2),D4
+		ASR.L	D4 
+		BLE	OBJ_DET_NEXT
+		
+OBJ_DET_COMMONB	MOVE.L	D4,D5			;D5=Brx-Alx
+		SUB.L	OBJ_XSIZE(A2),D4
+		SUB.L	OBJ_XSIZE(A1),D4
+		MOVE.L	D4,D6			;D6=Blx-Arx	
+		BPL.S	.det_delimit0
+		MOVE.L	D5,DET_XERROR
+		MOVEQ	#0,D6			;Inside	object area.
+.det_delimit0	SUB.L	D1,D4			;Xmove check.
+		BPL	OBJ_DET_NEXT
+
+		MOVE.L	OBJ_YPOS(A2),D4		;Yrange check.
+		SUB.L	OBJ_YSIZE(A2),D4
+		SUB.L	OBJ_YPOS(A1),D4
+		BGT	OBJ_DET_NEXT
+		ADD.L	OBJ_YSIZE(A2),D4
+		ADD.L	OBJ_YSIZE(A1),D4
+		BLE	OBJ_DET_NEXT
+
+.det_zcheck	TST.L	D1
+		BEQ.S	.det_limset
+		LSR.L	D5
+		MULU	D2,D5			;*Zfactor
+		SWAP	D5
+		ROL.L	D5
+		CMP.W	D0,D5
+		BCS.S	.det_delimit1
+.det_limset	MOVE.W	D0,D5
+.det_delimit1	MOVE.W	OBJ_ZPOS(A1),D4		;Bzb
+		SUB.W	OBJ_ZPOS(A2),D4
+		SUB.W	OBJ_ZSIZE(A2),D4	;-Azf
+		CMP.W	D5,D4
+		BPL	OBJ_DET_NEXT
+	
+		MOVE.W	D6,D5
+		MULU	D2,D5			;*Zfactor
+		SWAP	D5
+		ADD.W	OBJ_ZPOS(A2),D5		;+Azb			
+		SUB.W	OBJ_ZPOS(A1),D5		
+		SUB.W	OBJ_ZSIZE(A1),D5	;-Bzf
+		BPL	OBJ_DET_NEXT
+		MOVE.L	OBJ_HIT_GOTO(A2),A0
+		JMP	(A0)
+
+; - Detect roadside objects. -----------------------------------------------
+
+;D0=Zmove D1=Xmove D4=Zpos D6=Zdir_offset D7=Zdirstep!Hit_patch_offset 
+;A1=Object A5=Detect hit control. A6=Detect dir control.
+
+SIGN_DETECT	TST.W	OBJ_ID(A1)
+		BMI	.end
+		CMP.W	#1,BG_TYPE	;Check if inside tunnel.
+		BEQ	.go
+		BTST	#O_DEAD,OBJ_FLAG0(A1)
+		BNE	.end
+
+.go		IF	LEVEL>3
+		MOVE.L	OBJ_YPOS(A1),-(SP)
+		MOVE.W	OBJ_ZPOS(A1),D3
+		ADD.W	ZVIEW,D3
+		MOVE.W	D3,D2
+		LSR.W	#7,D3
+		MULU	#RCSTEP,D3
+		LEA	ROAD_CORD_DATA-RCSTEP,A3
+		AND.W	#$7F,D2
+		MULS	RCYFRACT(A3,D3.W),D2
+		ADD.L	RCYPOS(A3,D3.W),D2
+		SUB.L	YVIEW,D2
+		ADD.L	D2,OBJ_YPOS(A1)
+		BSR	.do_detect
+		MOVE.L	(SP)+,OBJ_YPOS(A1)
+		RTS
+		ENDIF
+
+.do_detect	MOVEQ	#0,D2			;D0=Zmove D1=Xmove
+		MOVE.W	D0,D2
+		SWAP	D2
+		MOVE.L	D1,D3
+		BEQ.S	.skp1
+		DIVU	D1,D2			;D2=Zfactor
+		BVC.S	.skp1
+		MOVEQ	#-1,D2
+.skp1		TST.W	D0
+		BEQ.S	.skp2
+		DIVU	D0,D3			;D3=Xfactor
+.skp2		
+		LEA	ROAD_DATA,A3
+		ADD.W	ZVIEW,D4
+		MOVE.W	D4,D5
+		LSR.W	#7,D5
+		ADD.W	#RUPD_PRINT_PNO-1,D5
+		MULU	#RDSTEP,D5
+		ADD.W	RMAP_OFF,D5		;D5=Patch map offset.		
+		AND.W	#$FF80,D4
+		SUB.W	ZVIEW,D4		;Sign zpos.
+		CMP.W	#$80*(VIEW_PATCHES+2),D4
+		BCC.S	.end
+
+		ADD.W	D0,D6
+		ADD.W	OBJ_ZSIZE(A1),D6
+		ADD.W	#$80,D6			;D6=Movement Zrange.
+
+		MOVE.W	D6,-(SP)
+		MOVE.L	D7,-(SP)
+
+.det_patch_lp	MOVEM.W	D4/D5,-(SP)
+		AND.W	#RDMASK,D5
+		LEA	(A3,D5.W),A4
+
+		MOVE.L	RDLEFT(A4),A2  		;Check left signs.
+		LEA	SGR_DETECT_AMT(A2),A2
+		MOVE.W	(A2)+,D7
+		BSR	SIGN_DET_START
+		
+		MOVE.L	RDRIGHT(A4),A2  	;Check right signs.
+		LEA	SGR_DETECT_AMT(A2),A2
+		MOVE.W	(A2)+,D7
+		BSR	SIGN_DET_START
+
+		MOVEM.W	(SP)+,D4/D5		;D4=SIGN_ZPOS/RMAP_OFF
+		ADD.W	(SP),D4			;Next patch.			
+		ADD.W	2(SP),D5		;Next Zpos.			
+		SUB.W	#$80,4(SP)		;Zarea covered
+		BPL.S	.det_patch_lp
+
+		ADDQ.L	#6,SP
+.end		RTS		
+
+;A5=* Zpos/Xpos total stop on hit.
+
+SIGN_DET_ZXKILL	ADD.W	OBJ_ZSIZE(A1),D5	;Z and X kill.	
+		ADD.W	SGR_DET_ZSIZE(A2),D5
+		BLE.S	.det_hit_on_z
+
+		TST.L	DET_XERROR		;Stuck in object?
+		BNE.S	SIGN_HIT_ON_Z
+
+.det_hit_on_x	MOVE.L	D6,D1			;Set Xmove
+		MOVE.W	D6,D0
+		MULU	D2,D0
+		SWAP	D0   			;Set Zmove
+		MOVE.W	#SIGN_HIT_X,DET_HIT_FLAG
+		BRA.S	SIGN_HIT_SET
+
+.det_hit_on_z	MOVE.W	D4,D0			;Set Zmove
+		MOVE.W	D0,D1
+		MULU	D3,D1			;Set Xmove
+		MOVE.W	#SIGN_HIT_Z,DET_HIT_FLAG
+		BRA.S	SIGN_HIT_SET
+
+;A5=* Total stop on Zpos only.
+
+SIGN_DET_ZXADJ	ADD.W	OBJ_ZSIZE(A1),D5	;Z and X kill.	
+		ADD.W	SGR_DET_ZSIZE(A2),D5
+		BLE.S	SIGN_HIT_ON_Z
+	     
+		TST.L	DET_XERROR		;Stuck in object?
+		BNE.S	SIGN_HIT_ON_Z
+
+.det_hit_on_x	MOVE.L	D6,D1			;Set Xmove
+		MOVE.W	#SIGN_HIT_X,DET_HIT_FLAG
+		BRA.S	SIGN_HIT_SET
+
+SIGN_HIT_ON_Z	MOVE.W	D4,D0			;Set Zmove
+		MOVE.W	#SIGN_HIT_Z,DET_HIT_FLAG
+		
+SIGN_HIT_SET	MOVE.L	A2,DET_HIT_DATA0
+		MOVE.W	4(SP),DET_HIT_DATA1	;Set hit patch.
+
+SIGN_DET_NEXT	LEA	SGR_DET_DLEN(A2),A2
+SIGN_DET_START	CLR.L	DET_XERROR
+		DBRA	D7,.det_jmp
+		RTS
+.det_jmp	JMP	(A6)  
+
+
+SIGN_DET_RF	MOVE.L	SGR_DET_XPOS(A2),D4
+		SUB.L	OBJ_XPOS(A1),D4
+		ASL.L	D4
+		ADD.L	SGR_DET_XSIZE(A2),D4
+		ADD.L	OBJ_XSIZE(A1),D4
+		ASR.L	D4 
+		BGT.S	SIGN_CONT_F
+		BRA.S	SIGN_DET_NEXT
+
+SIGN_DET_LF	MOVE.L	OBJ_XPOS(A1),D4
+		SUB.L	SGR_DET_XPOS(A2),D4
+		ASL.L	D4
+		ADD.L	OBJ_XSIZE(A1),D4
+		ADD.L	SGR_DET_XSIZE(A2),D4
+		ASR.L	D4 
+		BLE.S	SIGN_DET_NEXT
+
+SIGN_CONT_F	MOVE.L	D4,D5			;D5=Brx-Alx
+		SUB.L	OBJ_XSIZE(A1),D4
+		SUB.L	SGR_DET_XSIZE(A2),D4
+		MOVE.L	D4,D6			;D6=Blx-Arx	
+		BPL.S	.det_delimit0
+		MOVE.L	D5,DET_XERROR
+		MOVEQ	#0,D6			;Inside	object area.
+.det_delimit0	SUB.L	D1,D4			;Xmove check.
+		BPL.S	SIGN_DET_NEXT
+
+		MOVE.L	OBJ_YPOS(A1),D4		;Yrange check.
+		SUB.L	OBJ_YSIZE(A1),D4
+		SUB.L	SGR_DET_YPOS(A2),D4
+		BGT.S	SIGN_DET_NEXT
+		ADD.L	OBJ_YSIZE(A1),D4
+		ADD.L	SGR_DET_YSIZE(A2),D4
+		BLE.S	SIGN_DET_NEXT
+
+.det_zcheck	TST.L	D1
+		BEQ.S	.det_limset
+		ASR.L	#2,D5
+		MULU	D2,D5			;*Zfactor
+		SWAP	D5
+		ROL.L	#2,D5
+		CMP.W	D0,D5
+		BCS.S	.det_delimit1
+.det_limset	MOVE.W	D0,D5
+.det_delimit1	MOVE.W	4(SP),D4		;Sign zpos.
+		ADD.W	SGR_DET_ZOFF(A2),D4	;Bzb
+		SUB.W	OBJ_ZPOS(A1),D4
+		SUB.W	OBJ_ZSIZE(A1),D4	;-Azf
+		CMP.W	D5,D4
+		BPL	SIGN_DET_NEXT
+	
+		MOVE.W	D6,D5
+		MULU	D2,D5			;*Zfactor
+		SWAP	D5
+		ADD.W	OBJ_ZPOS(A1),D5		;+Azb			
+		SUB.W	4(SP),D5		;Sign zpos.
+		SUB.W	SGR_DET_ZOFF(A2),D5		
+		SUB.W	SGR_DET_ZSIZE(A2),D5	;-Bzf
+		
+		BPL	SIGN_DET_NEXT
+		JMP	(A5)
+
+
+SIGN_DET_RB	MOVE.L	SGR_DET_XPOS(A2),D4
+		SUB.L	OBJ_XPOS(A1),D4
+		ASL.L	D4
+		ADD.L	SGR_DET_XSIZE(A2),D4
+		ADD.L	OBJ_XSIZE(A1),D4
+		ASR.L	D4 
+		BGT.S	SIGN_CONT_B
+		BRA	SIGN_DET_NEXT
+
+SIGN_DET_LB	MOVE.L	OBJ_XPOS(A1),D4
+		SUB.L	SGR_DET_XPOS(A2),D4
+		ASL.L	D4
+		ADD.L	OBJ_XSIZE(A1),D4
+		ADD.L	SGR_DET_XSIZE(A2),D4
+		ASR.L	D4 
+		BLE	SIGN_DET_NEXT
+
+SIGN_CONT_B	MOVE.L	D4,D5			;D5=Brx-Alx
+		SUB.L	OBJ_XSIZE(A1),D4
+		SUB.L	SGR_DET_XSIZE(A2),D4
+		MOVE.L	D4,D6			;D6=Blx-Arx	
+		BPL.S	.det_delimit0
+		MOVE.L	D5,DET_XERROR
+		MOVEQ	#0,D6			;Inside	object area.
+.det_delimit0	SUB.L	D1,D4			;Xmove check.
+		BPL	SIGN_DET_NEXT
+
+		MOVE.L	OBJ_YPOS(A1),D4		;Yrange check.
+		SUB.L	OBJ_YSIZE(A1),D4
+		SUB.L	SGR_DET_YPOS(A2),D4
+		BGT	SIGN_DET_NEXT
+		ADD.L	OBJ_YSIZE(A1),D4
+		ADD.L	SGR_DET_YSIZE(A2),D4
+		BLE	SIGN_DET_NEXT
+
+.det_zcheck	TST.L	D1
+		BEQ.S	.det_limset
+		ASR.L	#2,D5
+		MULU	D2,D5			;*Zfactor
+		SWAP	D5
+		ROL.L	#2,D5
+		CMP.W	D0,D5
+		BCS.S	.det_delimit1
+.det_limset	MOVE.W	D0,D5
+.det_delimit1	MOVE.W	OBJ_ZPOS(A1),D4		;Azb
+		SUB.W	4(SP),D4		;Sign zpos.
+		SUB.W	SGR_DET_ZOFF(A2),D4	
+		SUB.W	SGR_DET_ZSIZE(A2),D4	;-Bzf
+		CMP.W	D5,D4
+		BPL	SIGN_DET_NEXT
+		
+		MOVE.W	D6,D5
+		MULU	D2,D5			;*Zfactor
+		SWAP	D5
+		ADD.W	4(SP),D5		;Sign zpos.
+		ADD.W	SGR_DET_ZOFF(A2),D5	;+Bzb			
+		SUB.W	OBJ_ZPOS(A1),D5		
+		SUB.W	OBJ_ZSIZE(A1),D5	;-Azf
+		BPL	SIGN_DET_NEXT
+		JMP	(A5)
+
+; - Setup object based on preset data. -------------------------------------
+
+;A6=Graphic control data.
+;*A0=DETECT_DATA
+;*A1=OBJECT_DATA
+
+O_OBJECT_SETUP	BSR	OBJECT_ALLOC
+		BEQ.S	O_OBJSET
+		RTS
+
+O_OBJSET	MOVE.L	A6,OBJ_ADDR0(A1)
+		MOVE.L	OBJGR_SETUP(A6),A5
+O_OSET		MOVE.W	(A5)+,OBJ_ID(A1)
+		BMI.S	.skp
+		BSR	DETECT_ALLOC
+.skp		MOVE.L	(A5)+,OBJ_MOVE_CTRL(A1)
+		MOVE.L	(A5)+,OBJ_PRN_CTRL(A1)
+		MOVE.W	(A5)+,OBJ_ZSIZE(A1)
+		MOVE.L	(A5)+,OBJ_XSIZE(A1)
+		MOVE.L	(A5)+,OBJ_YSIZE(A1)
+		MOVE.W	(A5)+,OBJ_MASS(A1)
+		MOVE.L	(A5)+,OBJ_HIT_GOTO(A1)
+		MOVE.W	(A5)+,OBJ_ZPOS(A1)
+		MOVE.L	(A5)+,OBJ_XPOS(A1)
+		MOVE.L	(A5)+,OBJ_YPOS(A1)
+		MOVE.W	(A5)+,OBJ_SPD_MAXA(A1)
+		MOVE.W	(A5)+,OBJ_SPD_MAXB(A1)
+		MOVE.W	(A5)+,OBJ_SPD_INCFA(A1)
+		MOVE.W	(A5)+,OBJ_SPD_INCFB(A1)
+		MOVE.W	(A5)+,OBJ_SPD_DECF(A1)
+		MOVE.W	(A5)+,OBJ_SPD_BRAKE(A1)
+		MOVE.W	(A5)+,OBJ_TRACTION(A1)
+
+		MOVE.W	#$40,OBJ_LMSPD(A1)
+		MOVE.L	#180*$100,OBJ_LXMIN(A1)
+		MOVE.L	#220*$100,OBJ_LXMAX(A1)
+		MOVE.W	#1*$80,OBJ_LZMIN(A1)
+		MOVE.W	#2*$80,OBJ_LZMAX(A1)
+
+		MOVEQ	#0,D0
+		RTS	    			;NE=Error EQ=OK.
+
+; - Road-map based object setup. -------------------------------------------
+
+;A0=ROAD_DATA
+;D6=Index.
+;D2=Zpos.
+;*A0=DETECT_DATA
+;*A1=OBJECT_DATA
+;*A2=ROAD_DATA(Indexed to patch)
+
+O_MTR_ALLOC	LEA	(A0,D6.W),A2
+		BSR	OBJECT_ALLOC
+		BNE.S	.error
+		BSR	DETECT_ALLOC
+		MOVE.L	A2,OBJ_ADDR6(A1)
+		MOVE.L	A1,D0
+		SUB.L	#OBJECT_DATA,D0
+		MOVE.W	D0,RDDATA3(A2)
+		RTS
+.error		CLR.W	RDDATA3(A2)
+		ADDQ.L	#4,SP
+		RTS
+
+;A0=ROAD_DATA
+;D6=Index.
+
+O_MTR_DEALL	MOVE.W	RDDATA3(A0,D6.W),D0
+		BEQ.S	.end
+		LEA	OBJECT_DATA,A1
+		LEA	(A1,D0.W),A1
+		CLR.W	RDDATA3(A0,D6.W)
+		BSR	O_CLEAR_S
+		MOVEQ	#1,D0
+.end		RTS
+    
+;A0=ROAD_DATA
+;A6=Graphic control data.
+;D6=Index.
+;D2=Zpos.
+;*A0=DETECT_DATA
+;*A1=OBJECT_DATA
+;*A2=ROAD_DATA(Indexed to patch)
+		
+O_MTR_SETUP	LEA	(A0,D6.W),A2
+		BSR	OBJECT_ALLOC
+		BNE.S	.error
+		BSR	O_OBJSET
+		MOVE.L	A2,OBJ_ADDR6(A1)
+		MOVE.L	A1,D0
+		SUB.L	#OBJECT_DATA,D0
+		MOVE.W	D0,RDDATA3(A2)
+		RTS
+.error		CLR.W	RDDATA3(A2)
+		ADDQ.L	#4,SP
+		RTS
+
+O_MTR_SETFIN	MOVE.W	D2,OBJ_ZPOS(A1)
+		MOVE.W	RDDATA0(A2),D0
+		EXT.L	D0
+		ASL.L	#$8,D0
+		MOVE.L	D0,OBJ_XPOS(A1)
+		MOVE.W	RDDATA1(A2),D0
+		ADD.W	D0,OBJ_ZPOS(A1)
+		RTS
+
+; - Detect object position limits. -----------------------------------------
+
+;A1=Object data.
+;*A6=Data area.
+;*D0=Zpos.
+;*D1=Zpos+Xpos adjustment.
+
+O_DET_PLIMITS	MOVE.L	D1,-(SP)
+
+		MOVE.L	OBJ_XPOS(A1),D1
+		CMP.L	DET_EDGE_R,D1
+		BMI.S	.chkm
+		CMP.L	DET_LIMIT_R,D1
+		BMI.S	.set_spd
+		MOVE.L	DET_LIMIT_R,OBJ_XPOS(A1)
+		TST.L	OBJ_XINERTIA(A1)
+		BMI.S	.set_spd
+.set_spd_xin	CLR.L	OBJ_XINERTIA(A1)
+.set_spd	MOVE.L	OBJ_SPD(A1),D1
+		ASR.L	#4,D1
+		SUB.L	D1,OBJ_SPD(A1)
+		MOVE.L	(SP)+,D1
+		OR.B	#$08,CCR		;Negitive (outside road area)
+		RTS
+.chkm		CMP.L	DET_EDGE_L,D1
+		BPL.S	.ok
+		CMP.L	DET_LIMIT_L,D1
+		BPL.S	.set_spd
+		MOVE.L	DET_LIMIT_L,OBJ_XPOS(A1)
+		TST.L	OBJ_XINERTIA(A1)
+		BPL.S	.set_spd
+ 		BRA.S	.set_spd_xin
+.ok		MOVE.L	(SP)+,D1
+		AND.B	#$F7,CCR		;Positive (within road area)
+		RTS
+
+; - Allocate print area/sort zpos based on xpos. ---------------------------
+
+;A1=Object data.
+;*A6=Data area.
+;*D0=Zpos.
+;*D1=Zpos+Xpos adjustment.
+
+O_PZ_ALLOCX_XIT	MOVE.W	OBJ_ZPOS(A1),D0
+O_PR_ALLOCX_XIT	BSR	O_PR_ALLOCX
+		ADDQ.L	#4,SP
+		RTS
+		ADDQ.L	#4,SP
+		RTS
+		ADDQ.L	#4,SP
+		RTS
+		RTS
+
+O_PZ_ALLOC_XIT	MOVE.W	OBJ_ZPOS(A1),D0
+O_PR_ALLOC_XIT	MOVE.W	D0,D1
+O_PR_A_XIT	BSR	OBJ_PR_ALLOCATE
+		ADDQ.L	#4,SP
+		RTS
+		ADDQ.L	#4,SP
+		RTS
+		ADDQ.L	#4,SP
+		RTS
+		RTS
+
+;*PC+0=Zpos<$80
+;*PC+4=Zpos>$1080
+;*PC+8=Allocation error.
+;*PC+C=Allocation successful.
+
+O_PZ_ALLOCX	MOVE.W	OBJ_ZPOS(A1),D0
+O_PR_ALLOCX	MOVE.L	OBJ_XPOS(A1),D1
+		ADD.L	XVIEW,D1
+		ASR.L	#7,D1
+		BPL.S	.skp
+		NEG.W	D1
+.skp		ADD.W	D0,D1
+		BRA	OBJ_PR_ALLOCATE
+
+; - Calc patch position/offsets. -------------------------------------------
+
+;A1=Object data.
+;*D0=Zpos.
+;*D4/D5=Patch zoffsets.
+;*A5=Patch data.
+
+O_CALC_PATCH	MOVE.W	OBJ_ZPOS(A1),D0
+O_CALC_PATCHZ	MOVE.W	D0,D5
+		ADD.W	ZVIEW,D5
+		MOVE.W	D5,D4
+		LSR.W	#7,D5
+		MULU	#RCSTEP,D5
+		LEA	ROAD_CORD_DATA-RCSTEP,A5
+		LEA	(A5,D5.W),A5		;A5=Patch data.
+		AND.W	#$7F,D4
+		MOVE.W	D4,D5			;D4/D5=Patch fraction offsets.
+		RTS
+
+; - Zpos camera range check. -----------------------------------------------
+
+;A1=Object data.
+;*D0=Zpos.
+;*PC+0=Behind camera range.
+;*PC+4=Ahead of camera range.
+;*PC+8=Within camera range.
+
+O_RANGE_CHK	MOVE.W	OBJ_ZPOS(A1),D0
+		CMP.W	#$80,D0
+		BMI.S	.behind
+		CMP.W	#$80*(VIEW_PATCHES+1),D0
+		BPL.S	.ahead
+		ADDQ.L	#8,(SP)
+		RTS
+.ahead		ADDQ.L	#4,(SP)
+.behind		RTS
+
+; - Calc view angle. -------------------------------------------------------
+
+;A0=Object graphic format data.
+;A5=Road patch data.
+;*A0=Object graphic for this frame.
+;*D3=Frame offset.
+
+O_CALC_VIEW	MOVEM.L	A3/D1/D2,-(SP)
+
+		MOVE.L	(A0)+,A3
+		MOVE.W	(A3)+,D3		;Center offset
+		MOVE.W	(A3)+,D2		;Xstep
+OCV_DENT	MOVE.L	XVIEW,D1
+		ADD.L	D1,D1
+		SUB.L	RCXPOS(A5),D1
+		ADD.L	OBJ_XPOS(A1),D1		;D1=Camera view angle.
+		BPL.S	.xangle_find
+		NEG.L	D1
+		NEG.W	D2
+.xangle_find	CMP.L	(A3)+,D1
+		BCS.S	.calc_view_y
+		SUB.W	D2,D3
+		BRA.S	.xangle_find
+
+.calc_view_y	MOVE.L	(A0)+,A3
+		MOVE.W	(A3)+,D2		;Ystep
+		MOVE.W	RCYFRACT(A5),D1
+		BPL.S	.yangle_find
+		NEG.W	D1
+		NEG.W	D2
+.yangle_find	CMP.W	(A3)+,D1
+		BCS.S	.set_data
+    		ADD.W	D2,D3
+		BRA.S	.yangle_find
+.set_data	LEA	(A0,D3.W),A0		;Data for this frame.
+		
+		MOVEM.L	(SP)+,A3/D1/D2
+		RTS
+		
+; - Graphic allocate/deallocate --------------------------------------------
+
+;A0=Object graphic to print.
+;A2=Currently allocated gr.
+;*A0=Object graphic for this frame.
+;*A2=Object graphic for last frame.
+
+O_ALLOC_DEALL_P	MOVEM.L	A0-A6/D0-D7,-(SP)
+		LEA	8(A0),A3
+		ADD.W	(A3),A3
+		MOVE.L	$08+SCL_GR(A3),D6		;"OBJPOS" offset.
+		LEA	8(A2),A3
+		ADD.W	(A3),A3
+		MOVE.L	$08+SCL_GR(A3),D7		;"OBJPOS" offset.
+		BRA.S	O_ALLOC_DEALL
+	
+O_ALLOC_DEALL_S	MOVEM.L	A0-A6/D0-D7,-(SP)
+		MOVE.L	$10+SCL_GR(A0),D6		;Standard "OBJSCL" offset.
+		MOVE.L	$10+SCL_GR(A2),D7		;Standard "OBJSCL" offset.
+
+;D6=GLIST addr for this frame.
+;D7=GLIST addr for last frame.
+
+O_ALLOC_DEALL	MOVE.L	A2,D0
+		BEQ.S	.must_allocate
+		CMP.L	D6,D7
+		BEQ.S	.end_ok
+
+		MOVE.L	D7,-(SP)
+		MOVE.L	D6,A1
+		BSR	ALLOCATE_IF
+		BMI.S	.unavailable
+		BTST	#6,GR_ACTIVE(A1)		;CDLD check.
+		BEQ.S	.skp
+		BSR	FORCED_CDLD
+.skp		MOVE.L	(SP)+,A1
+		BSR	DEALLOCATE
+.end_ok		MOVEM.L	(SP)+,A0-A6/D0-D7
+		RTS
+.unavailable	ADDQ.L	#4,SP
+.end_error	MOVEM.L	(SP)+,A0-A6/D0-D7
+	    	MOVE.L	A2,A0
+		RTS
+
+.must_allocate	MOVE.L	D6,A1
+		BSR	ALLOCATE_IF
+		BMI.S	.end_error
+		BTST	#6,GR_ACTIVE(A1)		;CDLD check.
+		BEQ.S	.end_ok
+		BSR	FORCED_CDLD
+		BRA.S	.end_ok
+
+; - Deallocate active graphic. ---------------------------------------------
+
+;A2=Object graphic format data.
+
+O_DEALL_P	MOVEM.L	A0-A6/D0-D7,-(SP)
+O_DP		LEA	8(A2),A3
+		ADD.W	(A3),A3
+		MOVE.L	SCL_GR+$08(A3),A1		;"OBJPOS" offset.
+		BRA.S	O_DEALL
+
+O_DEALL_S	MOVEM.L	A0-A6/D0-D7,-(SP)
+O_DS		MOVE.L	SCL_GR+$10(A2),A1		;"OBJSCL" offset.
+
+;A1=Object graphic for last frame.
+
+O_DEALL		MOVE.L	A2,D0
+		BEQ.S	.skp
+		BSR	DEALLOCATE
+.skp		MOVEM.L	(SP)+,A0-A6/D0-D7
+		RTS
+
+; - Total object deallocation. ---------------------------------------------
+
+;A1=Object data.
+
+O_CLEAR_S	MOVEM.L	A0-A6/D0-D7,-(SP)
+		BSR	DETECT_DEALL
+		CLR.B	OBJ_FLAG0(A1)
+		MOVE.L	OBJ_ADDR1(A1),A2
+		BRA	O_DS
+
+O_CLEAR_P	MOVEM.L	A0-A6/D0-D7,-(SP)
+		BSR	DETECT_DEALL
+		CLR.B	OBJ_FLAG0(A1)
+		MOVE.L	OBJ_ADDR1(A1),A2
+		BRA	O_DP
+
+; - Differantial size object print. ----------------------------------------
+
+;D0=Zpos. 
+;D4/D5=Patch zoffset.
+;A0=Object graphic format data.
+;A1=Object data.
+;A5=Road patch data.
+;A6=Scale preformat data.
+;*D6/D7=Xpos/Ypos.
+
+O_PR_DIFF0	MOVE.L	OBJ_XPOS(A1),D6
+		MOVE.L	OBJ_YPOS(A1),D7
+
+O_PR_DIFF0_XY	MOVEM.L	D0-D7/A0/A4,-(SP)
+		MOVE.L	A0,D3		;Error trap.
+		BEQ	O_PRN_ERROR
+
+		MOVE.W	D0,D1		;Calculate differance.
+		ADD.W	OBJ_ZSIZE(A1),D1
+		ADD.W	ZVIEW,D1
+		MOVE.W	D1,D2
+		LSR.W	#7,D2
+		CMP.W	#VIEW_PATCHES+1,D2
+		BPL	O_PRN_ERROR
+		
+		MULU	#RCSTEP,D2
+		LEA	ROAD_CORD_DATA-RCSTEP,A4
+		AND.W	#$7F,D1
+		MULS	RCYFRACT(A4,D2.W),D1
+		ADD.L	RCYPOS(A4,D2.W),D1
+
+		MULS	RCXFRACT(A5),D4
+		ADD.L	RCXPOS(A5),D4
+		ADD.L	D6,D4
+		MULS	RCYFRACT(A5),D5
+		ADD.L	RCYPOS(A5),D5
+		
+		SUB.L	D5,D1
+		ADD.L	D1,D5
+
+		ADD.L	D7,D5
+		ADD.L	(A0)+,D4
+		ADD.L	(A0)+,D5
+		MOVEM.L	(A0)+,D6/D7	;D4=Xpos D5=Ypos D6=width D7=Height 
+
+		SUB.L	D1,D7
+		BRA	O_PR_ENT2
+
+; - Standard object print. -------------------------------------------------
+
+;D0=Zpos. 
+;D4/D5=Patch zoffset.
+;A0=Object graphic format data.
+;A1=Object data.
+;A5=Road patch data.
+;A6=Scale preformat data.
+;*D6/D7=Xpos/Ypos.
+
+O_PR_SET0	MOVE.L	OBJ_XPOS(A1),D6
+		MOVE.L	OBJ_YPOS(A1),D7
+
+O_PR_SET0_XY	MOVEM.L	D0-D7/A0/A4,-(SP)
+		MOVE.L	A0,D3		;Error trap.
+		BEQ.S	O_PRN_ERROR
+
+		MULS	RCXFRACT(A5),D4
+		ADD.L	RCXPOS(A5),D4
+		ADD.L	D6,D4
+		MULS	RCYFRACT(A5),D5
+		ADD.L	RCYPOS(A5),D5
+		ADD.L	D7,D5
+
+O_PR_ENT0	ADD.L	(A0)+,D4
+		ADD.L	(A0)+,D5
+
+O_PR_ENT1	MOVEM.L	(A0)+,D6/D7	;D4=Xpos D5=Ypos D6=width D7=Height 
+
+O_PR_ENT2	DIVS	D0,D4
+		DIVS	D0,D5
+		DIVS	D0,D6
+		BNE.S	.xok
+		MOVEQ	#1,D6
+.xok		DIVS	D0,D7
+		BNE.S	.yok
+		MOVEQ	#1,D7
+.yok		SWAP	D6
+		MOVE.W	D7,D6
+		SWAP	D6
+	     
+		LEA	SCALE,A4
+	 	
+O_PR_SET0_FIN	MOVE.L	RCYMAX(A5),D7
+	  	MOVE.L	RCXMAX(A5),D0	;Clip co-ords.
+O_PR_SET1_FIN	ADD.W	#128,D4
+		ADD.W	#97,D5
+		MOVE.W	D4,(A6)+	
+		MOVE.W	D5,(A6)+
+		MOVEM.L	D0/D1/D2/D3/D6/D7/A0/A4,(A6)
+		
+		MOVEM.L	(SP)+,D0-D7/A0/A4
+		RTS		
+
+O_PRN_ERROR	MOVE.L	#SIGN_NEXT,$20(A6)		
+		MOVEM.L	(SP)+,D0-D7/A0/A4
+		RTS		
+
+O_PR_SET0_W	MOVE.L	OBJ_XPOS(A1),D6
+		MOVE.L	OBJ_YPOS(A1),D7
+
+O_PR_SET0_XY_W	MOVEM.L	D0-D7/A0/A4,-(SP)
+		MOVE.L	A0,D3		;Error trap.
+		BEQ.S	O_PRN_ERROR
+
+		MULS	RCXFRACT(A5),D4
+		ADD.L	RCXPOS(A5),D4
+		ADD.L	D6,D4
+		MOVE.L	YVIEW,D5
+		ADD.L	D7,D5
+		BRA.S	O_PR_ENT0
+
+;--- Resize sprite ---
+
+O_PR_SET0_RS	MOVE.L	OBJ_XPOS(A1),D6
+		MOVE.L	OBJ_YPOS(A1),D7
+
+O_PR_SET0_XY_RS	MOVEM.L	D0-D7/A0/A4,-(SP)
+		MOVE.L	A0,D3		;Error trap.
+		BEQ.S	O_PRN_ERROR
+
+		MULS	RCXFRACT(A5),D4
+		ADD.L	RCXPOS(A5),D4
+		ADD.L	D6,D4
+		MULS	RCYFRACT(A5),D5
+		ADD.L	RCYPOS(A5),D5
+		ADD.L	D7,D5
+
+		MOVEM.L	(A0)+,D2/D3/D6/D7;D4=Xpos D5=Ypos D6=width D7=Height 
+		DIVS	D1,D2
+		DIVS	D1,D3
+		DIVS	D0,D4
+		DIVS	D0,D5
+		ADD.W	D2,D4
+		ADD.W	D3,D5
+		DIVS	D1,D6
+		BNE.S	.xok
+		MOVEQ	#1,D6
+.xok		DIVS	D1,D7
+		BNE.S	.yok
+		MOVEQ	#1,D7
+.yok		SWAP	D6
+		MOVE.W	D7,D6
+		SWAP	D6
+	     
+		LEA	SCALE,A4
+	 	BRA	O_PR_SET0_FIN
+
+; --------------------------------------------------------------------------
+
+;D0=Zpos. 
+;D4/D5=Road position X/Y.
+;A0=Object graphic format data.
+;A1=Object data.
+;A6=Scale preformat data.
+
+O_PR_SET1	MOVEM.L	D0-D7/A0/A4,-(SP)
+		MOVE.L	A0,D3		;Error trap.
+		BEQ	O_PRN_ERROR
+
+		ADD.L	(A0)+,D4
+		ADD.L	(A0)+,D5
+
+O_PS_SET1_PENT	MOVEM.L	(A0)+,D6/D7	;D4=Xpos D5=Ypos D6=width D7=Height 
+
+		DIVS	D0,D4
+		DIVS	D0,D5
+		DIVS	D0,D6
+		BNE.S	.xok
+		MOVEQ	#1,D6
+.xok		DIVS	D0,D7
+		BNE.S	.yok
+		MOVEQ	#1,D7
+.yok		SWAP	D6
+		MOVE.W	D7,D6
+		SWAP	D6
+	     
+		LEA	SCALE,A4
+	 	
+		MOVE.L	#$00C00000,D7
+	  	MOVE.L	#$01000000,D0	;Clip co-ords.
+		BRA	O_PR_SET1_FIN
+
+O_PR_SET1P	MOVEM.L	D0-D7/A0/A4,-(SP)
+		MOVE.L	A0,D3		;Error trap.
+		BEQ	O_PRN_ERROR
+
+		ADD.L	(A0)+,D4
+		ADD.L	(A0)+,D5
+		ADD.W	(A0),A0
+		BRA.S	O_PS_SET1_PENT
+
+; --------------------------------------------------------------------------
+
+;D0=Zpos. 
+;D4/D5=Patch zoffset.
+;D6/D7=Xpos/Ypos.
+;A0=Object graphic format data.
+;A1=Object data.
+;A5=Road patch data.
+;A6=Scale preformat data.
+
+O_PR_SET0P	MOVE.L	OBJ_XPOS(A1),D6
+		MOVE.L	OBJ_YPOS(A1),D7
+
+O_PR_SET0P_XY	MOVEM.L	D0-D7/A0/A4,-(SP)
+		MOVE.L	A0,D3		;Error trap.
+		BEQ	O_PRN_ERROR
+
+		MULS	RCXFRACT(A5),D4
+		ADD.L	RCXPOS(A5),D4
+		ADD.L	D6,D4
+		MULS	RCYFRACT(A5),D5
+		ADD.L	RCYPOS(A5),D5
+		ADD.L	D7,D5
+
+		ADD.L	(A0)+,D4
+		ADD.L	(A0)+,D5
+		ADD.W	(A0),A0
+		BRA	O_PR_ENT1
+
+; - Rotational object print. -----------------------------------------------
+
+;D0=Zpos. 
+;D2=Angle[0-$3FE]
+;D4/D5=Patch zoffset.
+;D6/D7=Xpos/Ypos.
+;A0=Object graphic format data.
+;A1=Object data.
+;A5=Road patch data.
+;A6=Scale preformat data.
+
+O_PR_ROTATE	MOVE.L	OBJ_XPOS(A1),D6
+		MOVE.L	OBJ_YPOS(A1),D7
+
+O_PR_ROTATE_XY	MOVEM.L	D0-D7/A0/A4,-(SP)
+		MOVE.L	A0,D3		;Error trap.
+		BEQ	O_PRN_ERROR
+
+		MULS	RCXFRACT(A5),D4
+		ADD.L	RCXPOS(A5),D4
+		ADD.L	D6,D4
+		MULS	RCYFRACT(A5),D5
+		ADD.L	RCYPOS(A5),D5
+		
+O_PR_R_ENTA	ADD.L	D7,D5
+		ADD.L	(A0)+,D4
+		ADD.L	(A0)+,D5
+		MOVEM.L	(A0)+,D6/D7	;D4=Xpos D5=Ypos D6=width D7=Height 
+
+		DIVS	D0,D4
+		DIVS	D0,D5
+		DIVS	D0,D6
+		BNE.S	.xok
+		MOVEQ	#1,D6
+.xok		DIVS	D0,D7
+		BNE.S	.yok
+		MOVEQ	#1,D7
+.yok 		SWAP	D6
+		MOVE.W	D7,D6
+		SWAP	D6
+		MOVE.L	D6,D3
+	  	ASR.W	D7
+		SUB.W	D7,D5
+	 	MOVE.W	D6,D7
+	  	ASR.W	D7
+	   	SUB.W	D7,D4
+
+		LEA	SIN_LOOKUP,A4
+		MOVE.W	(A4,D2.W),D1
+		SWAP	D1
+		LEA	$100(A4),A4
+		MOVE.W	(A4,D2.W),D1
+
+		LEA	SCALE_ROTATE,A4
+		BRA	O_PR_SET0_FIN
+
+
+O_PR_R_WATER	MOVE.L	OBJ_XPOS(A1),D6
+		MOVE.L	OBJ_YPOS(A1),D7
+
+O_PR_R_WATER_XY	MOVEM.L	D0-D7/A0/A4,-(SP)
+		MOVE.L	A0,D3		;Error trap.
+		BEQ	O_PRN_ERROR
+
+		MULS	RCXFRACT(A5),D4
+		ADD.L	RCXPOS(A5),D4
+		ADD.L	D6,D4
+		MOVE.L	YVIEW,D5
+		BRA.S	O_PR_R_ENTA
+
+; - Calc hill & turn amts. -------------------------------------------------
+
+;D0=Zdistance.
+;A1=Object data.
+;*D3=Hill amt.
+;*D4=Turn amt.
+
+O_CALC_MOVEAMTS	MOVE.W	#RDSTEP*(RUPD_PRINT_PNO-1),D6
+O_CALC_MAMTSENT	LEA	ROAD_DATA,A0	
+		MOVE.W	OBJ_ZPOS(A1),D7
+		ADD.W	ZVIEW,D7
+		MOVE.W	D7,D1
+		LSR.W	#7,D7
+		MULU	#RDSTEP,D7
+		ADD.W	RMAP_OFF,D7
+		ADD.W	D6,D7
+		NEG.W	D1
+		AND.W	#$7F,D1
+
+		MOVEQ	#0,D3
+		MOVEQ	#0,D4
+		TST.W	D0
+		BPL.S	.floop
+
+		SUB.W	#$80,D1
+		BNE.S	.bloop
+		SUB.W	#RDSTEP,D7
+.bloop		SUB.W	D1,D0
+		BLE.S	.bcalc
+		ADD.W	D0,D1
+		BMI.S	.bcalc
+		RTS
+.bcalc		MOVE.W	D1,D2
+		AND.W	#RDMASK,D7
+		MULS	RDHILL(A0,D7.W),D1
+		MULS	RDTURN(A0,D7.W),D2
+		ADD.L	D1,D3
+		SUB.L	D2,D4
+		SUB.W	#RDSTEP,D7
+		MOVE.W	#$FF80,D1
+		BRA.S	.bloop
+
+.floop		SUB.W	D1,D0
+		BPL.S	.fcalc
+		ADD.W	D0,D1
+		BGT.S	.fcalc
+		RTS
+.fcalc		MOVE.W	D1,D2
+		AND.W	#RDMASK,D7
+		MULS	RDHILL(A0,D7.W),D1
+		MULS	RDTURN(A0,D7.W),D2
+		ADD.L	D1,D3
+		SUB.L	D2,D4
+		ADD.W	#RDSTEP,D7
+		MOVE.W	#$80,D1
+		BRA.S	.floop
+
+; - Calc object speed update. ----------------------------------------------
+
+;D6=Control(Same as joypad).
+;A1=Object data.
+;*D0=New speed.
+
+O_SPEED_UPDATE	MOVEQ	#0,D4
+O_SPD_UPENT	MOVE.L	OBJ_SPD(A1),D0
+		MOVEQ	#0,D1
+		MOVE.W	OBJ_SPD_MAXA(A1),D1
+
+		MOVE.W	OBJ_SPD_INCFA(A1),D2
+		MOVE.W	OBJ_SPD_DECF(A1),D3
+  		BTST	#5,D6
+		BEQ.S	.start
+		MOVE.W	OBJ_SPD_MAXB(A1),D1
+		MOVE.W	OBJ_SPD_INCFB(A1),D2
+		BSET	#3,D6
+.start		SWAP	D1
+		ADD.L	D4,D1
+
+O_SPD_START	BTST	#2,D6
+		BEQ.S	.accel_chk
+
+		IF	REVERSE
+		CMP.L	#$80000,D0
+		BPL.S	.brake
+		NEG.L	D1
+		BRA	.calc_speed
+		ENDIF
+
+.brake		MOVEQ	#0,D1
+		MOVE.W	OBJ_SPD_BRAKE(A1),D1
+		SWAP	D1
+		TST.L	OBJ_YPOS(A1)
+		BPL.S	.bcalc
+		ASR.L	D1
+		
+.bcalc		TST.L	D0
+		BMI.S	.bneg
+		SUB.L	D1,D0
+		BPL.S	.set_speed
+		MOVEQ	#0,D0
+		BRA	.set_speed
+.bneg		ADD.L	D1,D0
+		BMI.S	.set_speed
+		MOVEQ	#0,D0
+		BRA.S	.set_speed
+
+.accel_chk	BTST	#3,D6
+		BNE.S	.calc_speed
+
+		MOVE.W	D3,D2
+		MOVE.L	D4,D1
+		BNE.S	.calc_speed
+		MOVE.L	D0,D4
+		BPL.S	.min_chk
+		NEG.L	D4
+.min_chk	SWAP	D4
+		TST.W	D4
+		BGT.S	.calc_speed
+		MOVEQ	#0,D0
+		BRA.S	.set_speed
+
+.calc_speed	BSR	O_CALC_INERTIA
+.set_speed	MOVE.L	D0,OBJ_SPD(A1)
+		RTS
+
+; - Calc object speed update based on hill angle. --------------------------
+
+;D6=Control(Same as joypad).
+;A1=Object data.
+;*D0=New speed.
+
+O_SPEED_UPHILL	MOVE.W	OBJ_ZPOS(A1),D7
+		BPL.S	.pos
+		CMP.W	#-$F00,D7
+		BCS	O_SPEED_UPDATE
+		BRA.S	.skp
+.pos		CMP.W	#$1F00,D7
+		BCC	O_SPEED_UPDATE
+.skp		ADD.W	ZVIEW,D7
+		LSR.W	#7,D7
+		MULU	#RDSTEP,D7
+		ADD.W	RMAP_OFF,D7
+		ADD.W	#RDSTEP*(RUPD_PRINT_PNO-1),D7
+		AND.W	#RDMASK,D7
+		LEA	ROAD_DATA,A0	
+		MOVE	RDHILL(A0,D7.W),D4
+		SWAP	D4
+		CLR.W	D4
+		BRA	O_SPD_UPENT
+
+; - Calc new inertia based on acceleration/max speed. ----------------------
+
+;D0=Current inertia.
+;D1=Max.
+;D2=Acceleration fraction.
+;*D0=New inertia.
+
+O_CALC_INERTIA	SUB.L	D0,D1
+		BPL.S	.pos
+		
+.neg		NEG.L	D1
+		BSR	.div
+		NEG.L	D1
+		ADD.L	D1,D0
+		RTS
+
+.pos		BSR.S	.div
+		ADD.L	D1,D0
+		RTS
+
+.div		DIVU	D2,D1
+		BVS.S	.error
+		AND.L	#$FFFF,D1
+		RTS
+.error		LSR.L	#8,D1
+		DIVU	D2,D1
+		BVS.S	.error1
+		AND.L	#$FFFF,D1
+		LSL.L	#8,D1
+		RTS
+.error1		LSR.L	#8,D1
+		DIVU	D2,D1
+		AND.L	#$FFFF,D1
+		LSL.L	#8,D1
+		LSL.L	#8,D1
+		RTS
+
+; - Calc object wheel turn. ------------------------------------------------
+
+;D6=Control(Same as joypad).
+;A1=Object data.
+;*D0=New wheel position.
+
+		IF	LEVEL<4
+WHEEL_STEP_N	EQU	$800
+WHEEL_STEP_NC	EQU	$E00
+WHEEL_STEP_T	EQU	$800
+WHEEL_STEP_TC	EQU	$E00
+WHEEL_MAX	EQU	$2200
+		ELSE
+WHEEL_STEP_N	EQU	$A00
+WHEEL_STEP_NC	EQU	$E00
+WHEEL_STEP_T	EQU	$A00
+WHEEL_STEP_TC	EQU	$E00
+WHEEL_MAX	EQU	$2200
+		ENDIF
+
+O_WHEEL_UPDATE
+		MOVE.W	#WHEEL_MAX,D1
+		MOVE.W	#WHEEL_STEP_N,D2
+		MOVE.W	#WHEEL_STEP_NC,D3
+  		BTST	#5,D6
+		BEQ.S	O_WHUPD
+		MOVE.W	#WHEEL_STEP_T,D2
+		MOVE.W	#WHEEL_STEP_TC,D3
+
+O_WHUPD		MOVE.W	OBJ_WHEEL(A1),D0
+		BTST	#0,D6
+		BNE.S	.mright
+		BTST	#1,D6
+		BEQ.S	.center
+		NEG.W	D2
+
+.mleft		TST.W	D0
+		BLE.S	.move
+		BRA.S	.cplus
+
+.mright		TST.W	D0
+		BMI.S	.cminus
+
+.move		ADD.W	D2,D0
+		BPL.S	.iright
+.ileft		NEG.W	D1
+		CMP.W	D1,D0
+		BCC.S	.done
+		MOVE.W	D1,D0
+		BRA.S	.done
+.iright		CMP.W	D1,D0
+		BCS.S	.done
+		MOVE.W	D1,D0
+		BRA.S	.done
+.center		TST.W	D0
+		BPL.S	.cplus
+.cminus		ADD.W	D3,D0
+		BMI.S	.done
+		BRA.S	.exact
+.cplus		SUB.W	D3,D0
+		BPL.S	.done
+.exact		MOVEQ	#0,D0
+.done		MOVE.W	D0,OBJ_WHEEL(A1)
+		RTS
+
+; --------------------------------------------------------------------------
+
+;D6=Control(Same as joypad).
+;A1=Object data.
+;*D0=New inertia.
+
+O_XIN_UPDATE	MOVE.L	OBJ_XINERTIA(A1),D0
+		MOVEQ	#0,D1
+		MOVEQ	#0,D2
+		MOVEQ	#0,D3
+		MOVE.B	OBJ_TRACTION(A1),D2
+		MOVE.B	OBJ_TRACTION+1(A1),D3
+
+O_XIN_START	MOVE.W	D6,D4
+		AND.W	#3,D4
+		BNE.S	.chk
+		MOVE.W	D3,D2
+.chk		MOVE.L	D0,D4
+		BPL.S	.min_chk
+		NEG.L	D4
+.min_chk	SWAP	D4
+		TST.W	D4
+		BGT.S	.calc_xin
+		MOVEQ	#0,D0
+		BRA.S	.set_xin
+.calc_xin	BSR	O_CALC_INERTIA
+.set_xin	MOVE.L	D0,OBJ_XINERTIA(A1)
+		RTS
+		
+; --------------------------------------------------------------------------
+
+;D4=TURN_AMT
+
+O_ROAD_MOVE	BSR	O_RCALC
+		BRA	DETECT_MOVE
+
+O_RCALC		BCLR	#O_SKID,OBJ_FLAG0(A1)
+		
+		MOVE.W	D4,-(SP)
+		BSR	O_XIN_UPDATE
+		MOVE.L	D0,D2			;D2=Xinertia
+		MOVE.W	(SP)+,D4
+
+		MOVE.W	OBJ_WHEEL(A1),D1
+		MOVE.W	OBJ_SPD(A1),D0
+		BPL.S	.skp
+		MOVEQ	#0,D1
+		MOVEQ	#0,D4
+.skp
+		MULS	#11,D4
+		MULS	D0,D4	  		;D4=Turn+centrafugal force.
+
+		MULS	D0,D1			;D1=Wheel Xdistance.
+		BNE.S	.smove
+.center		ADD.L	D4,D1
+		BRA.S	.schk
+
+.smove		ADD.L	D4,D2
+
+.schk		TST.L	D1
+		BMI.S	.neg
+		BNE.S	.pos
+		ADD.L	D2,D1
+		BEQ.S	.ok
+		BRA.S	.skid
+.neg		ADD.L	D2,D1
+		BMI.S	.ok
+		BRA.S	.skid
+.pos		ADD.L	D2,D1
+		BPL.S	.ok
+.skid		TST.L	OBJ_YPOS(A1)
+		BNE.S	.ok
+		BSET	#O_SKID,OBJ_FLAG0(A1)
+		
+.ok		ASR.L	#8,D1
+		RTS
+
+; --------------------------------------------------------------------------
+
+O_SKID_SMOKE	MOVE.L	OBJ_ADDR0(A1),A2
+		MOVE.L	OBJGR_SKID(A2),A2
+		MOVE.W	(A2)+,D7
+		BMI.S	.forced
+		BTST	#O_SKID,OBJ_FLAG0(A1)
+		BEQ.S	.end
+		BRA.S	.skid_start
+.forced		NEG.W	D7
+		BRA.S	.skid_start
+.skid_loop	MOVE.L	OBJ_XPOS(A1),D1
+		ADD.L	(A2)+,D1
+		MOVEM.L	A0/A1/A2/D7,-(SP)
+
+		MOVE.W	OBJ_ZPOS(A1),D0
+		MOVE.L	OBJ_YPOS(A1),D2
+		MOVE.W	OBJ_SPD(A1),D3
+		MOVE.W	D3,D4
+		ASR.W	#2,D4
+		SUB.W	D4,D3
+		BSR	VIS_SET
+
+		MOVEM.L	(SP)+,A0/A1/A2/D7
+.skid_start	DBRA	D7,.skid_loop		
+.end		RTS
+
+; --------------------------------------------------------------------------
+
+;A0=Normal graphic frame.
+;D1=GLIST offset.
+
+;-PR allocation error (CCR=Negitive)-
+;-PR allocation ok (CCR=Positive)-
+;*A0=Flash graphic frame.
+
+FLASH_MAX	EQU	10
+FLASH_DLEN	EQU	$26
+
+O_FLASH_ALLOC_S	MOVEM.L	A1/A2/D0/D1/D7,-(SP)	
+		MOVE.L	A0,D0
+		BEQ.S	.error
+		
+		ADD.L	$10+SCL_GR(A0),D1	;New GLIST offset.
+	
+		LEA	FLASH_COPY_DATA-FLASH_DLEN,A1
+		MOVEQ	#FLASH_MAX-1,D7
+
+.chk_lp		LEA	FLASH_DLEN(A1),A1
+		MOVE.L	(A1),D0
+		BEQ.S	.cmp_only
+		CMP.L	D0,A0
+		DBEQ	D7,.chk_lp
+		BNE.S	.error
+		CMP.L	$16+SCL_GR(A1),D1
+		DBEQ	D7,.chk_lp
+		BNE.S	.error
+
+.already_here	LEA	6(A1),A0		;A0=Flash graphic frame.	
+.done		MOVEM.L	(SP)+,A1/A2/D0/D1/D7
+		AND.B	#$F7,CCR		;Positive (allocation ok)
+		RTS
+
+.error		MOVEM.L	(SP)+,A1/A2/D0/D1/D7
+		OR.B	#$08,CCR		;Negitive (allocation error)
+		RTS
+
+.cmp_only	MOVE.L	A1,A2
+		CMP.L	D0,A0
+		BRA.S	.cmp_chk
+.cmp_lp		LEA	FLASH_DLEN(A1),A1
+		CMP.L	(A1),A0
+.cmp_chk	DBEQ	D7,.cmp_lp
+		BNE.S	.allocate
+		CMP.L	$16+SCL_GR(A1),D1
+		DBEQ	D7,.chk_lp
+		BEQ.S	.already_here
+
+.allocate	MOVE.L	A0,(A2)+
+		CLR.W	(A2)+
+		MOVE.L	(A0)+,(A2)+
+		MOVE.L	(A0)+,(A2)+
+		MOVE.L	(A0)+,(A2)+
+		MOVE.L	(A0)+,(A2)+
+		MOVE.L	(A0)+,(A2)+
+		MOVE.L	(A0)+,(A2)+
+		MOVE.L	(A0)+,(A2)+
+		MOVE.L	(A0)+,(A2)+
+		LEA	-$20(A2),A0
+		MOVE.L	D1,$10+SCL_GR(A0)
+		BRA.S	.done
+
+; ----------------------------------------
+
+O_FLASH_ALLOC_P	MOVEM.L	A1/A2/D0/D1/D7,-(SP)	
+		MOVE.L	A0,D0
+		BEQ.S	.error
+
+		LEA	8(A0),A1
+		ADD.W	(A1),A1
+		ADD.L	$08+SCL_GR(A1),D1	;New GLIST offset.
+
+		LEA	FLASH_COPY_DATA-FLASH_DLEN,A1
+		MOVEQ	#FLASH_MAX-1,D7
+
+.chk_lp		LEA	FLASH_DLEN(A1),A1
+		MOVE.L	(A1),D0
+		BEQ.S	.cmp_only
+		CMP.L	D0,A0
+		DBEQ	D7,.chk_lp
+		BNE.S	.error
+		CMP.L	$16+SCL_GR(A1),D1
+		DBEQ	D7,.chk_lp
+		BNE.S	.error
+
+.already_here	LEA	4(A1),A0		;A0=Flash graphic frame.	
+.done		MOVEM.L	(SP)+,A1/A2/D0/D1/D7
+		AND.B	#$F7,CCR		;Positive (allocation ok)
+		RTS
+
+.error		MOVEM.L	(SP)+,A1/A2/D0/D1/D7
+		OR.B	#$08,CCR		;Negitive (allocation error)
+		RTS
+
+.cmp_only	MOVE.L	A1,A2
+		CMP.L	D0,A0
+		BRA.S	.cmp_chk
+.cmp_lp		LEA	FLASH_DLEN(A1),A1
+		CMP.L	(A1),A0
+.cmp_chk	DBEQ	D7,.cmp_lp
+		BNE.S	.allocate
+		CMP.L	$16+SCL_GR(A1),D1
+		DBEQ	D7,.chk_lp
+		BEQ.S	.already_here
+
+.allocate	MOVE.L	A0,(A2)+
+		MOVE.L	(A0)+,(A2)+
+		MOVE.L	(A0)+,(A2)+
+		MOVE.W	#2,(A2)+
+		ADD.W	(A0),A0
+		MOVE.L	(A0)+,(A2)+
+		MOVE.L	(A0)+,(A2)+
+		MOVE.L	(A0)+,(A2)+
+		MOVE.L	(A0)+,(A2)+
+		MOVE.L	(A0)+,(A2)+
+		MOVE.L	(A0)+,(A2)+
+		LEA	-$22(A2),A0
+		MOVE.L	D1,$12+SCL_GR(A0)
+		BRA.S	.done
+
+; ----------------------------------------
+
+FLASH_DEALL_CHK	LEA	FLASH_COPY_DATA,A1
+		MOVEQ	#FLASH_MAX-1,D7
+
+.chk_lp		TST.L	(A1)
+		BEQ.S	.next
+		MOVE.L	$16+SCL_GR(A1),A2
+		MOVE.W	GR_ACTIVE(A2),D0
+		AND.W	#$3FFF,D0
+		BNE.S	.next
+		CLR.L	(A1)
+.next		LEA	FLASH_DLEN(A1),A1
+		DBRA	D7,.chk_lp
+		RTS
+
+; ----------------------------------------
+
+O_FLASH_CHECK_S	TST.B	OBJ_FLASH0(A1)
+		BLE.S	.chk_flash1
+		SUBQ.B	#1,OBJ_FLASH0(A1)
+.chk_flash1	TST.B	OBJ_FLASH1(A1)
+		BLE.S	O_FCS_CHK
+		SUBQ.B	#1,OBJ_FLASH1(A1)
+O_FCS_CHK	MOVE.L	#GLIST2-GLIST,D1
+		BTST.B	#0,OBJ_FLASH1(A1)
+		BNE	O_FLASH_ALLOC_S
+		MOVE.L	#GLIST3-GLIST,D1
+		BTST.B	#0,OBJ_FLASH0(A1)
+		BNE	O_FLASH_ALLOC_S
+.end		RTS
+
+O_FLASH_CHECK_P	TST.B	OBJ_FLASH0(A1)
+		BLE.S	.chk_flash1
+		SUBQ.B	#1,OBJ_FLASH0(A1)
+.chk_flash1	TST.B	OBJ_FLASH1(A1)
+		BLE.S	O_FCP_CHK
+		SUBQ.B	#1,OBJ_FLASH1(A1)
+O_FCP_CHK	MOVE.L	#GLIST2-GLIST,D1
+		BTST.B	#0,OBJ_FLASH1(A1)
+		BNE	O_FLASH_ALLOC_P
+		MOVE.L	#GLIST3-GLIST,D1
+		BTST.B	#0,OBJ_FLASH0(A1)
+		BNE	O_FLASH_ALLOC_P
+.end		RTS
+
+; - Standard car allocation and print. -------------------------------------
+
+;D0=Zpos
+;A1=Object_data
+;(OBJ_ADDR0)=Standard frame data.
+;(OBJ_ADDR1)=Currently allocated frame.
+;-PR allocation successful (CCR=Positive)-
+;*A0=This frame.
+;*A2=Last frame.
+;*A3=Frame data.
+;*A4=OBJ_ADDR1.
+;*A5=Road data.
+;*A6=PRalloc.
+;*D1=Zpos adjusted for Xpos.
+;*D3=Frame offset.
+;*D4/D5=Patch zoffset.
+;*D6/D7=Xpos/Ypos.
+;-PR allocation error (CCR=Negitive)-
+;*D1=Zpos adjusted for Xpos.
+;*A2=Last frame.
+;*A3=Frame data.
+;*A4=OBJ_ADDR1.
+
+O_CAR_PRINT_S	LEA	OBJ_ADDR0(A1),A4
+O_CPS_ENTA	MOVE.L	(A4)+,A3
+O_CPS_ENTB	MOVE.L	OBJGR_ANM0(A3),A0
+		BCHG	#O_TIRE,OBJ_FLAG0(A1)
+		BEQ.S	O_CPS_ENTC
+		MOVE.L	OBJGR_ANM1(A3),A0
+
+O_CPS_ENTC	MOVE.L	(A4),A2
+		BSR	O_PR_ALLOCX
+		BRA.L	O_CPS_DEALL
+		BRA.L	O_CPS_DEALL
+		BRA.L	O_CPS_DEALL
+		
+O_CPS_ENTD	BSR	O_CALC_PATCHZ
+		BSR	O_CALC_VIEW
+		BSR	O_FLASH_CHECK_S
+		BSR	O_ALLOC_DEALL_S
+		MOVE.L	A0,(A4)
+		BSR	O_PR_SET0
+		AND.B	#$F7,CCR	;Positive (print ok)
+		RTS
+
+O_CAR_PRINT_SNX	LEA	OBJ_ADDR0(A1),A4
+O_CPS_ENTA_NX	MOVE.L	(A4)+,A3
+O_CPS_ENTB_NX	MOVE.L	OBJGR_ANM0(A3),A0
+		BCHG	#O_TIRE,OBJ_FLAG0(A1)
+		BEQ.S	O_CPS_ENTC_NX
+		MOVE.L	OBJGR_ANM1(A3),A0
+O_CPS_ENTC_NX	MOVE.L	(A4),A2
+		MOVE.W	D0,D1
+		BSR	OBJ_PR_ALLOCATE
+		BRA.L	O_CPS_DEALL
+		BRA.L	O_CPS_DEALL
+		BRA.L	O_CPS_DEALL
+		BRA.S	O_CPS_ENTD
+
+O_CPS_DEALL	BSR	O_DEALL_S
+		CLR.L	(A4)
+		OR.B	#$08,CCR	;Negitive (print error)
+		RTS
+
+O_CAR_PRINT_P	LEA	OBJ_ADDR0(A1),A4
+O_CPP_ENT	MOVE.L	(A4)+,A3
+		MOVE.L	(A4),A2
+
+		BSR	O_PR_ALLOCX
+		BRA.L	.deall
+		BRA.L	.deall
+		BRA.L	.done
+
+		MOVE.L	OBJGR_ANM0(A3),A0
+		BCHG	#O_TIRE,OBJ_FLAG0(A1)
+		BEQ.S	.print
+		MOVE.L	OBJGR_ANM1(A3),A0
+
+.print		BSR	O_CALC_PATCHZ
+		BSR	O_CALC_VIEW
+		BSR	O_FLASH_CHECK_P
+		BSR	O_ALLOC_DEALL_P
+		MOVE.L	A0,(A4)
+		BSR	O_PR_SET0P
+.done		AND.B	#$F7,CCR	;Positive (print ok)
+		RTS
+
+.deall		BSR	O_DEALL_P
+		CLR.L	(A4)
+		OR.B	#$08,CCR	;Negitive (print error)
+		RTS
+
+; --------------------------------------------------------------------------
+
+O_THROW_TO_MAIN	LEA	OBJECT_DATA,A3
+		MOVE.L	OBJ_SPD(A3),D0
+		MOVE.W	OBJ_ZPOS(A3),D1
+		MOVE.L	OBJ_XPOS(A3),D6
+		MOVE.W	OBJ_XFORCE(A3),D7
+
+;D0=OBJ_SPD 
+;D1=OBJ_ZPOS
+;D6=OBJ_XPOS
+;D7=OBJ_XFORCE
+
+O_THROW_TO_POS	MOVE.L	A1,A2
+		MOVE.L	(A4)+,A6
+		MOVEM.L	D0/D1/D6/D7,-(SP)
+		BSR	O_OBJECT_SETUP	 
+		BNE	.error
+		MOVEM.L	(SP)+,D0/D1/D6/D7
+
+		MOVE.L	(A4)+,OBJ_ADDR6(A1)	;Set ground hit.
+		MOVE.L	(A4)+,OBJ_ADDR7(A1)	;Set object hit.
+
+		MOVE.W	OBJ_ZPOS(A2),OBJ_ZPOS(A1)
+		MOVE.L	OBJ_XPOS(A2),OBJ_XPOS(A1)
+		MOVE.L	OBJ_YPOS(A2),D2
+		ADD.L	(A4)+,D2
+		MOVE.L	D2,OBJ_YPOS(A1)
+		MOVE.L	OBJ_SPD(A2),OBJ_SPD(A1)
+
+		MOVE.L	(A4)+,D2		;Y throw height.
+		MOVE.W	(A4)+,D3		;UP steps.
+		MOVE.W	(A4)+,D4		;DOWN step.
+		MOVE.W	D3,D5
+		ADD.W	D4,D5			;D5=Total steps.
+
+		SUB.L	OBJ_SPD(A1),D0
+		ASR.L	#8,D0
+		MULS	D5,D0
+		SUB.W	OBJ_ZPOS(A1),D1
+		EXT.L	D1
+		ASL.L	#8,D1
+		ADD.L	D1,D0	   		;D0=Zdistance.
+
+		BPL.S	.zlim_p			;Limit check.
+		MOVE.L	(A4)+,D1
+		BEQ.S	.zlim_done
+.zlim_n		NEG.L	D1
+		CMP.L	D1,D0
+		BPL.S	.zlim_done
+		BRA.S	.zlim_use
+.zlim_p		MOVE.L	(A4)+,D1
+		BEQ.S	.zlim_done
+		CMP.L	D1,D0
+		BMI.S	.zlim_done
+.zlim_use	MOVE.L	D1,D0
+.zlim_done		
+		MOVE.L	D6,D1
+		SUB.L	OBJ_XPOS(A1),D1		;D1=Xdistance.
+
+		MULS	D5,D7			;Pre-emt Xposition.	
+		ADD.L	D7,D1			;D1=Distance to hit-pt.
+		
+		BPL.S	.xlim_p			;Limit check.
+		MOVE.L	(A4)+,D7
+		BEQ.S	.xlim_done
+.xlim_n		NEG.L	D7
+		CMP.L	D7,D1
+		BPL.S	.xlim_done
+		BRA.S	.xlim_use
+.xlim_p		MOVE.L	(A4)+,D7
+		BEQ.S	.xlim_done
+		CMP.L	D7,D1
+		BMI.S	.xlim_done
+.xlim_use	MOVE.L	D7,D1
+.xlim_done		
+
+		DIVS	D5,D1
+		EXT.L	D1  		
+		MOVE.L	D1,OBJ_ADDR4(A1)	;Set Xstep.
+
+		MOVE.W	D5,D6
+		ADDQ.W	#1,D6
+		MULU	D5,D6
+		DIVS	D6,D0
+		EXT.L	D0
+		ASL.L	#8,D0
+		ASL.L	#1,D0
+		MOVE.L	D0,OBJ_ADDR5(A1)	;Set SPDstep.
+
+		MOVE.W	D4,D5
+		ADDQ.W	#1,D5
+		MULU	D4,D5
+		ASL.L	D2
+		DIVU	D5,D2
+		MULU	D2,D3
+		NEG.L	D3
+		MOVE.L	D3,OBJ_ADDR2(A1)	;Set Ystep init.
+		EXT.L	D2
+		MOVE.L	D2,OBJ_ADDR3(A1)	;Set Ystep.
+		
+		EXG	A1,A2
+		MOVEQ	#0,D0
+		RTS
+
+.error		ADD.L	#$10,SP
+		EXG	A1,A2
+		MOVEQ	#1,D0
+		RTS
+
+O_T2M_MOVE	BTST	#O_CLEAR,OBJ_FLAG0(A1)
+		BNE	O_CLEAR_S
+		BSR	O_RANGE_CHK 	
+		BRA.L	O_CLEAR_S
+		BRA.L	O_CLEAR_S
+		MOVE.L	OBJ_XPOS(A1),D0
+		SUB.L	#200*$100,D0
+		BPL.S	.pxchk
+		NEG.L	D0
+.pxchk		CMP.L	#600*$100,D0
+		BPL	O_CLEAR_S
+
+		MOVE.W	OBJ_SPD(A1),D0
+		MOVE.W	OBJ_ADDR4+2(A1),D1
+		LEA	SIGN_DET_ZXKILL,A5	;Sign hit adjust routine.
+		BSR	DETECT_ZXY
+		ADD.W	D0,OBJ_ZPOS(A1)
+		ADD.L	D1,OBJ_XPOS(A1)
+
+		MOVE.W	DET_HIT_FLAG,D0
+		BNE.S	.hit
+.cont		MOVE.L	OBJ_ADDR5(A1),D0
+		ADD.L	D0,OBJ_SPD(A1)
+		MOVE.L	OBJ_ADDR2(A1),D0
+		MOVE.L	OBJ_YPOS(A1),D1
+		ADD.L	D0,D1
+		MOVE.L	D1,OBJ_YPOS(A1)
+		BPL.S	.hit_ground
+		ADD.L	OBJ_ADDR3(A1),D0
+		MOVE.L	D0,OBJ_ADDR2(A1)
+		RTS
+
+.hit		CMP.W	#OBJ_HIT,D0
+		BCS.S	.hit_visuals
+		MOVE.L	DET_HIT_DATA1,A2
+		CMP.W	#ID_MAIN,OBJ_ID(A2)
+		BNE.S	.cont
+		MOVE.L	OBJ_ADDR7(A1),A0
+		JMP	(A0)
+
+.hit_ground	CLR.L	OBJ_YPOS(A1)
+.hit_visuals	MOVE.L	OBJ_ADDR6(A1),A0
+		JMP	(A0)
+
+O_T2M_HIT	CMP.W	#ID_MAIN,OBJ_ID(A1)
+		BNE.S	.end
+		MOVEM.L	D0-D7/A0-A6,-(SP)
+		EXG	A2,A1
+		MOVE.L	OBJ_ADDR7(A1),A0
+		JSR	(A0)
+		MOVEM.L	(SP)+,D0-D7/A0-A6
+.end		JMP	OBJ_DET_NEXT
+
+O_T2M_HIT_EN	CMP.W	#IDRANGE_CAR,OBJ_ID(A1)
+		BPL.S	.end
+		MOVEM.L	D0-D7/A0-A6,-(SP)
+		EXG	A2,A1
+		MOVE.L	OBJ_ADDR7(A1),A0
+		JSR	(A0)
+		MOVEM.L	(SP)+,D0-D7/A0-A6
+.end		JMP	OBJ_DET_NEXT
+
+O_T2M_PRINT	MOVE.L	OBJ_ADDR1(A1),A2
+		MOVE.W	D0,D1
+		BSR	OBJ_PR_ALLOCATE
+		BRA.L	.deall
+		BRA.L	.deall
+		BRA.L	.end
+
+		BSR	O_CALC_PATCHZ
+		BSR	O_FLASH_CHECK_S
+		BSR	O_ALLOC_DEALL_S
+		MOVE.L	A0,OBJ_ADDR1(A1)
+		BRA	O_PR_SET0
+
+.deall		BSR	O_DEALL_S
+		CLR.L	OBJ_ADDR1(A1)
+.end		RTS
+
+; --------------------------------------------------------------------------
+
+O_LINE_TO_MAIN	LEA	OBJECT_DATA,A3
+		MOVE.L	OBJ_SPD(A3),D0
+		MOVE.W	OBJ_ZPOS(A3),D1
+		MOVE.L	OBJ_XPOS(A3),D6
+		MOVE.W	OBJ_XFORCE(A3),D7
+
+;D0=OBJ_SPD 
+;D1=OBJ_ZPOS
+;D6=OBJ_XPOS
+;D7=OBJ_XFORCE
+
+O_LINE_TO_POS	MOVE.L	A1,A2
+		MOVE.L	(A4)+,A6
+		MOVEM.L	D0/D1/D6/D7,-(SP)
+		BSR	O_OBJECT_SETUP	 
+		BNE	.error
+		MOVEM.L	(SP)+,D0/D1/D6/D7
+
+		MOVE.L	(A4)+,OBJ_ADDR6(A1)	;Set ground hit.
+		MOVE.L	(A4)+,OBJ_ADDR7(A1)	;Set object hit.
+
+		MOVE.W	OBJ_ZPOS(A2),OBJ_ZPOS(A1)
+		SUBQ.W	#2,OBJ_ZPOS(A1)
+		MOVE.L	OBJ_XPOS(A2),OBJ_XPOS(A1)
+		MOVE.L	OBJ_YPOS(A2),D2
+		ADD.L	(A4)+,D2
+		MOVE.L	D2,OBJ_YPOS(A1)
+		MOVE.L	OBJ_SPD(A2),OBJ_SPD(A1)
+
+		MOVE.L	(A4)+,D2		;Y throw height.
+		MOVE.W	(A4)+,D3		;UP steps.
+		MOVE.W	(A4)+,D4		;DOWN step.
+		MOVE.W	D3,D5
+		ADD.W	D4,D5			;D5=Total steps.
+
+		SUB.L	OBJ_SPD(A1),D0
+		ASR.L	#8,D0
+		MULS	D5,D0
+		SUB.W	OBJ_ZPOS(A1),D1
+		EXT.L	D1
+		ASL.L	#8,D1
+		ADD.L	D1,D0	   		;D0=Zdistance.
+
+		BPL.S	.zlim_p			;Limit check.
+		MOVE.L	(A4)+,D1
+		BEQ.S	.zlim_done
+.zlim_n		NEG.L	D1
+		CMP.L	D1,D0
+		BPL.S	.zlim_done
+		BRA.S	.zlim_use
+.zlim_p		MOVE.L	(A4)+,D1
+		BEQ.S	.zlim_done
+		CMP.L	D1,D0
+		BMI.S	.zlim_done
+.zlim_use	MOVE.L	D1,D0
+.zlim_done		
+		MOVE.L	D6,D1
+		SUB.L	OBJ_XPOS(A1),D1		;D1=Xdistance.
+
+		MULS	D5,D7			;Pre-emt Xposition.	
+		ADD.L	D7,D1			;D1=Distance to hit-pt.
+		
+		BPL.S	.xlim_p			;Limit check.
+		MOVE.L	(A4)+,D7
+		BEQ.S	.xlim_done
+.xlim_n		NEG.L	D7
+		CMP.L	D7,D1
+		BPL.S	.xlim_done
+		BRA.S	.xlim_use
+.xlim_p		MOVE.L	(A4)+,D7
+		BEQ.S	.xlim_done
+		CMP.L	D7,D1
+		BMI.S	.xlim_done
+.xlim_use	MOVE.L	D7,D1
+.xlim_done		
+		DIVS	D5,D1
+		EXT.L	D1  		
+		MOVE.L	D1,OBJ_ADDR4(A1)	;Set Xstep.
+
+		MOVE.W	D5,D6
+		ADDQ.W	#1,D6
+		MULU	D5,D6
+		DIVS	D6,D0
+		EXT.L	D0
+		ASL.L	#8,D0
+		ASL.L	#1,D0
+		MOVE.L	D0,OBJ_ADDR5(A1)	;Set SPDstep.
+
+		DIVS	D5,D2
+		EXT.L	D2
+		MOVE.L	D2,OBJ_ADDR2(A1)	;Set Ystep.
+
+		MOVEQ	#0,D0
+.end		EXG	A1,A2
+		RTS
+.error		ADD.L	#$10,SP
+		EXG	A1,A2
+		RTS
+
+; --------------------------------------------------------------------------
+
+

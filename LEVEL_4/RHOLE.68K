@@ -1,0 +1,205 @@
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ BATMAN RETURNS CD-ROM						   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+; ROAD OBJECT - LEVEL 4 - "Rotating hole"
+
+; --------------------------------------------------------------------------
+
+RLHOLE_SETUP	LEA	OBJ_RLHOLE,A6
+		BSR	O_MTR_SETUP
+		MOVE.W	#SFX_ERHOLE_A,OBJ_FX0_SFXNUM(A1)
+		MOVE.W	D2,OBJ_ZPOS(A1)
+	    	BSR	RANDOM_NO
+		MOVE.W	D0,OBJ_CNT0(A1)
+	    	MOVE.W	#$C,OBJ_CNT1(A1)
+		BSR	RANDOM_NO
+		BPL.S	.end
+		NEG.W	OBJ_CNT1(A1)
+.end		RTS
+
+; --------------------------------------------------------------------------
+
+RHOLE_DEALL	BSR	O_MTR_DEALL
+		BEQ.S	.end
+		JSR	SFX3D_KILL
+.end		RTS
+
+; --------------------------------------------------------------------------
+
+RHOLE_HIT	
+		MOVEM.L	D0-D7/A0-A6,-(SP)
+
+		LEA	OBJ_RHPOS,A0
+		MOVE.W	OBJ_CNT0(A2),D0
+		AND.W	#$3FE,D0
+		LEA	SIN_LOOKUP,A3
+		MOVE.L	(A0)+,D1
+		MULS	(A3,D0.W),D1	;D1=Xoff
+		ASL.W	D1
+		SWAP	D1
+		EXT.L	D1
+		SUB.L	OBJ_XPOS(A2),D1
+		ADD.L	OBJ_XPOS(A1),D1
+		ASL.L	D1
+		ADD.L	(A0),D1
+		SUB.L	OBJ_XSIZE(A1),D1
+		BLE.S	.hit
+		ASR.L	D1
+		SUB.L	(A0)+,D1
+		ADD.L	OBJ_XSIZE(A1),D1
+		BPL.S	.hit
+
+.ok		MOVEM.L	(SP)+,D0-D7/A0-A6
+		JMP	OBJ_DET_NEXT
+
+.hit		CMP.W	#ID_MAIN,OBJ_ID(A1)
+		BNE.S	.done
+		TST.W	OBJ_CNT7(A2)
+		BNE.S	.ok
+		MOVE.W	#8,OBJ_CNT7(A2)
+
+		MOVE.L	OBJ_SPD(A1),D7
+		BPL.S	.hit_calc
+		NEG.L	D7
+.hit_calc	SWAP	D7
+		ROL.L	#3,D7
+		ADD.W	D7,OBJ_BASH_AMT(A1)
+
+		ADDQ.B	#4,OBJ_FLASH1(A1)	;Rebound batski.
+		MOVE.W	OBJ_SPD(A1),D1
+		ASR.W	D1
+		NEG.W	D1
+		BMI.S	.neg
+		NEG.W	D1
+.neg		CMP.W	#-$40,D1
+		BMI.S	.set
+		MOVE.W	#-$40,D1
+.set		MOVE.W	D1,OBJ_SPD(A1)
+		MOVE.L	#200*$100,D1
+		SUB.L	OBJ_XPOS(A1),D1
+		ASL.L	#5,D1
+		MOVE.L	D1,OBJ_XINERTIA(A1)
+
+.sfx		MOVE.W	#SFX_METRHOLE_A,D0
+		JSR	CSFX_ONESHOT_V
+
+		CLR.L	DET_XERROR
+		MOVEM.L	(SP)+,D0-D7/A0-A6
+		BRA	OBJ_DET_ZXKILL
+
+
+.done		MOVEM.L	(SP)+,D0-D7/A0-A6
+		BRA	OBJ_HIT_NORM
+
+; --------------------------------------------------------------------------
+
+RHOLE_MOVE	MOVE.W	#$7F,OBJ_SPD(A1)
+		JSR	SFX3D_SPEED
+		CLR.W	OBJ_SPD(A1)
+
+		TST.W	OBJ_CNT7(A1)
+		BEQ.S	.skp
+		SUBQ.W	#1,OBJ_CNT7(A1)
+.skp
+		MOVE.W	OBJ_CNT0(A1),D2
+		ADD.W	OBJ_CNT1(A1),D2
+		AND.W	#$3FE,D2
+		MOVE.W	D2,OBJ_CNT0(A1)
+
+		CMP.W	#$C0,OBJ_ZPOS(A1)
+		BMI.S	.end
+
+		MOVE.W	#100,D7
+		BSR	RANDOM_RANGE_U
+		CMP.W	#50,D7
+		BMI.S	.end
+
+		LEA	VIS_RHSPARK,A0
+		BSR	VIS_SET_XYZS
+		BNE.S	.end
+
+		MOVE.W	#$400,D7
+		BSR	RANDOM_RANGE_U
+		AND.W	#$3FE,D7
+		LEA	SIN_LOOKUP,A4
+		MOVE.W	(A4,D7.W),D1
+		MULS	#200,D1
+		ASR.L	#7,D1
+		MOVE.L	D1,OBJ_YPOS(A1)
+		LEA	$100(A4),A4
+		MOVE.W	(A4,D7.W),D1
+		MULS	#180,D1
+		ASR.L	#7,D1
+		ADD.L	#200*$100,D1
+		MOVE.L	D1,OBJ_XPOS(A1)
+
+.end		RTS
+
+VIS_RHSPARK
+		DC.W	0,0,0
+		DC.W	-$08,0,$600
+		DC.W	$0080,$0500
+		DC.L	VIS_MOVE0
+		DC.L	VIS_PRN0W
+		DC.L	VIS_SPARK1_GRS
+		DC.W	0			;SFX
+
+; --------------------------------------------------------------------------
+
+RHOLE_PRINT	CMP.W	#$C0,D0
+		BPL.S	.prn
+		RTS
+		
+.prn		ADDQ.W	#4,D0
+		MOVE.W	D0,D1
+		CMP.W	#$180,D1
+		BMI.S	.alloc
+		ADD.W	#$200,D1
+.alloc		BSR	O_PR_A_XIT
+		BSR	O_CALC_PATCHZ
+		
+		MOVE.L	OBJ_ADDR0(A1),A2
+		MOVE.L	OBJGR_ANM0(A2),A0
+		MOVE.W	OBJ_CNT0(A1),D2
+		CMP.W	#$140,D2
+		BMI.S	.flash
+		CMP.W	#$2B0,D2
+		BMI.S	.galloc
+.flash		BSR	RANDOM_NO
+		BPL.S	.galloc
+		MOVE.L	OBJGR_ANM1(A2),A0
+.galloc		MOVE.L	OBJ_ADDR1(A1),A2
+		BSR	O_ALLOC_DEALL_S
+		MOVE.L	A0,OBJ_ADDR1(A1)
+
+		BRA	O_PR_R_WATER
+
+; --------------------------------------------------------------------------
+
+		XYRATIO	100,350,100,350
+		OBJCNTR	0,0,0,0
+
+OBJ_RHPOS	XSIZE	19
+		XSIZE	50
+OBJ_RLHOLE
+		DC.L	OBJ_RHOLE_SET
+		DC.L	OBJ_RLHOLE_ANM0
+		DC.L	OBJ_RLHOLE_ANM1
+
+OBJ_RLHOLE_ANM0	OBJSCL	0,0,119,102,110,110,RHDARK
+OBJ_RLHOLE_ANM1	OBJSCL	0,0,119,102,110,110,RHLITE
+
+OBJ_RHOLE_SET	DC.W	ID_ROADOBJ	;OBJ_ID
+		DC.L	RHOLE_MOVE	;OBJ_MOVE_CTRL
+		DC.L	RHOLE_PRINT	;OBJ_PRN_CTRL
+		DC.W	$10		;OBJ_ZSIZE
+		XYSIZE	110,110
+		DC.W	0		;OBJ_MASS
+		DC.L	RHOLE_HIT	;OBJ_HIT_GOTO
+		DC.W	0		;OBJ_ZPOS
+		DC.L	200*$100	;OBJ_XPOS
+		DC.L	-25*$100	;OBJ_YPOS
+
+; --------------------------------------------------------------------------
+

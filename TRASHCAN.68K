@@ -1,0 +1,281 @@
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ BATMAN RETURNS CD-ROM						   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+; ROAD OBJECT - LEVEL 1,2,3 - "Trash can"
+
+; --------------------------------------------------------------------------
+
+TCAN_SETUP	LEA	OBJ_TCAN0,A6
+		BSR	O_MTR_SETUP
+	    	BRA	O_MTR_SETFIN
+
+; --------------------------------------------------------------------------
+
+TCANPUP_SETUP	LEA	OBJ_TCAN1,A6
+		BSR	O_OBJECT_SETUP
+		BNE.S	.end
+		NOT.B	OBJ_FLAG1(A1)
+		BSR	RANDOM_NO
+		BPL.S	.done
+		MOVE.L	#300*$100,OBJ_XPOS(A1)
+.done		MOVE.W	#50*$100,D7
+		BSR	RANDOM_RANGE_S
+		ADD.L	D7,OBJ_XPOS(A1)
+		SUBQ.W	#1,ECL_ACTIVE
+		ADDQ.W	#1,ECL_PAUSE
+		MOVEQ	#0,D0
+.end		RTS
+
+; --------------------------------------------------------------------------
+
+TCAN_HIT	;CMP.W	#ID_SHOT,OBJ_ID(A1)
+		;BEQ	OBJ_DET_ZXKILL
+		
+		TST.B	OBJ_FLAG1(A2)
+		BEQ.S	.norm
+		
+.pup		CMP.W	#ID_MAIN,OBJ_ID(A1)
+		BNE	OBJ_DET_NEXT
+		MOVEM.L	D0-D7/A0-A6,-(SP)
+		EXG	A2,A1
+		MOVEM.L	A1-A2,-(SP)	
+		BSR	PUP_SETUP
+		MOVEM.L	(SP)+,A1-A2
+		BRA.S	.setup
+
+.norm		CMP.W	#IDRANGE_CAR,OBJ_ID(A1)
+		BCC	OBJ_DET_NEXT
+		MOVEM.L	D0-D7/A0-A6,-(SP)
+		EXG	A2,A1
+		MOVE.L	OBJ_ADDR6(A1),A0
+		CLR.W	RDDATA3(A0)
+
+.setup		BSR	O_CLEAR_S
+
+		MOVE.W	DET_MOVE_Z,D0
+		BPL.S	.pos
+		MOVE.W	#-$20,D3
+		BRA.S	.tcan_spin
+.pos		ADD.W	OBJ_ZSIZE(A2),D0
+		MOVEQ	#0,D3	       
+       
+.tcan_spin	ADD.W	OBJ_ZPOS(A2),D0
+		MOVE.L	OBJ_XPOS(A1),D1
+		MOVE.L	OBJ_YPOS(A1),D2
+		ADD.W	OBJ_SPD(A2),D3
+		ASR.W	D3
+		ADD.W	OBJ_SPD(A2),D3
+		
+		MOVEM.L	D0-D3/A1,-(SP)
+		LEA	VIS_TCAN1,A0
+		BSR	VIS_RTOBJ_SET
+		BNE.S	.skp
+		MOVE.W	OBJ_XFORCE(A2),D0
+		ADD.W	D0,OBJ_CNT4(A1)
+.skp		MOVEM.L	(SP)+,D0-D3/A1
+		SUB.L	#40*$100,D2
+		LEA	VIS_TCAN2,A0
+		BSR	VIS_RTOBJ_SET
+		BNE.S	.skp1
+		MOVE.W	OBJ_XFORCE(A2),D0
+		ADD.W	D0,OBJ_CNT4(A1)
+.skp1		JSR	SCADD_ROADOBJ
+
+		MOVEM.L	(SP)+,D0-D7/A0-A6
+		JMP	OBJ_DET_NEXT
+
+; --------------------------------------------------------------------------
+
+TCAN_MOVE	TST.W	OBJ_ZPOS(A1)
+		BMI	O_CLEAR_S
+		SUBQ.W	#1,OBJ_CNT7(A1)
+		BPL.S	.end
+		MOVE.W	#6,OBJ_CNT7(A1)
+		MOVE.B	#4,OBJ_FLASH1(A1)
+.end		RTS
+
+; --------------------------------------------------------------------------
+
+PUP_SETUP	BSR	OBJECT_ALLOC
+	 	BNE.S	.error
+		MOVE.L	#PUP_MOVE,OBJ_MOVE_CTRL(A1)
+		MOVE.L	#PUP_PRINT,OBJ_PRN_CTRL(A1)
+		MOVE.W	#$100,OBJ_CNT1(A1)
+		MOVE.W	#20,OBJ_CNT0(A1)
+		MOVE.L	#40*$100,OBJ_YPOS(A1)
+.end		RTS
+.error		ADDQ.W	#1,MISSTOT
+		RTS
+
+PUP_MOVE	TST.W	OBJ_CNT7(A1)
+		BEQ.S	.move
+		SUBQ.W	#1,OBJ_CNT7(A1)
+		RTS
+
+.move		SUBQ.W	#1,OBJ_CNT0(A1)
+		BLE.S	.clear		
+		
+		MOVE.L	#-118*$100,D0
+		MOVE.L	#-86*$100,D1
+
+		MOVE.W	MISSTOT,D2
+.ylp		SUBQ.W	#3,D2
+		BMI.S	.xchk
+		ADD.L	#13*$100,D1
+		BRA.S	.ylp
+.xchk		ADD.W	#3,D2
+		MULS	#10*$100,D2
+		ADD.L	D2,D0
+
+		MOVE.L	#$500,D2
+		SUB.L	OBJ_XPOS(A1),D0
+		SUB.L	OBJ_YPOS(A1),D1
+		SUB.W	OBJ_CNT1(A1),D2
+		DIVS	OBJ_CNT0(A1),D0
+		EXT.L	D0
+		DIVS	OBJ_CNT0(A1),D1
+		EXT.L	D1
+		DIVS	OBJ_CNT0(A1),D2
+		ADD.L	D0,OBJ_XPOS(A1)
+		ADD.L	D1,OBJ_YPOS(A1)
+		ADD.W	D2,OBJ_CNT1(A1)
+		RTS
+
+.clear		ADDQ.W	#1,MISSTOT
+		BRA	O_CLEAR_S
+
+PUP_PRINT	TST.W	OBJ_CNT7(A1)
+		BNE.S	.end
+
+		MOVE.W	#$180,D0
+		BSR	O_PR_ALLOC_XIT
+		LEA	PUP_GR,A0
+		MOVE.L	OBJ_ADDR1(A1),A2
+		BSR	O_ALLOC_DEALL_S
+		MOVE.L	A0,OBJ_ADDR1(A1)
+		BEQ	O_PRN_ERROR
+		
+		MOVE.L	OBJ_XPOS(A1),D4
+		MOVE.L	OBJ_YPOS(A1),D5
+		ADD.L	(A0)+,D4
+		ADD.L	(A0)+,D5
+
+		MOVEM.L	(A0)+,D6/D7	;D4=Xpos D5=Ypos D6=width D7=Height 
+		ASR.L	#7,D4
+		ASR.L	#7,D5
+		DIVS	OBJ_CNT1(A1),D6
+		BNE.S	.xok
+		MOVEQ	#1,D6
+.xok		SUB.W	D6,D4
+		ASR.W	D4
+		DIVS	OBJ_CNT1(A1),D7
+		BNE.S	.yok
+		MOVEQ	#1,D7
+.yok		SUB.W	D7,D5
+		ASR.W	D5
+		SWAP	D6
+		MOVE.W	D7,D6
+		SWAP	D6
+		
+		LEA	SCALE,A4
+		MOVE.L	#$00C00000,D7
+	  	MOVE.L	#$01000000,D0	;Clip co-ords.
+		ADD.W	#128,D4
+		ADD.W	#97,D5
+		MOVE.W	D4,(A6)+	
+		MOVE.W	D5,(A6)+
+		MOVEM.L	D0/D1/D2/D3/D6/D7/A0/A4,(A6)
+.end		RTS		
+
+		XYRATIO	100,500,100,500
+		OBJCNTR	0,0,0,0
+PUP_GR		OBJSCL	0,0,0,48,11,14,BMNUMS
+
+; --------------------------------------------------------------------------
+
+		XYRATIO	100,120,100,130
+		OBJCNTR	0,0,32,48
+
+OBJ_TCAN0	DC.L	OBJ_TCAN_SET0
+		DC.L	OBJ_TCAN_ANM0
+		DC.L	OBJ_TCAN_ANM0
+OBJ_TCAN_ANM0	DC.L	OBJ_TCAN_XVIEW,OBJ_TCAN_YVIEW
+		OBJSCL	0,0,32,0,32,48,TRSCAN
+		
+OBJ_TCAN_SET0	DC.W	ID_ROADOBJ	;OBJ_ID
+		DC.L	SIGN_NEXT	;OBJ_MOVE_CTRL
+		DC.L	O_CAR_PRINT_S	;OBJ_PRN_CTRL
+		DC.W	$18		;OBJ_ZSIZE
+		XYSIZE	32,48
+		DC.W	0		;OBJ_MASS
+		DC.L	TCAN_HIT	;OBJ_HIT_GOTO
+		DC.W	0		;OBJ_ZPOS
+		DC.L	0		;OBJ_XPOS
+		DC.L	0		;OBJ_YPOS
+
+OBJ_TCAN1	DC.L	OBJ_TCAN_SET1
+		DC.L	OBJ_TCAN_ANM1
+		DC.L	OBJ_TCAN_ANM1
+OBJ_TCAN_ANM1	DC.L	OBJ_TCAN_XVIEW,OBJ_TCAN_YVIEW
+		OBJSCL	0,0,0,0,32,48,TRSCAN
+
+OBJ_TCAN_SET1	DC.W	ID_ROADOBJ	;OBJ_ID
+		DC.L	TCAN_MOVE	;OBJ_MOVE_CTRL
+		DC.L	O_CAR_PRINT_S	;OBJ_PRN_CTRL
+		DC.W	$18		;OBJ_ZSIZE
+		XYSIZE	32,48
+		DC.W	0		;OBJ_MASS
+		DC.L	TCAN_HIT	;OBJ_HIT_GOTO
+		DC.W	40*$80		;OBJ_ZPOS
+		DC.L	100*$100		;OBJ_XPOS
+		DC.L	0		;OBJ_YPOS
+
+OBJ_TCAN_XVIEW	DC.W	0*$20,$20
+		DC.L	-1
+OBJ_TCAN_YVIEW	DC.W	0
+		DC.W	-1
+
+THITGR_SFX	DC.W	4
+		DC.W	SFX_TRASHGND_A
+		DC.W	SFX_TRASHGND_B
+		DC.W	SFX_TRASHGND_C
+		DC.W	SFX_TRASHGND_D
+
+VIS_TCAN1	DC.W	0,0,0
+		DC.W	0,0,0
+		DC.W	$0000,$0000
+		DC.L	VIS_RTOBJ_MOVER
+		DC.L	VIS_PRN_ROTATEX
+		DC.L	VIS_TCAN_GRS1
+		DC.W	SFX_TRASHHIT_A	;SFX
+		DC.W	$300,$300		;Lie angles
+		DC.W	0,0			;Lie range.
+		DC.W	1000,8			;Ydecay/Zdecay.
+		DC.W	$28,$800		;Spin/Xrand.
+		DC.W	0			;Height range.
+		DC.L	THITGR_SFX
+
+VIS_TCAN2	DC.W	0,0,0
+		DC.W	0,0,0
+		DC.W	$0000,$0000
+		DC.L	VIS_RTOBJ_MOVER
+		DC.L	VIS_PRN_ROTATEX
+		DC.L	VIS_TCAN_GRS2
+		DC.W	0		;SFX
+		DC.W	0,0			;Lie angles
+		DC.W	0,0			;Lie range.
+		DC.W	600,5			;Ydecay/Zdecay.
+		DC.W	$60,$800		;Spin/Xrand.
+		DC.W	0			;Height range.
+		DC.L	0
+
+		OBJCNTR	0,0,38,19
+VIS_TCAN_GRS1	OBJSCL	0,0,64,69,42,42,TRSPIN
+
+		OBJCNTR	0,0,32,7
+VIS_TCAN_GRS2	OBJSCL	0,0,144,55,32,32,TRSPIN
+
+; --------------------------------------------------------------------------
+
+

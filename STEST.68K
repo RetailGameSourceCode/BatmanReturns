@@ -1,0 +1,860 @@
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ BATMAN RETURNS CD-ROM						   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+PRINT_PROCESS	MOVE.L	#SCL_BUFFER,SCL_MAKE_AT
+		MOVE.L	#SCL_BUFFER,SCL_PRINT_AT
+
+		MOVE.L	#OBJ_PRLIST+8,OBJ_PRNEXTADDR	
+		LEA	ROAD_CORD_DATA+RCSTEP*VIEW_PATCHES,A5
+		LEA	ROAD_DATA,A6
+		MOVE.W	#$80*(VIEW_PATCHES+1),D0
+		SUB.W	ZVIEW,D0	;A6=256-Zview
+		MOVE.W	RMAP_OFF,D1
+		ADD.W	#RDSTEP*(RUPD_PRINT_PNO+VIEW_PATCHES),D1
+		MOVE.W	#VIEW_PATCHES-1,D2
+
+.loop		AND.W	#RDMASK,D1
+  		MOVEM.L	A5-A6/D0-D2,-(SP)
+		
+		MOVE.L	OBJ_PRNEXTADDR,A5
+		MOVE.L	(SP),D0
+		CMP.W	(A5)+,D0
+		BPL.S	.pr_left_sign
+.pr_obj		LEA	OBJ_PRDATA,A6
+		ADD.W	(A5)+,A6
+		ADDQ.L	#2,A5
+		MOVE.L	A5,OBJ_PRNEXTADDR
+		MOVEM.W	(A6)+,D4/D5
+		MOVEM.L	(A6)+,D0/D1/D2/D3/D6/D7/A0/A1
+		JSR	(A1)
+		MOVE.L	OBJ_PRNEXTADDR,A5
+		MOVE.L	(SP),D0
+		CMP.W	(A5)+,D0
+		BMI.S	.pr_obj
+
+.pr_left_sign	MOVEM.L	(SP),A5-A6/D0-D2
+		MOVE.L	RDLEFT(A6,D1.W),A6
+		MOVE.L	SGR_SDATA(A6),A0
+		MOVE.L	SGR_PRINT(A6),A1
+		JSR	(A1)
+ 		
+.pr_right_sign	MOVEM.L	(SP),A5-A6/D0-D2
+		MOVE.L	RDRIGHT(A6,D1.W),A6
+		MOVE.L	SGR_SDATA(A6),A0
+		MOVE.L	SGR_PRINT(A6),A1
+		JSR	(A1)
+
+.patch_done	MOVEM.L	(SP)+,A5-A6/D0-D2
+		LEA	-RCSTEP(A5),A5
+		SUB.W	#RDSTEP,D1
+		SUB.W	#$80,D0
+		DBRA	D2,.loop
+
+		MOVE.L	OBJ_PRNEXTADDR,A5
+.pr_obj_to_end	TST.W	(A5)+
+		BEQ.S	SIGN_NEXT
+		LEA	OBJ_PRDATA,A6
+		ADD.W	(A5)+,A6
+		ADDQ.L	#2,A5
+		MOVE.L	A5,-(SP)
+		MOVEM.W	(A6)+,D4/D5
+		MOVEM.L	(A6)+,D0/D1/D2/D3/D6/D7/A0/A1
+		JSR	(A1)
+		MOVE.L	(SP)+,A5
+		BRA.S	.pr_obj_to_end
+
+SIGN_NEXT 	RTS
+
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ Partial area print.							   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+PARTIAL_SCALE_L	BSR.S	READ_CFRACTS
+		SUB.W	D6,D4
+		BRA.S	PTSCALE
+
+PARTIAL_SCALE24	CMP.W	#24,D2
+		BCS.S	PARTIAL_SCALE
+		RTS
+
+PARTIAL_SCALE	BSR.S	READ_CFRACTS
+
+PTSCALE		MOVEM.L	A0-A1/D0-D1/D3-D7,-(SP)
+	    	MOVE.L	(A1)+,D2
+	  	DIVS	D0,D2
+	   	ADD.W	D4,D2
+		CMP.W	D3,D2
+		BMI.S	.xskp0
+		MOVE.W	D2,D3
+.xskp0	 	SWAP	D3
+	    	MOVE.L	(A1)+,D2
+	  	DIVS	D0,D2
+	   	ADD.W	D4,D2
+		CMP.W	D3,D2
+		BPL.S	.xskp1
+		MOVE.W	D2,D3
+.xskp1	 	SWAP	D3
+	    	MOVE.L	(A1)+,D2
+	  	DIVS	D0,D2
+	   	ADD.W	D5,D2
+		CMP.W	D7,D2
+		BMI.S	.yskp0
+		MOVE.W	D2,D7
+.yskp0	 	SWAP	D7
+	    	MOVE.L	(A1)+,D2
+	  	DIVS	D0,D2
+	   	ADD.W	D5,D2
+		CMP.W	D7,D2
+		BPL.S	.yskp1
+		MOVE.W	D2,D7
+.yskp1	 	SWAP	D7
+		MOVE.L	D3,D0
+		BSR	SCALE
+		MOVEM.L	(SP)+,A0-A1/D0-D1/D3-D7
+		LEA	16(A1),A1
+		DBRA	D1,PTSCALE
+		RTS
+
+READ_CFRACTS	MOVE.L	A0,A1
+		MOVE.W	(A1)+,D1
+		MOVEM.L	(A1)+,D4-D7/A0
+		SUB.L	D7,D5
+		ADD.L	RCXPOS(A5),D4
+ 
+		IF	LEVEL<4		;Land or water.
+		ADD.L	RCYPOS(A5),D5
+		ELSE
+		ADD.L	YVIEW,D5
+		ENDIF
+
+		DIVS	D0,D4
+		DIVS	D0,D5
+		DIVS	D0,D6
+		BNE.S	.xok
+		MOVEQ	#1,D6
+.xok		DIVS	D0,D7
+		BNE.S	.yok
+		MOVEQ	#1,D7
+.yok		SWAP	D6
+		MOVE.W	D7,D6
+		SWAP	D6
+		ADD.W	#256/2,D4
+		ADD.W	#1+RSHEIGHT/2,D5
+		MOVE.L	RCYMAX(A5),D7
+		MOVE.L	RCXMAX(A5),D3
+		RTS
+
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ Tunnel print routines.						   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+PRINT_TEXIT	BSR	PARTIAL_SCALE
+		CMP.W	D4,D3
+		BPL.S	.skp
+		MOVE.W	D4,D3
+.skp		MOVE.W	D3,-(SP)
+		SWAP	D3
+		ADD.W	D6,D4
+		CMP.W	D4,D3
+		BPL.S	PRINT_WALL
+		MOVE.W	D3,D4
+	  	BRA.S	PRINT_WALL
+
+PRINT_TENT	BSR.S	READ_CFRACTS
+		MOVE.L	#$01000000,D3
+		CLR.W	D7
+		BSR	PTSCALE
+		MOVE.W	D4,-(SP)
+		ADD.W	D6,D4
+		MOVE.L	(A1)+,D3
+		DIVS	D0,D3
+		ADD.W	D5,D3
+		BMI.S	PRINT_WALL
+		MOVE.W	D3,D7
+
+PRINT_WALL	MOVEM.L	(A1)+,D3/D6
+		MOVE.L	A1,A0		
+		DIVS	D0,D3
+		DIVS	D0,D6
+		SWAP	D6
+		MOVE.W	D3,D6
+.loop0	 	MOVEM.L	D4-D7/A0,-(SP)
+		MOVE.L	#$01000000,D0
+		BSR	SCALE
+	  	MOVEM.L	(SP)+,A0/D4-D7
+		ADD.W	D6,D4
+		CMP.W	#256,D4
+		BMI.S	.loop0
+		MOVE.W	(SP)+,D4
+.loop1		SUB.W	D6,D4
+		MOVEM.L	D4-D7/A0,-(SP)
+	 	MOVE.L	#$01000000,D0
+		BSR	SCALE
+		MOVEM.L	(SP)+,A0/D4-D7
+		TST.W	D4
+		BPL.S	.loop1
+		RTS
+
+DPRINT_TSWALL_L	CMP.W	#20,D2
+		BCC	PSCEND
+PRINT_TSWALL_L	MOVEQ	#$40,D4
+		MOVE.W	D4,D5
+		MOVE.W	D4,D6
+		MOVE.W	D4,D2
+		SUB.W	D4,D0
+		LEA	-RCSTEP(A5),A5
+		MOVE.L	(A0)+,D1
+		MULS	RCXFRACT(A5),D4
+		ADD.L	RCXPOS(A5),D4
+		ADD.L	(A0)+,D4
+		MULS	RCYFRACT(A5),D5
+		ADD.L	RCYPOS(A5),D5
+		ADD.L	(A0)+,D5
+		MULS	RCXFRACT+RCSTEP(A5),D6
+		ADD.L	RCXPOS+RCSTEP(A5),D6
+		ADD.L	(A0)+,D6
+		MULS	RCYFRACT+RCSTEP(A5),D2
+		ADD.L	RCYPOS+RCSTEP(A5),D2
+		ADD.L	(A0)+,D2
+		MOVE.L	D5,D7
+		SUB.L	D1,D5
+		SUB.L	D1,D2
+		DIVS	D0,D4		;D4=Xpos
+		DIVS	D0,D5		;D5=Ypos(top)
+		DIVS	D0,D7		;D7=Ypos(bot)
+		ADD.W	#$80,D0
+		DIVS	D0,D6		;D6=Xpos1
+		SUB.W	D4,D6		;D6=Width
+		BGT	PSIDE_CALC
+		RTS
+
+DPRINT_TSWALL_R	CMP.W	#20,D2
+		BCC	PSCEND
+PRINT_TSWALL_R	MOVEQ	#$40,D4
+		MOVE.W	D4,D5
+		MOVE.W	D4,D6
+		MOVE.W	D4,D2
+		ADD.W	D4,D0
+		LEA	-RCSTEP(A5),A5
+		MOVE.L	(A0)+,D1
+		MULS	RCXFRACT+RCSTEP(A5),D4
+		ADD.L	RCXPOS+RCSTEP(A5),D4
+		ADD.L	(A0)+,D4
+		MULS	RCYFRACT+RCSTEP(A5),D5
+		ADD.L	RCYPOS+RCSTEP(A5),D5
+		ADD.L	(A0)+,D5
+		MULS	RCXFRACT(A5),D6
+		ADD.L	RCXPOS(A5),D6
+		ADD.L	(A0)+,D6
+		MULS	RCYFRACT(A5),D2
+		ADD.L	RCYPOS(A5),D2
+		ADD.L	(A0)+,D2
+		MOVE.L	D5,D7
+		SUB.L	D1,D5
+		SUB.L	D1,D2
+		DIVS	D0,D4		;D4=Xpos
+		DIVS	D0,D5		;D5=Ypos(top)
+		DIVS	D0,D7		;D7=Ypos(bot)
+		SUB.W	#$80,D0
+		DIVS	D0,D6		;D6=Xpos1
+		SUB.W	D4,D6		;D6=Width
+		BGT	PSIDE_CALC
+		RTS
+
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ Front and side views. (Buildings)					   บ
+; ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน
+; บ Routines: PRINT_BUILD_R (Front&side)				   บ
+; บ 	      BRINT_BUILD_L (Front&side)				   บ
+; บ 	      PRINT_AT      (Front)					   บ
+; บ 	      PRIGHT_FRONT  (Front)					   บ
+; บ 	      PLEFT_FRONT   (Front)					   บ
+; บ 	      PRIGHT_SIDE   (Side)					   บ
+; บ 	      PLEFT_SIDE    (Side)					   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+PRINT_BUILD_R	MOVEM.L	A0/A5/D0,-(SP)
+		MOVEM.L	(A0)+,D4-D7
+	   	LEA	$10(A0),A0
+		BSR	PRSIDE
+		MOVEM.L	(SP)+,A0/A5/D0
+		BRA.S	PRIGHT_FRONT
+
+PRINT_BUILD_L	MOVEM.L	A0/A5/D0,-(SP)
+		MOVEM.L	(A0)+,D4-D7
+	   	LEA	$10(A0),A0
+		BSR	PLSIDE
+		MOVEM.L	(SP)+,A0/A5/D0
+
+PLEFT_FRONT	MOVEM.L	(A0)+,D4-D7	;Xoff/Yoff/Xsize/Ysize
+		ADD.L	RCXPOS(A5),D4
+		DIVS	D0,D4
+		DIVS	D0,D6
+		BNE.S	.skp
+		MOVEQ	#1,D6
+.skp		SUB.W	D6,D4
+		BRA.S	PFRONT_CALC
+
+PRINT_AT	    
+PRIGHT_FRONT	MOVEM.L	(A0)+,D4-D7	;Xoff/Yoff/Xsize/Ysize
+		ADD.L	RCXPOS(A5),D4
+		DIVS	D0,D4
+		DIVS	D0,D6
+		BNE.S	PFRONT_CALC
+		MOVEQ	#1,D6
+PFRONT_CALC	
+		IF	LEVEL<4		;Land or water.
+		ADD.L	RCYPOS(A5),D5
+		ELSE
+		ADD.L	YVIEW,D5
+		ENDIF
+		
+		DIVS	D0,D5
+		DIVS	D0,D7
+		BNE.S	.skp
+		MOVEQ	#1,D7
+.skp		SUB.W	D7,D5
+		ADD.W	#256/2,D4
+		ADD.W	#1+RSHEIGHT/2,D5
+		SWAP	D6
+		MOVE.W	D7,D6
+		SWAP	D6
+		MOVE.L	RCYMAX(A5),D7
+		MOVE.L	RCXMAX(A5),D0
+		BRA	SCALE
+
+
+PLEFT_SIDE	MOVEM.L	(A0)+,D4-D7
+PLSIDE		CMP.W	#VIEW_PATCHES-1,D2
+		BCS.S	PLSTART
+PSCEND	  	RTS
+
+PLSTART		SUB.L	D7,D5
+		MOVE.L	D4,D6		;D6=Xoff
+		MOVE.L	D5,D2		;D2=Yoff
+		MOVE.L	D7,D1		;D1=Ysize
+		ADD.L	RCXPOS(A5),D4	
+		
+		IF	LEVEL<4		;Land or water.
+		ADD.L	RCYPOS(A5),D5
+		ELSE
+		ADD.L	YVIEW,D5
+		ENDIF
+		
+		ADD.L	D5,D7
+		DIVS	D0,D4		;D4=Xpos
+		DIVS	D0,D5		;D5=Ypos(top)
+		DIVS	D0,D7		;D7=Ypos(bot)
+		
+		ADD.W	#$80,D0
+		ADD.L	RCSTEP+RCXPOS(A5),D6	
+		DIVS	D0,D6
+		SUB.W	D4,D6		;D6=Width
+		BLE.S	PSCEND
+
+		IF	LEVEL<4		;Land or water.
+		ADD.L	RCSTEP+RCYPOS(A5),D2		
+		ELSE
+		ADD.L	YVIEW,D2
+		ENDIF
+
+PSIDE_CALC	ADD.L	D2,D1
+		DIVS	D0,D1
+		DIVS	D0,D2
+		MOVE.W	D2,D0
+		MOVE.W	D5,D3
+	 	SUB.W	D2,D3		;D3=Top differance
+		MOVE.W	D7,D2
+	 	SUB.W	D1,D2		;D2=Bot differance
+		SUB.W	D0,D1		;D1=Mid differance
+
+		SUB.W	D5,D7
+		ADD.W	#256/2,D4
+		ADD.W	#1+RSHEIGHT/2,D5
+		
+		SWAP	D6
+		MOVE.W	D7,D6
+
+		MOVE.L	RCYMAX(A5),D7
+		MOVE.L	RCXMAX(A5),D0	     
+ 		BRA	SCALE_ANGULAR
+
+PRIGHT_SIDE	MOVEM.L	(A0)+,D4-D7
+PRSIDE		CMP.W	#VIEW_PATCHES-1,D2
+		BCC.S	PSCEND
+		
+		SUB.L	D7,D5
+		MOVE.L	D4,D6
+		MOVE.L	D5,D2
+		MOVE.L	D7,D1
+		ADD.W	#$80,D0
+		ADD.L	RCSTEP+RCXPOS(A5),D4	
+		
+		IF	LEVEL<4		;Land or water.
+		ADD.L	RCSTEP+RCYPOS(A5),D5		
+		ELSE
+		ADD.L	YVIEW,D5
+		ENDIF
+
+		ADD.L	D5,D7
+		DIVS	D0,D4		;D4=Xpos
+		DIVS	D0,D5		;D5=Ypos(top)
+		DIVS	D0,D7		;D7=Ypos(bot)
+		
+		SUB.W	#$80,D0
+		ADD.L	RCXPOS(A5),D6	
+		DIVS	D0,D6
+		SUB.W	D4,D6		;D6=Width
+		BLE	PSCEND
+
+		IF	LEVEL<4		;Land or water.
+		ADD.L	RCYPOS(A5),D2		
+		ELSE
+		ADD.L	YVIEW,D2
+		ENDIF
+		
+		BRA.S	PSIDE_CALC
+
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ Building with light.						   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+PLEFT_LIGHT	MOVEM.L	A0/A5/D0/D2,-(SP)
+		MOVE.L	(A0),A0		;Do side.
+		MOVEM.L	(A0)+,D4-D7
+	   	LEA	$10(A0),A0
+		BSR	PLSIDE
+
+		MOVEM.L	(SP),A0/A5/D0/D2
+		LEA	4(A0),A0	;Do light.
+		MOVE.W	(A0)+,D4
+		MOVE.W	D4,D5
+		ADD.W	D4,D0
+		MULS	RCXFRACT(A5),D4
+		MULS	RCYFRACT(A5),D5
+		ADD.L	(A0)+,D4
+		ADD.L	(A0)+,D5
+		MOVEM.L	(A0)+,D6/D7	;Xsize/Ysize
+		ADD.L	RCXPOS(A5),D4
+		DIVS	D0,D4
+		DIVS	D0,D6
+		BNE.S	.xok
+		MOVEQ	#1,D6
+.xok		BSR	PFRONT_CALC	
+
+		MOVEM.L	(SP)+,A0/A5/D0/D2
+		MOVE.L	(A0),A0		;Do front.
+		BRA	PLEFT_FRONT
+
+PRIGHT_LIGHT	MOVEM.L	A0/A5/D0/D2,-(SP)
+		MOVE.L	(A0),A0		;Do side.
+		MOVEM.L	(A0)+,D4-D7
+	   	LEA	$10(A0),A0
+		BSR	PRSIDE
+
+		MOVEM.L	(SP),A0/A5/D0/D2
+		LEA	4(A0),A0	;Do light.
+		MOVE.W	(A0)+,D4
+		MOVE.W	D4,D5
+		ADD.W	D4,D0
+		MULS	RCXFRACT(A5),D4
+		MULS	RCYFRACT(A5),D5
+		ADD.L	(A0)+,D4
+		ADD.L	(A0)+,D5
+		MOVEM.L	(A0)+,D6/D7	;Xsize/Ysize
+		ADD.L	RCXPOS(A5),D4
+		DIVS	D0,D4
+		DIVS	D0,D6
+		BNE.S	.xok
+		MOVEQ	#1,D6
+.xok		SUB.W	D6,D4
+		BSR	PFRONT_CALC	
+
+		MOVEM.L	(SP)+,A0/A5/D0/D2
+		MOVE.L	(A0),A0		;Do front.
+		BRA	PRIGHT_FRONT
+
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ Multiable printer.							   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+PRINT_MULTIABLE	MOVE.L	A0,A1
+		MOVE.W	(A1)+,D7
+		BRA.S	.start
+.loop		MOVEM.L	(A1)+,A0/A2
+		MOVEM.L	A1/A5/D0/D2/D7,-(SP)
+		JSR	(A2)
+		MOVEM.L	(SP)+,A1/A5/D0/D2/D7
+.start		DBRA	D7,.loop
+		RTS
+
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ Bridge printer.							   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+PRINT_BRIDGE	MOVEM.L	A0/A5/D0/D2,-(SP)
+		MOVE.L	(A0),A0		;Do sides.
+		MOVEM.L	(A0)+,D4-D7
+	   	LEA	$10(A0),A0
+		BSR	PLSIDE
+		MOVEM.L	(SP),A0/A5/D0/D2
+		MOVE.L	4(A0),A0
+		MOVEM.L	(A0)+,D4-D7
+	   	LEA	$10(A0),A0
+		BSR	PRSIDE
+
+		MOVEM.L	8(SP),A1	;Do cross-pieces.
+		LEA	8(A1),A1
+		MOVE.W	(A1)+,D7
+		BRA.S	.start
+.loop		MOVEM.L	(SP),D0/D2/A0/A5
+		MOVE.W	(A1)+,D4
+		ADD.W	D4,D0
+		MOVE.W	D4,D5
+		MULS	RCXFRACT(A5),D4
+		MULS	RCYFRACT(A5),D5
+		MOVE.L	D4,D6
+		MOVE.L	D5,D2
+		ADD.L	(A1)+,D4
+		ADD.L	(A1)+,D5
+		ADD.L	(A1)+,D6
+		ADD.L	(A1)+,D2
+		MOVE.L	(A1)+,A0
+		MOVEM.L	A1/D7,-(SP)
+		MOVE.L	(A0)+,D7
+		SUB.L	D7,D5
+		SUB.L	D7,D2
+		MOVE.L	D7,D1		;D1=Ysize
+		ADD.L	RCXPOS(A5),D4	
+		ADD.L	RCYPOS(A5),D5
+		ADD.L	D5,D7
+		DIVS	D0,D4		;D4=Xpos
+		DIVS	D0,D5		;D5=Ypos(top)
+		DIVS	D0,D7		;D7=Ypos(bot)
+		ADD.L	RCXPOS(A5),D6	
+		DIVS	D0,D6
+		SUB.W	D4,D6		;D6=Width
+		ADD.L	RCYPOS(A5),D2		
+		BSR	PSIDE_CALC
+		MOVEM.L	(SP)+,A1/D7
+.start		DBRA	D7,.loop		
+
+		MOVEM.L	(SP),A0/A5/D0/D2
+		MOVE.L	(A0),A0		;Do fronts.
+		BSR	PLEFT_FRONT
+		MOVEM.L	(SP)+,A0/A5/D0/D2
+		MOVE.L	4(A0),A0
+		BRA	PRIGHT_FRONT
+
+; --------------------------------------------------------------------------
+
+PRINT_COVERS	MOVEM.L	A0/A5/D0/D2,-(SP)
+	    	MOVE.L	A0,A1
+
+		MOVE.W	(A1)+,D7
+		BRA.S	.start
+.loop		MOVEM.L	(SP),D0/D2/A0/A5
+		MOVE.W	D7,-(SP)
+		
+		MOVE.L	(A1)+,A0
+		
+		MOVE.L	(A1)+,D4
+		MOVE.L	(A1)+,D5
+		MOVE.L	(A1)+,D6
+		MOVE.L	(A1)+,D2
+		
+		MOVE.L	(A0)+,D7
+		SUB.L	D7,D5
+		SUB.L	D7,D2
+		MOVE.L	D7,D1		;D1=Ysize
+		
+		ADD.W	(A1)+,D0
+		ADD.W	(A1)+,A5
+		ADD.L	RCXPOS(A5),D4	
+		ADD.L	RCYPOS(A5),D5
+		ADD.L	D5,D7
+		DIVS	D0,D4		;D4=Xpos
+		DIVS	D0,D5		;D5=Ypos(top)
+		DIVS	D0,D7		;D7=Ypos(bot)
+
+		ADD.W	(A1)+,D0
+		ADD.W	(A1)+,A5
+		ADD.L	RCXPOS(A5),D6	
+		ADD.L	RCYPOS(A5),D2
+		DIVS	D0,D6
+		SUB.W	D4,D6		;D6=Width
+		
+		MOVE.L	A1,-(SP)
+		BSR	PSIDE_CALC
+		MOVE.L	(SP)+,A1
+		MOVE.W	(SP)+,D7
+		
+.start		DBRA	D7,.loop		
+		
+		LEA	16(SP),SP
+		RTS
+
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ Poles								   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+PRINT_POLES	MOVEM.L	(A0)+,D3-D7
+		SUB.L	D7,D5
+		ADD.L	RCXPOS(A5),D4
+		ADD.L	RCYPOS(A5),D5
+		DIVS	D0,D3
+		DIVS	D0,D4
+		DIVS	D0,D5
+		DIVS	D0,D6
+		BNE.S	.xok
+		MOVEQ	#1,D6
+.xok		DIVS	D0,D7
+		BNE.S	.yok
+		MOVEQ	#1,D7
+.yok		SWAP	D6
+		MOVE.W	D7,D6
+		SWAP	D6
+		ADD.W	#256/2,D4
+		ADD.W	#1+RSHEIGHT/2,D5
+		MOVE.L	RCYMAX(A5),D7
+		MOVE.L	RCXMAX(A5),D0
+
+.loop		MOVEM.L	D0-D7/A0,-(SP)
+		BSR	SCALE
+	  	MOVEM.L	(SP)+,A0/D0-D7
+		ADD.W	D3,D4
+		BMI.S	.end
+		CMP.W	#256,D4
+		BMI.S	.loop
+.end		RTS
+
+; --------------------------------------------------------------------------
+; --------------------------------------------------------------------------
+; --------------------------------------------------------------------------
+; --------------------------------------------------------------------------
+;
+;SPINIT_SDATA	
+;		XYRATIO	1,1,1,1
+;		XYSIZE	54,54
+;		SCALER	50,55,54,54,DRPIPE
+;
+;		XYRATIO	1,1,1,1
+;		XYSIZE	38,38
+;		SCALER	46,46,38,38,DRDOOR
+;
+;
+;		XYRATIO	73,73,73,83
+;		XYSIZE	111,111
+;		SCALER	55,65,73,73,BOXHED
+;		
+;TVIEW		DC.W	0
+;
+;
+;OTES2		DC.W	$80*2
+;KKK		DC.L	0*$100
+;
+;OBJ_PRINT2	
+;		MOVE.L	KKK,D0
+;		MOVE.W	SCOM_MDATA+MCOM_JOY1,D1
+;		LSR.W	#1,D1
+;		BCC.S	.Askp
+;		ADD.L	#$800,D0
+;.Askp		LSR.W	D1
+;		BCC.S	.Askp1
+;		SUB.L	#$800,D0
+;.Askp1		MOVE.L	D0,KKK
+;
+;		MOVE.W	OTES2,D0
+;		SUB.W	ZMOVE,D0
+;		LSR.W	#1,D1
+;		BCC.S	.skp
+;		SUB.W	#$10,D0
+;.skp		LSR.W	D1
+;		BCC.S	.skp1
+;		ADD.W	#$10,D0
+;.skp1		MOVE.W	D0,OTES2
+;
+;		MOVE.W	D0,D1
+;		BSR	OBJ_PR_ALLOCATE
+;		BRA.L	.end
+;		BRA.L	.end
+;		BRA.L	.end
+;
+;
+;		LEA	SPINIT_SDATA,A0
+;		ADD.W	#32,TVIEW
+;		AND.W	#$3FE,TVIEW
+;		MOVE.W	TVIEW,D2
+;
+;		MOVE.W	D0,D7
+;		ADD.W	ZVIEW,D7
+;		MOVE.W	D7,D4
+;		AND.W	#$7F,D4
+;		MOVE.W	D4,D5
+;		LSR.W	#7,D7
+;		MULU	#RCSTEP,D7
+;		LEA	ROAD_CORD_DATA-RCSTEP,A5
+;		LEA	(A5,D7.W),A5
+;
+;		MULS	RCXFRACT(A5),D4
+;		ADD.L	RCXPOS(A5),D4
+;;		ADD.L	OBJ_XPOS(A4),D4
+;		MULS	RCYFRACT(A5),D5
+;		ADD.L	RCYPOS(A5),D5
+;;		ADD.L	OBJ_YPOS(A4),D5
+;		
+;		ADD.L	KKK,D4
+;		SUB.L	#$100*80,D5
+;
+;		MOVEM.L	(A0)+,D6-D7
+;
+;		DIVS	D0,D4
+;		DIVS	D0,D5
+;		DIVS	D0,D6
+;		BNE.S	.xok
+;		MOVEQ	#1,D6
+;.xok		DIVS	D0,D7
+;		BNE.S	.yok
+;		MOVEQ	#1,D7
+;.yok 		SWAP	D6
+;		MOVE.W	D7,D6
+;		SWAP	D6
+;		MOVE.L	D6,D3
+;	  	ASR.W	D7
+;		SUB.W	D7,D5
+;	 	MOVE.W	D6,D7
+;	  	ASR.W	D7
+;	   	SUB.W	D7,D4
+;
+;		LEA	SIN_LOOKUP,A1
+;		LEA	$100(A1),A2
+;		MOVE.W	(A1,D2.W),D1
+;		SWAP	D1
+;		MOVE.W	(A2,D2.W),D1
+;
+;	 	MOVE.L	RCYMAX(A5),D7
+;	  	MOVE.L	RCXMAX(A5),D0
+;	   
+;		ADD.W	#128,D4
+;		ADD.W	#97,D5
+;
+;		MOVE.W	D4,(A6)+	
+;		MOVE.W	D5,(A6)+
+;		LEA	SCALE_ROTATE,A1
+;		MOVEM.L	D0/D1/D2/D3/D6/D7/A0/A1,(A6)
+;.end		RTS
+;
+;; --------------------------------------------------------------------------
+;
+;RS_TYPE_A		 
+;		MOVEM.L	(A0)+,D6-D7
+;
+;		DIVS	D0,D4
+;		DIVS	D0,D5
+;		DIVS	D0,D6
+;		BNE.S	.xok
+;		MOVEQ	#1,D6
+;.xok		DIVS	D0,D7
+;		BNE.S	.yok
+;		MOVEQ	#1,D7
+;.yok 		SWAP	D6
+;		MOVE.W	D7,D6
+;		SWAP	D6
+;		MOVE.L	D6,D3
+;	  	ASR.W	D7
+;		SUB.W	D7,D5
+;	 	MOVE.W	D6,D7
+;	  	ASR.W	D7
+;	   	SUB.W	D7,D4
+;
+;		LEA	SIN_LOOKUP,A1
+;		LEA	$100(A1),A2
+;		MOVE.W	(A1,D2.W),D1
+;		SWAP	D1
+;		MOVE.W	(A2,D2.W),D1
+;
+;		ADD.W	#128,D4
+;		ADD.W	#96,D5
+;		MOVE.L	#$01000000,D0
+;		MOVE.L	#$00C00000,D7
+;		BRA	SCALE_ROTATE
+;
+;; --------------------------------------------------------------------------
+;
+;RS_TYPE_B
+;		ADD.W	#16,TVIEW
+;		AND.W	#$3FE,TVIEW
+;		MOVE.W	TVIEW,D2
+;		
+;
+;		MOVE.W	#$100,D0
+;		MOVE.L	#$100*0,D4
+;		MOVE.L	#$100*-20,D5
+;		LEA	SPINIT_SDATA,A0
+;		
+;
+;		;ADD.W	ZVIEW,D0
+;		;ADD.L	XPCALC,D4
+;		;ADD.L	YPCALC,D5
+;		MOVEM.L	(A0)+,D6-D7
+;
+;		DIVS	D0,D4
+;		DIVS	D0,D5
+;		DIVS	D0,D6
+;		BNE.S	.xok
+;		MOVEQ	#1,D6
+;.xok		DIVS	D0,D7
+;		BNE.S	.yok
+;		MOVEQ	#1,D7
+;.yok 		MOVE.W	D7,D3
+;		SWAP	D3
+;		MOVE.W	D6,D3
+;
+;		LEA	SIN_LOOKUP,A1
+;		LEA	$100(A1),A2
+;		MOVE.W	(A1,D2.W),D1
+;		SWAP	D1
+;		MOVE.W	(A2,D2.W),D1
+;		MOVE.W	D7,D0
+;		AND.W	#$1FE,D2
+;		MULS	(A1,D2.W),D6
+;		MULS	(A1,D2.W),D7
+;		ADD.W	#$100,D2
+;		AND.W	#$1FE,D2
+;		MOVE.W	(A1,D2.W),D2
+;		MULS	D2,D0
+;		MULS	D3,D2
+;		ADD.L	D0,D6
+;		SWAP	D6
+;		SUB.W	D6,D5
+;		ROL.L	D6
+;		TST.W	D6
+;		BNE.S	.xok1
+;		MOVEQ	#1,D6
+;.xok1		SWAP	D6
+;		ADD.L	D2,D7
+;		SWAP	D7
+;		SUB.W	D7,D4
+;		ROL.L	D7
+;		MOVE.W	D7,D6
+;		BNE.S	.yok1
+;		ADDQ.W	#1,D6
+;.yok1		
+;
+;		ADD.W	#128,D4
+;		ADD.W	#96,D5
+;		MOVE.L	#$01000000,D0
+;		MOVE.L	#$00C00000,D7
+;		BRA	SCALE_ROTATE
+;
+; --------------------------------------------------------------------------
+; --------------------------------------------------------------------------
+; --------------------------------------------------------------------------
+; --------------------------------------------------------------------------
+; --------------------------------------------------------------------------
+
+
+
+
+

@@ -1,0 +1,121 @@
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ BATMAN RETURNS CD-ROM						   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+; STANDARD ENEMY - LEVEL 1 - "Mini Firetruck"
+
+; --------------------------------------------------------------------------
+
+MINI_SETUP	LEA	OBJ_MFITR,A6
+		BRA	O_OBJECT_SETUP 
+	 
+; --------------------------------------------------------------------------
+
+MINI_CLEAR	BRA	O_CLEAR_S
+
+; --------------------------------------------------------------------------
+
+MINI_MOVE
+		BRA	O_MOVER
+
+; --------------------------------------------------------------------------
+
+MINI_PRINT	
+		BRA	O_CAR_PRINT_S
+
+; --------------------------------------------------------------------------
+
+;17,43
+
+OBJ_MFITR
+		XYRATIO	4,5,4,5
+		OBJCNTR	194,126,24,43
+
+		DC.L	OBJ_MFIT_SET
+		DC.L	OBJ_MFITR_ANM0
+		DC.L	OBJ_MFITR_ANM0
+		DC.L	OBJ_MFIT_SKID
+
+OBJ_MFITR_ANM0	DC.L	OBJ_MFIT_XVIEW,OBJ_MFIT_YVIEW
+
+		OBJSCL	187,126,0,0,30,48,MFITAA
+		OBJSCL	191,126,0,0,26,48,MFITAB
+		OBJSCL	194,126,0,0,24,47,MFITAC
+		OBJSCL	194,126,0,0,27,48,MFITAD
+		OBJSCL	195,126,0,0,30,48,MFITAE
+
+		OBJSCL	187,126,0,0,30,46,MFITAF
+		OBJSCL	191,126,0,0,26,46,MFITAG
+		OBJSCL	194,126,0,0,24,46,MFITAH
+		OBJSCL	195,126,0,0,26,46,MFITAI
+		OBJSCL	195,126,0,0,30,46,MFITAJ
+
+		OBJSCL	187,126,0,0,31,45,MFITAK
+		OBJSCL	191,126,0,0,26,45,MFITAL
+		OBJSCL	194,126,0,0,24,44,MFITAM
+		OBJSCL	195,126,0,0,26,45,MFITAN
+		OBJSCL	194,126,0,0,31,45,MFITAO
+
+OBJ_MFIT_XVIEW	DC.W	7*$20,$20
+		DC.L	$3000,$7800,-1
+OBJ_MFIT_YVIEW	DC.W	5*$20
+		DC.W	$16,-1
+
+OBJ_MFIT_SKID	DC.W	1
+		XSIZE	0
+
+OBJ_MFIT_SET	DC.W	ID_CAR		;OBJ_ID
+		DC.L	MINI_MOVE	;OBJ_MOVE_CTRL
+		DC.L	MINI_PRINT	;OBJ_PRN_CTRL
+		DC.W	$50		;OBJ_ZSIZE
+		RATIO	49,59,49	;OBJ_XSIZE
+		RATIO	49,59,51	;OBJ_YSIZE
+		DC.W	200		;OBJ_MASS
+		DC.L	HROUTINE_CAR	;OBJ_HIT_GOTO
+		DC.W	$80*15		;OBJ_ZPOS
+		DC.L	$100*200	;OBJ_XPOS
+		DC.L	$100*0		;OBJ_YPOS
+		DC.W	$40		;OBJ_SPD_MAXA
+		DC.W	$A0		;OBJ_SPD_MAXB
+		DC.W	40		;OBJ_SPD_INCFA
+		DC.W	30		;OBJ_SPD_INCFB
+		DC.W	20		;OBJ_SPD_DECF
+		DC.W	5		;OBJ_SPD_BRAKE
+		DC.W	13		;OBJ_TRACTION
+
+; --------------------------------------------------------------------------
+
+;17,43
+
+OBJ_MFITL
+		XYRATIO	4,5,4,5
+		OBJCNTR	194,126,24,43
+
+		DC.L	OBJ_MFIT_SET
+		DC.L	OBJ_MFITL_ANM0
+		DC.L	OBJ_MFITL_ANM0
+		DC.L	OBJ_MFIT_SKID
+
+OBJ_MFITL_ANM0	DC.L	OBJ_MFIT_XVIEW,OBJ_MFIT_YVIEW
+
+		OBJSCLM	195,126,0,0,30,48,MFITAE
+		OBJSCLM	194,126,0,0,27,48,MFITAD
+		OBJSCLM	194,126,0,0,24,47,MFITAC
+		OBJSCLM	191,126,0,0,26,48,MFITAB
+		OBJSCLM	187,126,0,0,30,48,MFITAA
+
+		OBJSCLM	195,126,0,0,30,46,MFITAJ
+		OBJSCLM	195,126,0,0,26,46,MFITAI
+		OBJSCLM	194,126,0,0,24,46,MFITAH
+		OBJSCLM	191,126,0,0,26,46,MFITAG
+		OBJSCLM	187,126,0,0,30,46,MFITAF
+
+		OBJSCLM	194,126,0,0,31,45,MFITAO
+		OBJSCLM	195,126,0,0,26,45,MFITAN
+		OBJSCLM	194,126,0,0,24,44,MFITAM
+		OBJSCLM	191,126,0,0,26,45,MFITAL
+		OBJSCLM	187,126,0,0,31,45,MFITAK
+
+; --------------------------------------------------------------------------
+
+

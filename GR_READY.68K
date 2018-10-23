@@ -1,0 +1,701 @@
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ 3DOBRIEN - Graphic allocation/pre-process				   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+; - Settings ---------------------------------------------------------------
+
+GLIST_TOTAL	EQU	3
+MAP_FIRST_ADDR	EQU	SWORD_RAM+SMAP_ADDR*4
+MAP_MAX		EQU	80	
+STAMP_MAX	EQU	1024	
+CDLD_MAX	EQU	16	
+CDLD_STEP	EQU	22
+CDLD_MASK	EQU	CDLD_MAX-1	
+
+; - GLIST Control data -----------------------------------------------------
+;
+; Format: (Repeats for each additional GLIST)
+;
+;	CDLD_CTAB_NORM	DC.L	0[Norm]/Addr[Color lookup table]
+;			DC.W	CDLD_NORM_NPC-(CDLD_BMOD+2)[No change]
+;		    or	DC.W	CDLD_NORM_PC-(CDLD_BMOD+2)[Palette change]
+;
+;	CDLD_CTAB_CRUN	DC.L	0[Norm]/Addr[Color lookup table]
+;			DC.W	CDLD_CRUNCH_NPC-(CDLD_BMOD+2)[No change]
+;		    or	DC.W	CDLD_CRUNCH_PC-(CDLD_BMOD+2)[Palette change]
+
+CDLD_CTAB_NORM	DC.L	0				
+		DC.W	CDLD_NORM_NPC-(CDLD_BMOD+2)
+		DC.L	PAL_CHANGE_A
+		DC.W	CDLD_NORM_PC-(CDLD_BMOD+2)
+		DC.L	PAL_CHANGE_B
+		DC.W	CDLD_NORM_PC-(CDLD_BMOD+2)
+
+CDLD_CTAB_CRUN	DC.L	0
+		DC.W	CDLD_CRUNCH_NPC-(CDLD_BMOD+2)
+		DC.L	PAL_CHANGE_A
+		DC.W	CDLD_CRUNCH_PC-(CDLD_BMOD+2)
+		DC.L	PAL_CHANGE_B
+		DC.W	CDLD_CRUNCH_PC-(CDLD_BMOD+2)
+
+; --------------------------------------------------------------------------
+
+; Palette change macro.
+; PCHANGE 0toN,1toN,2toN,3toN,4toN,5toN,6toN,7toN,\
+;	  8toN,9toN,10toN,11toN,12toN,13toN,14toN,15toN
+
+PCHANGE		MACRO
+		IF	NARG<>16
+		INFORM	3,"Macro parameter error."
+		ENDIF
+		DC.B	\1<<4!\1,\1<<4!\2,\1<<4!\3,\1<<4!\4,\1<<4!\5,\1<<4!\6,\1<<4!\7,\1<<4!\8
+		DC.B	\1<<4!\9,\1<<4!\10,\1<<4!\11,\1<<4!\12,\1<<4!\13,\1<<4!\14,\1<<4!\15,\1<<4!\16
+		DC.B	\2<<4!\1,\2<<4!\2,\2<<4!\3,\2<<4!\4,\2<<4!\5,\2<<4!\6,\2<<4!\7,\2<<4!\8
+		DC.B	\2<<4!\9,\2<<4!\10,\2<<4!\11,\2<<4!\12,\2<<4!\13,\2<<4!\14,\2<<4!\15,\2<<4!\16
+		DC.B	\3<<4!\1,\3<<4!\2,\3<<4!\3,\3<<4!\4,\3<<4!\5,\3<<4!\6,\3<<4!\7,\3<<4!\8
+		DC.B	\3<<4!\9,\3<<4!\10,\3<<4!\11,\3<<4!\12,\3<<4!\13,\3<<4!\14,\3<<4!\15,\3<<4!\16
+		DC.B	\4<<4!\1,\4<<4!\2,\4<<4!\3,\4<<4!\4,\4<<4!\5,\4<<4!\6,\4<<4!\7,\4<<4!\8
+		DC.B	\4<<4!\9,\4<<4!\10,\4<<4!\11,\4<<4!\12,\4<<4!\13,\4<<4!\14,\4<<4!\15,\4<<4!\16
+		DC.B	\5<<4!\1,\5<<4!\2,\5<<4!\3,\5<<4!\4,\5<<4!\5,\5<<4!\6,\5<<4!\7,\5<<4!\8
+		DC.B	\5<<4!\9,\5<<4!\10,\5<<4!\11,\5<<4!\12,\5<<4!\13,\5<<4!\14,\5<<4!\15,\5<<4!\16
+		DC.B	\6<<4!\1,\6<<4!\2,\6<<4!\3,\6<<4!\4,\6<<4!\5,\6<<4!\6,\6<<4!\7,\6<<4!\8
+		DC.B	\6<<4!\9,\6<<4!\10,\6<<4!\11,\6<<4!\12,\6<<4!\13,\6<<4!\14,\6<<4!\15,\6<<4!\16
+		DC.B	\7<<4!\1,\7<<4!\2,\7<<4!\3,\7<<4!\4,\7<<4!\5,\7<<4!\6,\7<<4!\7,\7<<4!\8
+		DC.B	\7<<4!\9,\7<<4!\10,\7<<4!\11,\7<<4!\12,\7<<4!\13,\7<<4!\14,\7<<4!\15,\7<<4!\16
+		DC.B	\8<<4!\1,\8<<4!\2,\8<<4!\3,\8<<4!\4,\8<<4!\5,\8<<4!\6,\8<<4!\7,\8<<4!\8
+		DC.B	\8<<4!\9,\8<<4!\10,\8<<4!\11,\8<<4!\12,\8<<4!\13,\8<<4!\14,\8<<4!\15,\8<<4!\16
+		DC.B	\9<<4!\1,\9<<4!\2,\9<<4!\3,\9<<4!\4,\9<<4!\5,\9<<4!\6,\9<<4!\7,\9<<4!\8
+		DC.B	\9<<4!\9,\9<<4!\10,\9<<4!\11,\9<<4!\12,\9<<4!\13,\9<<4!\14,\9<<4!\15,\9<<4!\16
+		DC.B	\10<<4!\1,\10<<4!\2,\10<<4!\3,\10<<4!\4,\10<<4!\5,\10<<4!\6,\10<<4!\7,\10<<4!\8
+		DC.B	\10<<4!\9,\10<<4!\10,\10<<4!\11,\10<<4!\12,\10<<4!\13,\10<<4!\14,\10<<4!\15,\10<<4!\16
+		DC.B	\11<<4!\1,\11<<4!\2,\11<<4!\3,\11<<4!\4,\11<<4!\5,\11<<4!\6,\11<<4!\7,\11<<4!\8
+		DC.B	\11<<4!\9,\11<<4!\10,\11<<4!\11,\11<<4!\12,\11<<4!\13,\11<<4!\14,\11<<4!\15,\11<<4!\16
+		DC.B	\12<<4!\1,\12<<4!\2,\12<<4!\3,\12<<4!\4,\12<<4!\5,\12<<4!\6,\12<<4!\7,\12<<4!\8
+		DC.B	\12<<4!\9,\12<<4!\10,\12<<4!\11,\12<<4!\12,\12<<4!\13,\12<<4!\14,\12<<4!\15,\12<<4!\16
+		DC.B	\13<<4!\1,\13<<4!\2,\13<<4!\3,\13<<4!\4,\13<<4!\5,\13<<4!\6,\13<<4!\7,\13<<4!\8
+		DC.B	\13<<4!\9,\13<<4!\10,\13<<4!\11,\13<<4!\12,\13<<4!\13,\13<<4!\14,\13<<4!\15,\13<<4!\16
+		DC.B	\14<<4!\1,\14<<4!\2,\14<<4!\3,\14<<4!\4,\14<<4!\5,\14<<4!\6,\14<<4!\7,\14<<4!\8
+		DC.B	\14<<4!\9,\14<<4!\10,\14<<4!\11,\14<<4!\12,\14<<4!\13,\14<<4!\14,\14<<4!\15,\14<<4!\16
+		DC.B	\15<<4!\1,\15<<4!\2,\15<<4!\3,\15<<4!\4,\15<<4!\5,\15<<4!\6,\15<<4!\7,\15<<4!\8
+		DC.B	\15<<4!\9,\15<<4!\10,\15<<4!\11,\15<<4!\12,\15<<4!\13,\15<<4!\14,\15<<4!\15,\15<<4!\16
+		DC.B	\16<<4!\1,\16<<4!\2,\16<<4!\3,\16<<4!\4,\16<<4!\5,\16<<4!\6,\16<<4!\7,\16<<4!\8
+		DC.B	\16<<4!\9,\16<<4!\10,\16<<4!\11,\16<<4!\12,\16<<4!\13,\16<<4!\14,\16<<4!\15,\16<<4!\16
+		ENDM
+
+; - Palette change data ----------------------------------------------------
+
+PAL_CHANGE_A	PCHANGE	0,3,2,2,2,2,3,3,2,2,2,2,4,3,3,4
+PAL_CHANGE_B	PCHANGE	0,10,9,10,11,11,11,11,9,9,10,11,11,10,11,11
+
+; - Required variables -----------------------------------------------------
+
+;GRR_DATA_START	RS.B	0
+;CURRENT_AGE	RS.L	1
+;STAMPS_FREE	RS.W	1
+;MAPS_FREE	RS.W	1
+;CDLD_WRITE	RS.W	1
+;CDLD_READ	RS.W	1
+;CDLD_COUNT	RS.W	1
+;MAP_ALLOCATE	RS.L	MAP_MAX
+;MAP_ALLOADDR	RS.L	MAP_MAX
+;STAMP_LIST	RS.W	16*16
+;CDLD_DATA	RS.B	CDLD_STEP*CDLD_MAX
+;STAMP_ALLOCATE	RS.B	STAMP_MAX
+;GRR_DATA_END	RS.B	0
+
+; --------------------------------------------------------------------------
+
+;GLIST HEADER
+;------------
+		RSRESET
+GR_ALLOCATE_AT	RS.L	1
+GR_ACTIVE	RS.W	1
+GR_MAP_XOFF	RS.W	1
+GR_MAP_YOFF	RS.W	1
+GR_STAMPS_WIDE	RS.W	1
+GR_STAMPS_HIGH	RS.W	1
+GR_STAMPS_USED	RS.W	1
+GR_SMAP_OFF	RS.L	1
+GR_CMAP_OFF	RS.L	1
+GR_DLEN		RS.B	0
+
+; --------------------------------------------------------------------------
+
+;GR_ACTIVE FORMAT
+;----------------
+;FEDCBA9876543210
+;----------------
+;0000000000000000 Unallocated and not downloaded.
+;00nnnnnnnnnnnnnn Allocated and downloaded.      
+;1000000000000000 Unallocated and downloaded.      
+;10nnnnnnnnnnnnnn Allocated but not downloaded.
+;1100000000000000 Unallocated and downloading.      
+;11nnnnnnnnnnnnnn Allocated and downloading.
+
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ Batman Returns - CD-ROM						   บ
+; ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน
+; บ Memory allocation/Ready graphics					   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+ALLOC_CHK	MOVE.W	GR_ACTIVE(A1),D0
+		BGT.S	.end
+		LSL.W	D0
+		BGT	READY_CDLD
+		MOVEQ	#-1,D0
+.end		RTS			;N=1/not useable.
+
+ALLOCATE_IF	BSR.S	ALLOCATE	;Don't flag allocation if unavailable.
+		BMI	DEALLOCATE
+		RTS			
+
+ALLOCATE	MOVE.W	GR_ACTIVE(A1),D0
+		ADDQ.W	#1,GR_ACTIVE(A1)
+ 		LSL.W	D0
+		BCS.S	.check_type
+		BEQ	READY_CDLD
+		RTS				;Allocate count updated.
+.check_type	LSL.W	D0
+ 		BCC.S	.cc_check
+  		BEQ.S	.reactivate
+		MOVEQ	#0,D0
+		RTS
+.cc_check	BNE	READY_CDLD
+		MOVE.W	#1,GR_ACTIVE(A1)
+.reactivate	MOVE.L	GR_ALLOCATE_AT(A1),A2	;Reactivate.
+    		MOVE.L	#1,(A2)
+  		RTS				;N=0/useable.
+
+; --------------------------------------------------------------------------
+
+ALLOC_RESTART	LEA	GRR_DATA_START,A0
+		MOVE.W	#(GRR_DATA_END-GRR_DATA_START)-1,D7
+.clr_lp		CLR.B	(A0)+
+		DBRA	D7,.clr_lp
+		MOVE.L	#-1,CURRENT_AGE	
+		MOVE.W	#STAMP_MAX-1,STAMPS_FREE	
+		MOVE.W	#MAP_MAX,MAPS_FREE	
+
+counter		=	1		;Multi GLIST ctrl.
+		REPT	GLIST_TOTAL-1
+counter		=	counter+1
+		LEA	GLIST\#counter,A1
+		BSR	GL_RESTART
+		ENDR
+		LEA	GLIST,A1
+
+GL_RESTART	MOVE.W	(A1)+,D7
+		ROL.W	#8,D7
+		BPL.S	.skp
+		NEG.W	D7
+.skp		BRA.S	.start
+
+.loop		MOVE.W	GR_ACTIVE(A1),D0
+		BPL.S	.reset		;00-0 00-n		
+ 		LSL.W	D0
+ 		BMI.S	.reset		;11-0 11-n
+		BNE.S	.next		;10-n
+		CLR.W	GR_ACTIVE(A1)	;10-0
+		BRA.S	.next
+.reset		AND.W	#$3FFF,GR_ACTIVE(A1)	
+		BEQ.S	.next
+		MOVEM.L	A1/D7,-(SP)	
+		BSR	READY_CDLD
+		BMI.S	.no_dld
+		BSR	FORCED_CDLD
+.no_dld		MOVEM.L	(SP)+,A1/D7
+.next		LEA	GR_DLEN(A1),A1
+.start		DBRA	D7,.loop
+  		RTS	    
+
+; --------------------------------------------------------------------------
+
+GLIST_RESET	LEA	GRR_DATA_START,A0
+		MOVE.W	#(GRR_DATA_END-GRR_DATA_START)-1,D7
+.clr_lp		CLR.B	(A0)+
+		DBRA	D7,.clr_lp
+		MOVE.L	#-1,CURRENT_AGE	
+		MOVE.W	#STAMP_MAX-1,STAMPS_FREE	
+		MOVE.W	#MAP_MAX,MAPS_FREE	
+  		
+counter		=	1		;Multi GLIST ctrl.
+		REPT	GLIST_TOTAL-1
+counter		=	counter+1
+		LEA	GLIST\#counter,A1
+		BSR	GL_RESET
+		ENDR
+		LEA	GLIST,A1
+
+GL_RESET	MOVE.W	(A1)+,D7
+		ROL.W	#8,D7
+		BPL.S	.start
+		NEG.W	D7
+		BRA.S	.start
+.loop		CLR.W	GR_ACTIVE(A1)
+		LEA	GR_DLEN(A1),A1
+.start		DBRA	D7,.loop
+		RTS
+
+; --------------------------------------------------------------------------
+
+READY_CDLD	CMP.W	#CDLD_MAX,CDLD_COUNT	;Download area available?
+		BGT	.no_allocation
+		
+		MOVE.W	STAMPS_FREE,D0		;Enough stamps available?
+		SUB.W	GR_STAMPS_USED(A1),D0
+		BMI.S	.deallocate
+
+		TST.W	MAPS_FREE		;Stamp map available?
+		BEQ	.deallocate		
+
+		LEA	MAP_ALLOCATE+MAP_MAX*4,A2
+		MOVEQ	#MAP_MAX-1,D7
+.ff_lp		TST.L	-(A2)
+		DBEQ	D7,.ff_lp
+		BEQ.S	.setup			;Unused map found?
+
+.deallocate	BSR	CLEAR_OLDEST	
+		BMI	.no_allocation
+		MOVE.W	STAMPS_FREE,D0
+		SUB.W	GR_STAMPS_USED(A1),D0
+		BMI.S	.deallocate
+
+.setup		LSL.W	#5,D7			;16x16 Map area.
+		MOVE.W	D7,D6
+		AND.L	#$1E0,D7
+		AND.L	#$FE00,D6	
+		LSL.W	#2,D6			
+		MOVE.W	D6,GR_MAP_YOFF(A1)	;Set Mypos offset.
+		LSL.L	#2,D6	
+		ADD.L	D7,D6
+		LSL.W	#6,D7			
+		MOVE.W	D7,GR_MAP_XOFF(A1)	;Set Mxpos offset.
+		LEA	MAP_FIRST_ADDR,A3
+		LEA	(A3,D6.L),A3		;A3=Map addr.
+
+		LEA	CDLD_DATA,A4		;Setup download.
+		MOVE.W	CDLD_WRITE,D0
+		MULU	#CDLD_STEP,D0
+		LEA	(A4,D0.W),A4
+		
+		MOVEQ	#0,D0			;Multi GLIST ctrl. 
+counter		=	1
+		REPT	GLIST_TOTAL-1
+counter		=	counter+1
+		CMP.L	#GLIST\#counter,A1
+		BCS.S	.set_type
+		ADDQ.W	#6,D0
+		ENDR
+
+.set_type	MOVE.W	D0,(A4)+		;Set TYPE
+		MOVE.L	A3,(A4)+		;Set MREAD
+		LEA	CMAPS,A5
+		ADD.L	GR_CMAP_OFF(A1),A5
+		MOVE.L	A5,(A4)+		;Set CREAD
+		CLR.W	(A4)+			;Set STAMP
+		MOVE.W	GR_STAMPS_HIGH(A1),D6
+		MOVE.W	GR_STAMPS_WIDE(A1),D7
+		MOVE.W	D6,(A4)+		;Set HEIGHT-1
+		MOVE.W	D7,(A4)+		;Set WIDTH_AT-1
+		MOVE.W	D7,(A4)+		;Set WIDTH-1 
+		MOVE.L	A1,(A4)+		;Set GADDR
+		ADDQ.W	#1,CDLD_WRITE	    
+		AND.W	#CDLD_MASK,CDLD_WRITE	;Update write position.
+		ADDQ.W	#1,CDLD_COUNT		;Update download amount. 
+		OR.W	#$C000,GR_ACTIVE(A1)	;Flag CDLD active.
+
+		MOVEQ	#0,D0			;Allocate stamps.
+		MOVE.W	GR_STAMPS_USED(A1),D7
+		SUB.W	D7,STAMPS_FREE
+		LEA	STAMP_ALLOCATE+1,A4
+		LEA	STAMP_LIST,A5
+		BRA.S	.alc_start		
+.alc_stamp_lp	ADDQ.W	#1,D0
+		TAS.B	(A4)+
+		BNE.S	.alc_stamp_lp
+.alc_start	MOVE.W	D0,(A5)+
+		DBRA	D7,.alc_stamp_lp
+
+		LEA	SMAPS,A4		;Setup stamp map.
+		LEA	STAMP_LIST,A5
+		ADD.L	GR_SMAP_OFF(A1),A4
+		BSR	ACCESS_REQ
+.map_line	MOVE.W	GR_STAMPS_WIDE(A1),D7	
+		MOVE.L	A3,A6
+.map_lp		MOVE.W	(A4)+,D0
+		ADD.W	D0,D0
+		MOVE.W	(A5,D0.W),(A6)+
+		DBRA	D7,.map_lp
+		LEA	$200(A3),A3
+		DBRA	D6,.map_line
+		SUBQ.W	#1,ACC_COUNT
+
+		SUBQ.W	#1,MAPS_FREE	
+		MOVE.L	A2,GR_ALLOCATE_AT(A1)		;Set stamp allocation addr.
+		MOVE.L	A1,MAP_ALLOADDR-MAP_ALLOCATE(A2);Set gr-data addr.
+		ADDQ.L	#1,(A2)				;Set allocation flag
+		RTS					;N=0/useable.
+
+.no_allocation	OR.W	#$8000,GR_ACTIVE(A1)
+		RTS				;N=1/not useable.
+
+; --------------------------------------------------------------------------
+
+DEALLOCATE	MOVE.W	GR_ACTIVE(A1),D0
+		BLE.S	.status_check
+
+		SUBQ.W	#1,GR_ACTIVE(A1)
+		BNE.S	.end
+		MOVE.W	#$8000,GR_ACTIVE(A1)	;Flag reuse possiable.	
+		MOVE.L	GR_ALLOCATE_AT(A1),A2
+		MOVE.L	CURRENT_AGE,(A2)	
+		SUBQ.L	#1,CURRENT_AGE
+		CMP.L	#2,CURRENT_AGE
+		BCS.S	AGE_RESET
+.end		MOVEQ	#-1,D0
+		RTS
+
+.status_check	LSL.W	#2,D0
+		BEQ.S	.end
+		BCS.S	.deallocate
+		SUBQ.W	#4,D0
+		BNE.S	.deallocate
+		CLR.W	GR_ACTIVE(A1)
+		MOVEQ	#-1,D0
+		RTS
+.deallocate	SUBQ.W	#1,GR_ACTIVE(A1)
+		RTS
+
+; --------------------------------------------------------------------------
+
+AGE_RESET	LEA	MAP_ALLOCATE+MAP_MAX*4,A2
+		MOVEQ	#MAP_MAX-1,D6
+.chk_lp		CMP.L	#2,-(A2)	;[0 and 1 are ignored as ages]
+		BCS.S	.chk_skp
+		MOVE.L	#-1,(A2)	;Reage graphic.
+.chk_skp	DBRA	D6,.chk_lp
+		MOVE.L	#-2,CURRENT_AGE ;Reset age.
+		RTS
+
+; --------------------------------------------------------------------------
+
+CLEAR_OLDEST	LEA	MAP_ALLOCATE+MAP_MAX*4,A3
+		MOVEQ	#1,D0		;[0 and 1 are ignored as ages]
+		MOVEQ	#-1,D1
+		MOVEQ	#MAP_MAX-1,D7
+
+.chk_lp		CMP.L	-(A3),D0	;Find oldest
+		BCC.S	.chk_skp
+		MOVE.L	(A3),D0
+		MOVE.L	A3,A2
+		MOVE.W	D7,D1
+.chk_skp	DBRA	D7,.chk_lp
+		
+		MOVE.W	D1,D7
+		BMI.S	.end		;Nothing to deallocate.
+
+		LSL.W	#5,D1			;16x16 Map area.
+		MOVE.W	D1,D0
+		AND.L	#$1E0,D0
+		AND.L	#$FE00,D1	
+		LSL.L	#4,D1
+		ADD.L	D1,D0	
+		LEA	MAP_FIRST_ADDR,A3
+		LEA	(A3,D0.L),A3		;A3=Map addr.
+
+		CLR.L	(A2)				;Flag free area.
+		MOVE.L	MAP_ALLOADDR-MAP_ALLOCATE(A2),A4;Data addr.
+		CLR.W	GR_ACTIVE(A4)			;Reuse off.
+		MOVE.W	GR_STAMPS_USED(A4),D0
+		ADD.W	D0,STAMPS_FREE
+		MOVE.W	GR_STAMPS_HIGH(A4),D4
+		MOVE.W	GR_STAMPS_WIDE(A4),D5
+		LEA	STAMP_ALLOCATE,A4
+		
+		BSR	ACCESS_REQ
+.clr_line	MOVE.W	D5,D6
+		MOVE.L	A3,A5
+.clr_lp		MOVE.W	(A5)+,D0
+		CLR.B	(A4,D0.W)
+.clr_skp	DBRA	D6,.clr_lp
+		LEA	$200(A3),A3
+		DBRA	D4,.clr_line
+		SUBQ.W	#1,ACC_COUNT
+		ADDQ.W	#1,MAPS_FREE	
+.end		RTS			;PL=OK MI=Nothing to deallocate.
+
+; --------------------------------------------------------------------------
+
+CDLD_CONTROL	TST.W	CDLD_COUNT	;Download during remaining time.
+		BEQ	.end
+
+.next_map	MOVE.W	CDLD_READ,D0
+		BSR	CDLD_DLD
+		ADDQ.W	#1,CDLD_READ
+		AND.W	#CDLD_MASK,CDLD_READ
+		SUBQ.W	#1,CDLD_COUNT
+		BNE.S	.next_map
+.end		RTS
+
+; --------------------------------------------------------------------------
+
+FORCED_CDLD	MOVE.W	CDLD_WRITE,D0	;Fully download last allocated data.
+		SUBQ.W	#1,D0
+		AND.W	#CDLD_MASK,D0
+		MOVE.W	D0,CDLD_WRITE
+		SUBQ.W	#1,CDLD_COUNT
+		NOT.W	SCL_SWAPIT
+		BSR	CDLD_DLD
+		CLR.W	SCL_SWAPIT
+		RTS
+
+; --------------------------------------------------------------------------
+
+CDLD_DLD	LEA	CDLD_CTAB_NORM,A1
+		TST.B	GLIST+1
+		BPL.S	.start
+		LEA	CDLD_CTAB_CRUN,A1
+
+.start		LEA	CDLD_DATA,A0
+		MOVEQ	#0,D4
+		MOVEQ	#0,D5
+		MULU	#CDLD_STEP,D0
+		ADD.W	D0,A0
+		ADD.W	(A0)+,A1	;TYPE
+		MOVE.L	(A1)+,A3	;A3=Palette change data
+		MOVE.W	(A1),CDLD_BMOD+2
+		MOVE.L	(A0)+,A1	;MREAD
+		MOVE.L	(A0)+,A2	;CREAD
+		MOVE.W	(A0)+,D5	;STAMP
+		MOVE.W	(A0)+,D6	;HEIGHT-1
+		MOVE.W	(A0)+,D7	;WIDTH_AT-1
+		LEA	CHARS+2,A4
+		BSR	ACCESS_REQ
+
+CDLD_STAMP_NEXT	CMP.W	(A1)+,D5
+		DBCS	D7,CDLD_STAMP_NEXT
+CDLD_BMOD	BCS.L	CDLD_BMOD
+
+CDLD_LINE_NEXT	MOVE.W	(A0),D7
+		SUB.W	D7,A1
+		SUB.W	D7,A1
+		LEA	$200-2(A1),A1
+		DBRA	D6,CDLD_LINE_START
+		
+		SUBQ.W	#1,ACC_COUNT		;Access off
+		
+		MOVE.L	2(A0),A1		;GLIST addr.
+	     	AND.W	#$3FFF,GR_ACTIVE(A1)
+		BNE.S	.end
+		MOVE.W	#$8000,GR_ACTIVE(A1)	;Flag reuse possiable.	
+		MOVE.L	GR_ALLOCATE_AT(A1),A2
+		MOVE.L	CURRENT_AGE,(A2)	;Start ageing process.	
+		SUBQ.L	#1,CURRENT_AGE
+		CMP.L	#2,CURRENT_AGE
+		BCS	AGE_RESET
+.end		RTS
+
+CDLD_LINE_START	TST.W	SCL_SWAPIT
+		BNE.S	CDLD_STAMP_NEXT
+		MOVE.W	(SCOM_SDATA+SCOM_FRAME).W,D0
+		CMP.W	(SCOM_MDATA+MCOM_FRAME).W,D0
+		BNE.S	CDLD_STAMP_NEXT
+		SUBQ.W	#1,ACC_COUNT		;Access off
+		MOVE.W	D7,-(A0)
+		MOVE.W	D6,-(A0)
+		MOVE.W	D5,-(A0)
+		MOVE.L	A2,-(A0)
+		MOVE.L	A1,-(A0)
+		ADDQ.L	#4,SP
+		RTS
+
+; --------------------------------------------------------------------------
+
+CDLD_NORM_NPC	MOVE.W	-2(A1),D5
+		MOVE.L	D5,D0
+		ADD.W	#SWORD_RAM>>7,D0
+		LSL.L	#7,D0
+		MOVE.L	D0,A5
+
+		MOVEM.W	(A2)+,D0-D3
+		LSL.L	#5,D0		;Char #1
+		LEA	(A4,D0.L),A6
+		REPT	8
+		MOVE.L	(A6)+,(A5)+
+		ENDR
+		LSL.L	#5,D1		;Char #2
+		LEA	(A4,D1.L),A6
+		REPT	8
+		MOVE.L	(A6)+,(A5)+
+		ENDR
+		LSL.L	#5,D2		;Char #3
+		LEA	(A4,D2.L),A6
+		REPT	8
+		MOVE.L	(A6)+,(A5)+
+		ENDR
+		LSL.L	#5,D3		;Char #4
+		LEA	(A4,D3.L),A6
+		REPT	8
+		MOVE.L	(A6)+,(A5)+
+		ENDR
+
+		DBRA	D7,CDLD_STAMP_NEXT
+		BRA	CDLD_LINE_NEXT
+
+; --------------------------------------------------------------------------
+
+CDLD_CRUNCH_NPC	MOVE.W	-2(A1),D5
+		MOVE.L	D5,D0
+		ADD.W	#SWORD_RAM>>7,D0
+		LSL.L	#7,D0
+		MOVE.L	D0,A5
+
+		MOVEM.W	(A2)+,D0-D3
+		LSL.L	#4,D0		;Char #1
+		LEA	(A4,D0.L),A6
+		REPT	4
+		MOVE.L	(A6)+,(A5)+
+		ENDR
+		LSL.L	#4,D1		
+		LEA	(A4,D1.L),A6
+		REPT	4
+		MOVE.L	(A6)+,(A5)+
+		ENDR
+		LSL.L	#4,D2		;Char #2
+		LEA	(A4,D2.L),A6
+		REPT	4
+		MOVE.L	(A6)+,(A5)+
+		ENDR
+		LSL.L	#4,D3		
+		LEA	(A4,D3.L),A6
+		REPT	4
+		MOVE.L	(A6)+,(A5)+
+		ENDR
+		
+		MOVEM.W	(A2)+,D0-D3
+		LSL.L	#4,D0		;Char #3
+		LEA	(A4,D0.L),A6
+		REPT	4
+		MOVE.L	(A6)+,(A5)+
+		ENDR
+		LSL.L	#4,D1		
+		LEA	(A4,D1.L),A6
+		REPT	4
+		MOVE.L	(A6)+,(A5)+
+		ENDR
+		LSL.L	#4,D2		;Char #4
+		LEA	(A4,D2.L),A6
+		REPT	4
+		MOVE.L	(A6)+,(A5)+
+		ENDR
+		LSL.L	#4,D3		
+		LEA	(A4,D3.L),A6
+		REPT	4
+		MOVE.L	(A6)+,(A5)+
+		ENDR
+	
+		DBRA	D7,CDLD_STAMP_NEXT
+		BRA	CDLD_LINE_NEXT
+
+; --------------------------------------------------------------------------
+
+CDLD_NORM_PC	MOVE.W	-2(A1),D5
+		MOVE.L	D5,D0
+		ADD.W	#SWORD_RAM>>7,D0
+		LSL.L	#7,D0
+		MOVE.L	D0,A5
+
+		MOVEM.W	(A2)+,D0-D3
+		LSL.L	#5,D0		;Char #1
+		LEA	(A4,D0.L),A6
+		REPT	32	
+		MOVE.B	(A6)+,D4
+		MOVE.B	(A3,D4.W),(A5)+
+		ENDR
+		LSL.L	#5,D1		;Char #2
+		LEA	(A4,D1.L),A6
+		REPT	32	
+		MOVE.B	(A6)+,D4
+		MOVE.B	(A3,D4.W),(A5)+
+		ENDR
+		LSL.L	#5,D2		;Char #3
+		LEA	(A4,D2.L),A6
+		REPT	32	
+		MOVE.B	(A6)+,D4
+		MOVE.B	(A3,D4.W),(A5)+
+		ENDR
+		LSL.L	#5,D3		;Char #4
+		LEA	(A4,D3.L),A6
+		REPT	32	
+		MOVE.B	(A6)+,D4
+		MOVE.B	(A3,D4.W),(A5)+
+		ENDR
+
+		DBRA	D7,CDLD_STAMP_NEXT
+		BRA	CDLD_LINE_NEXT
+
+; --------------------------------------------------------------------------
+
+CDLD_CRUNCH_PC	MOVE.W	-2(A1),D5
+		MOVE.L	D5,D0
+		ADD.W	#SWORD_RAM>>7,D0
+		LSL.L	#7,D0
+		MOVE.L	D0,A5
+
+		MOVEM.W	(A2)+,D0-D3
+		LSL.L	#4,D0		;Char #1
+		LEA	(A4,D0.L),A6
+		REPT	16	
+		MOVE.B	(A6)+,D4
+		MOVE.B	(A3,D4.W),(A5)+
+		ENDR
+		LSL.L	#4,D1		
+		LEA	(A4,D1.L),A6
+		REPT	16	
+		MOVE.B	(A6)+,D4
+		MOVE.B	(A3,D4.W),(A5)+
+		ENDR
+		LSL.L	#4,D2		;Char #2
+		LEA	(A4,D2.L),A6
+		REPT	16	
+		MOVE.B	(A6)+,D4
+		MOVE.B	(A3,D4.W),(A5)+
+		ENDR
+		LSL.L	#4,D3		
+		LEA	(A4,D3.L),A6
+		REPT	16	
+		MOVE.B	(A6)+,D4
+		MOVE.B	(A3,D4.W),(A5)+
+		ENDR
+
+		MOVEM.W	(A2)+,D0-D3
+		LSL.L	#4,D0		;Char #3
+		LEA	(A4,D0.L),A6
+		REPT	16	
+		MOVE.B	(A6)+,D4
+		MOVE.B	(A3,D4.W),(A5)+
+		ENDR
+		LSL.L	#4,D1		
+		LEA	(A4,D1.L),A6
+		REPT	16	
+		MOVE.B	(A6)+,D4
+		MOVE.B	(A3,D4.W),(A5)+
+		ENDR
+		LSL.L	#4,D2		;Char #4
+		LEA	(A4,D2.L),A6
+		REPT	16	
+		MOVE.B	(A6)+,D4
+		MOVE.B	(A3,D4.W),(A5)+
+		ENDR
+		LSL.L	#4,D3		
+		LEA	(A4,D3.L),A6
+		REPT	16	
+		MOVE.B	(A6)+,D4
+		MOVE.B	(A3,D4.W),(A5)+
+		ENDR
+
+		DBRA	D7,CDLD_STAMP_NEXT
+		BRA	CDLD_LINE_NEXT
+
+; --------------------------------------------------------------------------
+

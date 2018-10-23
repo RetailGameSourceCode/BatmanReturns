@@ -1,0 +1,129 @@
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ BATMAN RETURNS CD-ROM						   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+; ROAD OBJECT - LEVEL 5 - "Jump ramp"
+
+; --------------------------------------------------------------------------
+
+RAMP_SETUP	LEA	OBJ_RAMP,A6
+		BSR	O_MTR_SETUP
+	    	BRA	O_MTR_SETFIN
+
+; --------------------------------------------------------------------------
+
+RAMP_HIT	CMP.W	#ID_MAIN,OBJ_ID(A1)
+		BEQ.S	.car
+		CMP.W	#ID_SHOT,OBJ_ID(A1)
+		BEQ	OBJ_DET_ZXKILL
+		CMP.W	#ID_MISS,OBJ_ID(A1)
+		BEQ	OBJ_DET_ZXKILL
+		BRA	OBJ_DET_NEXT
+
+.car		TST.W	OBJ_CNT0(A2)
+		BNE	OBJ_DET_NEXT
+		MOVEM.L	D0-D7/A0-A6,-(SP)
+		EXG	A2,A1
+
+		MOVE.W	OBJ_SPD(A2),D0
+		CMP.W	#$20,D0
+		BPL.S	.calc
+
+		TST.W	DET_MOVE_Z
+		BPL.S	.ycalc
+		ADD.W	#$B0,D4
+		NEG.W	D4
+.ycalc		EXT.L	D4
+		ASL.L	#6,D4
+		CMP.L	OBJ_YPOS(A2),D4
+		BPL.S	.done
+		MOVE.L	D4,OBJ_YPOS(A2)
+		MOVE.L	#BAT_AIR_DEC,OBJ_ADDR7(A2)
+		BRA.S	.done
+
+.calc		MOVE.L	#-$1800,OBJ_YPOS(A2)
+		MOVE.W	#6,OBJ_CNT0(A1)
+
+		MULS	#42,D0
+		EXT.L	D0
+		NEG.L	D0
+		SUB.L	#$800,D0
+		MOVE.L	D0,OBJ_ADDR7(A2)
+
+		MOVE.W	#SFX_RAMP_A,D0
+		JSR	CSFX_ONESHOT_V
+
+		CMP.W	#$58,OBJ_SPD(A2)
+		BMI.S	.done
+		MOVE.W	#20,OBJ_CNT5(A2)
+
+		MOVE.W	#$30,OBJ_CNT2(A2)
+		BTST	#0,JOY0+1
+		BNE.S	.done
+		NEG.W	OBJ_CNT2(A2)
+
+.done		MOVEM.L	(SP)+,D0-D7/A0-A6
+		JMP	OBJ_DET_NEXT
+
+; --------------------------------------------------------------------------
+
+RAMP_MOVE	TST.W	OBJ_CNT0(A1)
+		BEQ.S	.end
+		SUBQ.W	#1,OBJ_CNT0(A1)
+.end		RTS
+
+; --------------------------------------------------------------------------
+
+RAMP_PRINT	MOVE.W	D0,D1
+		ADD.W	#$58,D1
+		CMP.W	#$180,D1
+		BMI.S	.alloc
+		ADD.W	#$200,D1
+.alloc		BSR	O_PR_A_XIT
+		MOVE.L	OBJ_ADDR0(A1),A0
+		MOVE.L	OBJGR_ANM0(A0),A0
+		
+		BSR	O_CALC_PATCHZ
+		BSR	O_CALC_VIEW
+		MOVE.L	OBJ_ADDR1(A1),A2
+		BSR	O_ALLOC_DEALL_S
+		MOVE.L	A0,OBJ_ADDR1(A1)
+		BRA	O_PR_DIFF0
+
+; --------------------------------------------------------------------------
+
+OBJ_RAMP
+		XYRATIO	100,150,100,150
+		OBJCNTR	0,0,56,40
+
+		DC.L	OBJ_RAMP_SET
+		DC.L	OBJ_RAMP_ANM0
+		DC.L	OBJ_RAMP_ANM0
+		DC.L	0
+
+OBJ_RAMP_ANM0	DC.L	OBJ_RAMP_XVIEW,OBJ_RAMP_YVIEW
+
+		OBJSCLM	0,0,0,0,78,43,ICRMP3
+		OBJSCLM	0,0,0,0,68,42,ICRMP2
+		OBJSCL	0,0,0,0,56,40,ICRMP1
+		OBJSCL	0,0,0,0,68,42,ICRMP2
+		OBJSCL	0,0,0,0,78,43,ICRMP3
+		
+OBJ_RAMP_XVIEW	DC.W	2*$20,$20
+		DC.L	$3000,$7800,-1
+OBJ_RAMP_YVIEW	DC.W	0,-1
+
+OBJ_RAMP_SET	DC.W	ID_ROADOBJ	;OBJ_ID
+		DC.L	RAMP_MOVE	;OBJ_MOVE_CTRL
+		DC.L	RAMP_PRINT	;OBJ_PRN_CTRL
+		DC.W	$60		;OBJ_ZSIZE
+		XYSIZE	70,50
+		DC.W	0		;OBJ_MASS
+		DC.L	RAMP_HIT	;OBJ_HIT_GOTO
+		DC.W	0		;OBJ_ZPOS
+		DC.L	0		;OBJ_XPOS
+		DC.L	0		;OBJ_YPOS
+
+; --------------------------------------------------------------------------
+
+

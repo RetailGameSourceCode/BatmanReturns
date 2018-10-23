@@ -1,0 +1,21 @@
+CD-ROM BATMAN. Initial system boot.
+ 
+[snmake]
+
+T7:;	IPSYS.68K
+
+	SNASM68k /P IPSYS.68K,B:IPSYS.BIN,IPSYS.SYM
+
+T7:;	MAI_AP.68K
+
+	SNASM68k /P MAI_AP.68K,B:MAI_AP.BIN
+
+T7:;	SUB_AP.68K
+
+	SNASM68k /P SUB_AP.68K,B:SUB_AP.BIN
+
+[eval]
+
+	SNBUG68k /v$$$ IPSYS.SYM
+
+

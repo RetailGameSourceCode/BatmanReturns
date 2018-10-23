@@ -1,0 +1,12 @@
+CD-ROM BATMAN. Devbios cd file emulation.
+ 
+[snmake]
+
+T7:;	IPTEST.68K
+
+	SNASM68k /P IPTEST.68K,IPTEST.BIN
+
+	COMMAND /C COPY /B IPTEST.BIN PRN:
+
+
+

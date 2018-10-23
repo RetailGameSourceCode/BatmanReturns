@@ -1,0 +1,58 @@
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ 									   บ
+; บ CD-ROM BATMAN.							   บ
+; บ 									   บ
+; ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน
+; บ 									   บ
+; บ Writen by: JOBBEEE	 Date: 01-21-92					   บ
+; บ 									   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+		OPT	ae-,an-,c-,d-,e-,l+,s+,w+,ws-,v-
+		OPT	op+,os+,ow+,oz+,oaq+,osq+,omq+
+	
+		INCLUDE	\SOURCE\DEVBIOS\GENESIS.68K
+ 		INCLUDE	\SOURCE\DEVBIOS\CDBIOS.68K
+  		INCLUDE	BATMAN.EQU
+
+		REGS	PC=$200
+		REGS	SSP=$5E80
+		REGS	SR=$2700
+
+		ORG	$6000
+AP_START
+
+; - Application ID Area. ---------------------------------------------------
+
+AP_TEXT		DC.B	"MAIN____DEV",0	;Module name, flag.
+		DC.W	$0000,0		;Version, type.
+		DC.L	0		;Ptr. to next module.
+		DC.L	0		;Module size.
+		DC.L	AP_USER-AP_TEXT	;User offset table.
+		DC.L	0		;Work ram size.
+AP_USER		DC.W	AP_INIT-AP_USER	;Initializiation routine.
+		DC.W	AP_MAIN-AP_USER	;Main routine.
+		DC.W	AP_VBL-AP_USER	;VBL interrupt routine.
+		DC.W	0		;User defined routine.
+		DC.W	0		;End flag.
+
+; - Application code area. -------------------------------------------------
+
+AP_INIT		
+AP_VBL		RTS
+AP_MAIN		
+		JMP	$8000(PC)
+
+AP_END
+
+; --------------------------------------------------------------------------
+
+		INCLUDE	BAT_SP.68K
+
+; --------------------------------------------------------------------------
+
+
+
+
+
+

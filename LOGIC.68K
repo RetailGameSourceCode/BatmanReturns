@@ -1,0 +1,538 @@
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ BATMAN RETURNS CD-ROM						   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+; ENEMY LOGIC CONTROLER.
+
+; --------------------------------------------------------------------------
+
+LOGIC_MOVER		
+		MOVE.L	OBJ_XINERTIA(A1),D1
+		BPL.S	.xin_pos
+		TST.W	OBJ_XFORCE(A1)
+		BPL.S	.xdir_calc
+		MOVEQ	#%01,D6
+		NEG.L	D1
+		BRA.S	.xin_chk
+.xin_pos	TST.W	OBJ_XFORCE(A1)
+		BMI.S	.xdir_calc
+		MOVEQ	#%10,D6
+.xin_chk	CMP.L	#$60000,D1
+		BPL.S	.xskid_chk
+
+.xdir_calc	MOVEQ	#0,D6
+		MOVE.L	OBJ_XPOS(A1),D1
+		CMP.L	OBJ_LXMIN(A1),D1
+		BPL.S	.xmax_chk
+		MOVEQ	#%01,D6
+		BRA.S	.xskid_chk
+.xmax_chk	CMP.L	OBJ_LXMAX(A1),D1
+		BMI.S	.zspd_calc
+		MOVEQ	#%10,D6
+
+.xskid_chk	BTST.B	#O_SKID,OBJ_FLAG0(A1)
+;		BNE.S	.update
+
+.zspd_calc	MOVE.W	OBJ_ZPOS(A1),D0
+		CMP.W	#$1400,D0
+		BPL.S	.update
+
+		BSET	#3,D6
+		MOVE.W	OBJECT_DATA+OBJ_SPD,D1
+		
+		MOVE.W	OBJ_SPD(A1),D1
+		CMP.W	OBJ_LMSPD(A1),D1
+		BPL.S	.zmin_chk
+		BRA.S	.zturbo
+
+.zmin_chk	CMP.W	OBJ_LZMIN(A1),D0
+		BPL.S	.zmax_chk
+.zturbo		BSET	#5,D6
+		BRA.S	.update
+.zmax_chk	CMP.W	OBJ_LZMAX(A1),D0
+		BMI.S	.update
+		BCLR	#3,D6
+
+.update		BSR	O_WHEEL_UPDATE
+		BSR	O_SPEED_UPDATE
+		SWAP	D0
+		BSR	O_CALC_MOVEAMTS
+		ASR.W	D4
+		BSR	O_RCALC
+
+		MOVE.W	D0,D2
+		ADD.W	OBJ_ZPOS(A1),D2
+		SUB.W	OBJECT_DATA+OBJ_SPD,D2
+		MOVE.W	D2,D3
+		ADD.W	OBJ_ZSIZE(A1),D3
+		SUB.W	OBJECT_DATA+OBJ_ZPOS,D3
+		BPL.S	.chk_b
+.chk_a		SUB.W	#$A0,D2
+		BPL.S	.move_adj
+		CMP.W	D3,D2
+		BPL.S	.move_adj
+		BRA.S	.swap
+.chk_b		SUB.W	#$A0,D2
+		BPL.S	.move
+.swap		MOVE.W	D2,D3
+.move_adj	SUB.W	D3,D0
+.move		BSR	DETECT_MOVE
+
+		BSR	O_DET_PLIMITS
+
+		LEA	VIS_ESKIDSMOKE,A0
+		BRA	O_SKID_SMOKE
+	
+; --------------------------------------------------------------------------
+
+IF_FAIL_NEXT	DC.L	0
+IF_TYPE		DC.W	0
+
+BAT_POS_X	DC.B	0
+ENEMY_POS_X	DC.B	0
+ENEMY_POS_Y	DC.B	0
+ENEMY_NEW_X	DC.B	0
+ENEMY_NEW_Y	DC.B	0
+		EVEN
+
+; --------------------------------------------------------------------------
+
+LGRID_X		TST.L	D0
+		BMI.S	.gneg
+		DIVU	#3303,D0
+		ADDQ.W	#1,D0
+		BGT.S	.gpos
+.gneg		MOVEQ	#1,D0
+		RTS
+.gpos		CMP.W	#$20,D0
+		BLE.S	.gend
+		MOVEQ	#$20,D0
+.gend		RTS
+
+
+LOGIC_CTRL	
+		MOVE.L	OBJECT_DATA+OBJ_XPOS,D0
+		BSR	LGRID_X
+		MOVE.B	D0,BAT_POS_X
+
+		MOVE.W	OBJ_ZPOS(A1),D0
+		CMP.W	#$100,D0
+		BPL.S	.skp_spdup
+		MOVE.W	OBJECT_DATA+OBJ_SPD,D1
+		ADD.W	#$10,D1
+		CMP.W	OBJ_SPD(A1),D1
+		BMI.S	.skp_spdup
+		ADD.W	#$8,OBJ_SPD(A1)
+.skp_spdup
+		ASR.W	#6,D0
+		SUB.W	#1+2,D0
+		BGT.S	.ypos
+		MOVEQ	#1,D0
+		BRA.S	.yset
+.ypos		CMP.W	#$40,D0
+		BLE.S	.yset
+		MOVEQ	#$40,D0
+.yset		MOVE.B	D0,ENEMY_POS_Y
+
+		MOVE.L	OBJ_XPOS(A1),D0
+		BSR	LGRID_X
+		MOVE.B	D0,ENEMY_POS_X
+
+		CLR.B	ENEMY_NEW_X
+		CLR.B	ENEMY_NEW_Y
+		
+		MOVE.L	OBJ_LOGIC_DATA(A1),A6
+
+		MOVEQ	#0,D0
+		MOVE.B	OBJ_LCTRL(A1),D0
+		MOVE.W	LCTRL_LIST(PC,D0.W),D0
+		JSR	LCTRL_LIST(PC,D0.W)
+
+		MOVEQ	#0,D0
+		MOVE.B	ENEMY_NEW_X,D0
+		BEQ.S	.skp0
+		MULU	#3303,D0
+		MOVE.L	D0,OBJ_LXMAX(A1)
+		SUB.L	#3303,D0
+		MOVE.L	D0,OBJ_LXMIN(A1)
+.skp0
+		MOVEQ	#0,D0
+		MOVE.B	ENEMY_NEW_Y,D0
+		BEQ.S	.skp1
+		ADD.W	#1,D0
+		ASL.W	#6,D0
+		MOVE.W	D0,OBJ_LZMIN(A1)
+		ADD.W	#$80,D0
+		MOVE.W	D0,OBJ_LZMAX(A1)
+.skp1
+		BRA	LOGIC_MOVER
+
+; --------------------------------------------------------------------------
+
+		RSRESET
+LCTRL_NORM	RS.W	1
+LCTRL_PAUSE	RS.W	1
+
+LCTRL_LIST	DC.W	CMD_NEXT-LCTRL_LIST
+		DC.W	LCPAUSE-LCTRL_LIST
+
+LCPAUSE		SUBQ.B	#1,OBJ_LVAR(A1)
+		BNE.S	.end
+		CLR.B	OBJ_LCTRL(A1)
+.end		RTS
+
+; --------------------------------------------------------------------------
+
+CMD_FALSE	TST.W	IF_TYPE
+		BMI.S	CMD_NEXT
+		BRA.S	CMD_REROUTE
+
+CMD_TRUE	TST.W	IF_TYPE
+		BPL.S	CMD_NEXT
+CMD_REROUTE	MOVE.L	IF_FAIL_NEXT,A6
+
+CMD_NEXT	MOVEQ	#0,D0
+		MOVE.B	(A6)+,D0
+		MOVE.W	LCMD_LIST(PC,D0.W),D0
+		JMP	LCMD_LIST(PC,D0.W)
+
+LCMD_LIST	DC.W	CMD_NEXT-LCMD_LIST			
+		DC.W	DO_IFTRUE-LCMD_LIST			
+		DC.W	DO_IFTRUEx-LCMD_LIST			
+		DC.W	DO_IFFALSE-LCMD_LIST			
+		DC.W	DO_IFFALSEx-LCMD_LIST			
+		DC.W	DO_GOTO-LCMD_LIST			
+		DC.W	DO_GOTOx-LCMD_LIST			
+		DC.W	DO_BATRANGE-LCMD_LIST			
+		DC.W	DO_GRIDRANGE-LCMD_LIST			
+		DC.W	DO_GRIDGOTOXY-LCMD_LIST			
+		DC.W	DO_GRIDGOTOX-LCMD_LIST			
+		DC.W	DO_GRIDGOTOY-LCMD_LIST			
+		DC.W	DO_LOGICEND-LCMD_LIST			
+		DC.W	DO_SET_FLAG0-LCMD_LIST			
+		DC.W	DO_LOGICPAUSE-LCMD_LIST			
+		DC.W	DO_RNDCHANCE-LCMD_LIST			
+
+; --------------------------------------------------------------------------
+
+DO_IFTRUE	MOVE.W	#1,IF_TYPE
+SETUP_IF	MOVEQ	#0,D0
+		MOVE.B	(A6)+,D0
+		ADD.L	A6,D0
+		MOVE.L	D0,IF_FAIL_NEXT
+		BRA	CMD_NEXT
+		
+DO_IFFALSE	MOVE.W	#-1,IF_TYPE
+		BRA.S	SETUP_IF
+
+DO_IFTRUEx	MOVE.W	#1,IF_TYPE
+SETUP_IFx	MOVE.B	(A6)+,D0
+		LSL.W	#8,D0
+		MOVE.B	(A6)+,D0
+		ADD.L	A6,D0
+		MOVE.L	D0,IF_FAIL_NEXT
+		BRA	CMD_NEXT
+
+DO_IFFALSEx	MOVE.W	#-1,IF_TYPE
+		BRA.S	SETUP_IFx
+
+DO_GOTO		MOVEQ	#0,D0
+		MOVE.B	(A6)+,D0
+		LEA	(A6,D0.W),A6
+		BRA	CMD_NEXT
+
+DO_GOTOx	MOVE.B	(A6)+,D0
+		LSL.W	#8,D0
+		MOVE.B	(A6)+,D0
+		LEA	(A6,D0.W),A6
+		BRA	CMD_NEXT
+
+DO_LOGICEND	RTS
+
+
+DO_BATRANGE	MOVE.B	BAT_POS_X,D0
+		MOVE.B	(A6)+,D1
+		MOVE.B	(A6)+,D2
+		CMP.B	D1,D0
+		BLT	CMD_FALSE
+		CMP.B	D2,D0
+		BGT	CMD_FALSE
+		BRA	CMD_TRUE
+		
+DO_GRIDRANGE	MOVE.B	ENEMY_POS_X,D0
+		MOVE.B	ENEMY_POS_Y,D1
+		MOVE.B	(A6)+,D2
+		MOVE.B	(A6)+,D3
+		MOVE.B	(A6)+,D4
+		MOVE.B	(A6)+,D5
+		CMP.B	D2,D0
+		BLT	CMD_FALSE
+		CMP.B	D3,D0
+		BGT	CMD_FALSE
+		CMP.B	D4,D1
+		BLT	CMD_FALSE
+		CMP.B	D5,D1
+		BGT	CMD_FALSE
+		BRA	CMD_TRUE
+
+DO_GRIDGOTOXY	MOVE.B	(A6)+,ENEMY_NEW_X
+DO_GRIDGOTOY	MOVE.B	(A6)+,ENEMY_NEW_Y
+		BRA	CMD_NEXT
+
+DO_GRIDGOTOX	MOVE.B	(A6)+,ENEMY_NEW_X
+		BRA	CMD_NEXT
+
+DO_SET_FLAG0	BSET.B	#0,OBJ_FLAG1(A1)
+		BRA	CMD_NEXT
+
+DO_LOGICPAUSE	MOVE.B	(A6)+,OBJ_LVAR(A1)
+		MOVE.B	#LCTRL_PAUSE,OBJ_LCTRL(A1)
+		BRA	CMD_NEXT
+
+DO_RNDCHANCE	MOVE.W	#100,D7
+		BSR	RANDOM_RANGE_U
+		CMP.B	(A6)+,D7
+		BCC	CMD_FALSE
+		BRA	CMD_TRUE
+
+; --------------------------------------------------------------------------
+
+		RSRESET
+CMD_NOP		RS.W	1
+CMD_IFTRUE	RS.W	1
+CMD_IFTRUEx	RS.W	1
+CMD_IFFALSE	RS.W	1
+CMD_IFFALSEx	RS.W	1
+CMD_GOTO	RS.W	1
+CMD_GOTOx	RS.W	1
+CMD_BATRANGE	RS.W	1
+CMD_GRIDRANGE	RS.W	1
+CMD_GRIDGOTOXY	RS.W	1
+CMD_GRIDGOTOX	RS.W	1
+CMD_GRIDGOTOY	RS.W	1
+CMD_LOGICEND	RS.W	1
+CMD_SET_FLAG0	RS.W	1
+CMD_LOGICPAUSE	RS.W	1
+CMD_RNDCHANCE	RS.W	1
+CMD_BASH	RS.W	1
+
+ifcnt		=	0
+ifsp		=	0
+eifsp		=	0
+
+; - IFTRUE -----------------------------------------------------------------
+
+IFTRUE		MACRO
+		DC.B	CMD_IFTRUE
+		DC.B	ife\#ifcnt-ifs\#ifcnt
+ifs\#ifcnt	EQU	*
+ifpos\#ifsp	=	ifcnt
+eifpos\#eifsp	=	ifcnt
+ifcnt		=	ifcnt+1
+ifsp		=	ifsp+1
+eifsp		=	eifsp+1
+		ENDM		
+
+
+IFTRUEx		MACRO
+		DC.B	CMD_IFTRUEx
+		DC.W	ife\#ifcnt-ifs\#ifcnt
+ifs\#ifcnt	EQU	*
+ifpos\#ifsp	=	ifcnt
+eifpos\#eifsp	=	ifcnt
+ifcnt		=	ifcnt+1
+ifsp		=	ifsp+1
+eifsp		=	eifsp+1
+		ENDM		
+
+; - IFFALSE ----------------------------------------------------------------
+
+IFFALSE		MACRO
+		DC.B	CMD_IFFALSE
+		DC.B	ife\#ifcnt-ifs\#ifcnt
+ifs\#ifcnt	EQU	*
+ifpos\#ifsp	=	ifcnt
+eifpos\#eifsp	=	ifcnt
+ifcnt		=	ifcnt+1
+ifsp		=	ifsp+1
+eifsp		=	eifsp+1
+		ENDM		
+
+
+IFFALSEx		MACRO
+		DC.B	CMD_IFFALSEx
+		DC.W	ife\#ifcnt-ifs\#ifcnt
+ifs\#ifcnt	EQU	*
+ifpos\#ifsp	=	ifcnt
+eifpos\#eifsp	=	ifcnt
+ifcnt		=	ifcnt+1
+ifsp		=	ifsp+1
+eifsp		=	eifsp+1
+		ENDM		
+
+; - ELSE_IFTRUE ------------------------------------------------------------
+
+ELSE_IFTRUE	MACRO
+eifsp		=	eifsp-1
+temp		=	eifpos\#eifsp
+		DC.B	CMD_GOTO
+		DC.B	eife\#temp-ifs\#ifcnt
+ifs\#ifcnt	EQU	*
+eifsp		=	eifsp+1
+ifcnt		=	ifcnt+1
+
+ifsp		=	ifsp-1
+temp		=	ifpos\#ifsp
+ife\#temp	EQU	*
+
+		DC.B	CMD_IFTRUE
+		DC.B	ife\#ifcnt-ifs\#ifcnt
+ifs\#ifcnt	EQU	*
+ifpos\#ifsp	=	ifcnt
+ifcnt		=	ifcnt+1
+ifsp		=	ifsp+1
+		ENDM		
+
+
+ELSE_IFTRUEx	MACRO
+eifsp		=	eifsp-1
+temp		=	eifpos\#eifsp
+		DC.B	CMD_GOTOx
+		DC.W	eife\#temp-ifs\#ifcnt
+ifs\#ifcnt	EQU	*
+eifsp		=	eifsp+1
+ifcnt		=	ifcnt+1
+
+ifsp		=	ifsp-1
+temp		=	ifpos\#ifsp
+ife\#temp	EQU	*
+
+		DC.B	CMD_IFTRUEx
+		DC.W	ife\#ifcnt-ifs\#ifcnt
+ifs\#ifcnt	EQU	*
+ifpos\#ifsp	=	ifcnt
+ifcnt		=	ifcnt+1
+ifsp		=	ifsp+1
+		ENDM		
+
+; - ELSE_IFFALSE -----------------------------------------------------------
+
+ELSE_IFFALSE	MACRO
+eifsp		=	eifsp-1
+temp		=	eifpos\#eifsp
+		DC.B	CMD_GOTO
+		DC.B	eife\#temp-ifs\#ifcnt
+ifs\#ifcnt	EQU	*
+eifsp		=	eifsp+1
+ifcnt		=	ifcnt+1
+
+ifsp		=	ifsp-1
+temp		=	ifpos\#ifsp
+ife\#temp	EQU	*
+
+		DC.B	CMD_IFFALSE
+		DC.B	ife\#ifcnt-ifs\#ifcnt
+ifs\#ifcnt	EQU	*
+ifpos\#ifsp	=	ifcnt
+ifcnt		=	ifcnt+1
+ifsp		=	ifsp+1
+		ENDM		
+
+
+ELSE_IFFALSEx	MACRO
+eifsp		=	eifsp-1
+temp		=	eifpos\#eifsp
+		DC.B	CMD_GOTOx
+		DC.W	eife\#temp-ifs\#ifcnt
+ifs\#ifcnt	EQU	*
+eifsp		=	eifsp+1
+ifcnt		=	ifcnt+1
+
+ifsp		=	ifsp-1
+temp		=	ifpos\#ifsp
+ife\#temp	EQU	*
+
+		DC.B	CMD_IFFALSEx
+		DC.W	ife\#ifcnt-ifs\#ifcnt
+ifs\#ifcnt	EQU	*
+ifpos\#ifsp	=	ifcnt
+ifcnt		=	ifcnt+1
+ifsp		=	ifsp+1
+		ENDM		
+
+; - IFELSE -----------------------------------------------------------------
+
+IFELSE		MACRO
+eifsp		=	eifsp-1
+temp		=	eifpos\#eifsp
+		DC.B	CMD_GOTO
+		DC.B	eife\#temp-ifs\#ifcnt
+ifs\#ifcnt	EQU	*
+eifsp		=	eifsp+1
+ifcnt		=	ifcnt+1
+
+ifsp		=	ifsp-1
+temp		=	ifpos\#ifsp
+ife\#temp	EQU	*
+
+ifs\#ifcnt	EQU	*
+ifpos\#ifsp	=	ifcnt
+ifcnt		=	ifcnt+1
+ifsp		=	ifsp+1
+		ENDM	
+
+IFELSEx		MACRO
+eifsp		=	eifsp-1
+temp		=	eifpos\#eifsp
+		DC.B	CMD_GOTOx
+		DC.W	eife\#temp-ifs\#ifcnt
+ifs\#ifcnt	EQU	*
+eifsp		=	eifsp+1
+ifcnt		=	ifcnt+1
+
+ifsp		=	ifsp-1
+temp		=	ifpos\#ifsp
+ife\#temp	EQU	*
+
+ifs\#ifcnt	EQU	*
+ifpos\#ifsp	=	ifcnt
+ifcnt		=	ifcnt+1
+ifsp		=	ifsp+1
+		ENDM	
+
+; - IFEND ------------------------------------------------------------------
+
+IFEND		MACRO
+ifsp		=	ifsp-1
+temp		=	ifpos\#ifsp
+ife\#temp	EQU	*
+		
+eifsp		=	eifsp-1
+temp		=	eifpos\#eifsp
+eife\#temp	EQU	*
+		ENDM		
+
+; --------------------------------------------------------------------------
+
+BATRANGE	MACROS
+		DC.B	CMD_BATRANGE,\1,\2
+GRIDRANGE	MACROS
+		DC.B	CMD_GRIDRANGE,\1,\2,\3,\4
+GRIDGOTOXY	MACROS
+		DC.B	CMD_GRIDGOTOXY,\1,\2
+GRIDGOTOX	MACROS
+		DC.B	CMD_GRIDGOTOX,\1
+GRIDGOTOY	MACROS
+		DC.B	CMD_GRIDGOTOY,\1
+SET_FLAG0	MACROS
+		DC.B	CMD_SET_FLAG0
+LOGICEND	MACROS
+		DC.B	CMD_LOGICEND
+LOGICPAUSE	MACROS
+		DC.B	CMD_LOGICPAUSE,\1
+RNDCHANCE	MACROS
+		DC.B	CMD_RNDCHANCE,\1
+
+; --------------------------------------------------------------------------
+
+

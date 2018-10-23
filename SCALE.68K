@@ -1,0 +1,809 @@
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ 3DOBRIEN Scale process/Multitask control.				   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+; - Presets ----------------------------------------------------------------
+
+SCL_TRC_LINES	EQU	192
+
+; - Scaler fixed format (A0 always points to this). ------------------------
+
+SCL_WIDTH	EQU	0
+SCL_MAPX	EQU	4
+SCL_HEIGHT	EQU	6
+SCL_MAPY	EQU	10
+SCL_GR		EQU	12
+
+; - Required variables -----------------------------------------------------
+;
+;IMG_BADDR_PREV	RS.W	1
+;IMG_BADDR	RS.W	1
+;IMG_BADDR_NEXT	RS.W	1
+;	
+;SCL_TRC_AT	RS.W	1
+;SCL_BUSY	RS.W	1
+;SCL_SWAPIT	RS.W	1
+;SCL_MAKE_AT	RS.L	1
+;SCL_PRINT_AT	RS.L	1
+;SCL_BUFFER	RS.B	$1400
+
+; - Memory map -------------------------------------------------------------
+;
+;SMAP_ADDR_HARD	EQU	($A0000-SWORD_RAM)/4
+;SSCR0_ADDR	EQU	($A0000-SWORD_RAM)/4
+;SSCR1_ADDR	EQU	($A6000-SWORD_RAM)/4
+;SSCR2_ADDR	EQU	($AC000-SWORD_RAM)/4
+;RSC_TRACE_ADDR	EQU	($80000-SWORD_RAM)/4
+;SCL_TRACE_ADDR	EQU	($B2000-SWORD_RAM)/4
+;SMAP_ADDR	EQU	($B2C00-SWORD_RAM)/4
+;SLINE0		EQU	(SMAP_ADDR-SMAP_ADDR_HARD)/8
+
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ Scale to image buffer.						   บ
+; ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน
+; บ Entry: A0=Graphic. D4=Ixpos D5=Iypos D6=Iheight/Iwidth		   บ
+; บ 		       D0=Ixmax+1/Ixmin D7=Iymax+1/Iymin		   บ
+; บ  Exit: 								   บ
+; บ  Used: 								   บ
+; ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน
+; บ 									   บ
+; บ Graphic fixed data format:						   บ
+; บ 									   บ
+; บ Gwidth*$800.L							   บ
+; บ Mxpos*$8.W								   บ
+; บ Gheight*$800.L							   บ
+; บ Mypos*$8.W								   บ
+; บ GRaddr.L								   บ
+; บ 									   บ
+; บ [Buffered data uses 36 byte entry]					   บ
+; บ 									   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+SCALE		MOVE.L	SCL_GR(A0),A1
+		TST.W	GR_ACTIVE(A1)
+		BLE	ALLOC_CHK		;Graphic unusable.
+
+;D0=Ixmax/min D1= D2= D3= D4=Ixpos D5=Iypos D6=Iheight/Iwidth D7=Iymax/min
+
+.do_x		MOVE.L	SCL_WIDTH(A0),D2	;D2=Graphic real width(*$800).	
+		MOVE.W	SCL_MAPX(A0),D1		;D1=Map xpos(*$8)
+		ADD.W	GR_MAP_XOFF(A1),D1
+		DIVS	D6,D2			;D2=Xstep.
+		BVC.S	.x_calc
+		CLR.W	D2
+		ROL.L	D2
+  		ADD.W	#$7FFF,D2
+
+.x_calc		CMP.W	D0,D4
+		BPL.S	.x_pos
+.x_neg		SUB.W	D0,D4
+		ADD.W	D4,D6
+		BLE	.end		;Not on-screen.
+		MULS	D2,D4
+	 	ASR.L	#8,D4
+		SUB.W	D4,D1		;D1=Mxpos.
+		MOVE.W	D0,D4		;D4=Ixpos.
+.x_pos		SWAP	D0
+		SUB.W	D4,D0		;D0=Maximum print width.
+		BLE	.end		;Not on-screen.
+		CMP.W	D6,D0
+		BCC.S	.do_y
+		MOVE.W	D0,D6		;D6=Iwidth.
+
+;D0= D1=Mxpos D2=Xstep D3= D4=Ixpos D5=Iypos D6=Iheight/Iwidth D7=Iymax/min
+
+.do_y	  	MOVE.L	SCL_HEIGHT(A0),D0	;D0=Graphic real height(*$800).	
+		MOVEQ	#0,D3
+		MOVE.W	SCL_MAPY(A0),D3		;D3=Map ypos(*$8)
+		ADD.W	GR_MAP_YOFF(A1),D3
+		SWAP	D3
+		SWAP	D6
+		DIVS	D6,D0		;D0=Ystep.
+		BVC.S	.y_calc
+	 	CLR.W	D0
+	  	ROL.L	D0
+  	   	ADD.W	#$7FFF,D0
+		
+.y_calc		CMP.W	D7,D5
+		BPL.S	.y_pos
+.y_neg		SUB.W	D7,D5
+		ADD.W	D5,D6
+		BLE	.end		;Not on-screen.
+		MULS	D0,D5
+	 	ASL.L	#8,D5
+		SUB.L	D5,D3		;D3=Mypos.
+		MOVE.W	D7,D5		;D5=Iypos.
+.y_pos		SWAP	D7
+		SUB.W	D5,D7		;D7=Maximum print width.
+		BLE	.end		;Not on-screen.
+		CMP.W	D6,D7
+		BCC.S	.do_setup
+		MOVE.W	D7,D6		;D6=Iheight.
+
+;D0=Ystep D1=Mxpos D2=Xstep D3=Mypos D4=Ixpos D5=Iypos D6=Iwidth/Iheight D7=
+
+.do_setup	MOVE.W	D4,D7
+		MOVE.W	D5,D7
+		SWAP	D5
+		MOVE.W	D4,D5
+		AND.W	#7,D4
+		EOR.W	D4,D5
+		LSL.L	#3,D5		;Ixpos*MaxYchars(fixed to 24)
+		ADD.W	D5,D7
+		ADD.W	D5,D5
+		ADD.W	D7,D5
+		ADD.W	IMG_BADDR,D5
+		AND.W	#$FFF8,D5
+		SWAP	D5
+		OR.W	D4,D5			;D5=SROT_BUFF/BOFF
+
+		LEA	SCL_LNEND_A+4(PC),A4
+		MOVE.W	D6,D7
+		LSL.W	#3,D7
+		SUB.W	D7,A4			;A4=Start addr.	
+		
+		LEA	SWORD_RAM+SCL_TRACE_ADDR*4,A5
+		MOVE.W	SCL_TRC_AT,D7
+		LSL.W	#2,D7
+		LEA	(A5,D7.W),A5		;A5=Trace addr.
+
+		SWAP	D1
+		SWAP	D2
+		SWAP	D3
+		MOVE.W	D3,D1		;D1=Mxpos/Mypos(HI)
+		SWAP	D3		;D3=Mypos(LO)
+		EXT.L	D0
+		ASL.L	#8,D0	
+		MOVE.W	D0,D4		;D4=Ystep(LO)
+		SWAP	D0		;D0=Ystep(HI)
+		CLR.W	D2		;D2=Xstep/0
+
+; Prebuffer control.
+
+		MOVE.W	SCL_TRC_AT,D7
+		ADD.W	#SCL_TRACE_ADDR,D7	;D7=SROT_TRACE 
+
+		MOVE.L	SCL_MAKE_AT,A2
+		MOVE.W	#$2100,SR
+		TST.W	RSC_BUSY		;Check road 
+		BNE.S	.type_2	
+
+.type_1		CMP.W	#1,SCL_BUSY
+		BCS.S	.scl_prestart
+		BEQ.S	.scl_prestore
+	
+.scl_store	MOVE.L	#SCL_TYPE_A,(A2)+
+		MOVEM.L	D1/D2/A4/A5,(A2)
+		LEA	16(A2),A2
+		MOVE.W	D0,(A2)+
+		MOVE.W	D3,(A2)+
+		MOVE.W	D4,(A2)+
+.scl_done	MOVE.L	D5,(A2)+
+		MOVE.L	D6,(A2)+
+		MOVE.W	D7,(A2)+
+		MOVE.L	#SCL_DONE,(A2)
+		MOVE.L	A2,SCL_MAKE_AT		;Next data buffer.
+
+.finish		ADDQ.W	#1,SCL_BUSY
+		MOVE.W	#$2000,SR
+		EOR.W	#$180,SCL_TRC_AT	;Next trace buffer.
+.end		RTS
+
+.scl_prestart	BSR	SCL_LNSET_A
+		LEA	(SROT_BUFF).W,A2
+		MOVE.L	D5,(A2)+
+		MOVE.L	D6,(A2)+
+		MOVE.W	D7,(A2)
+		MOVE.L	#SCL_EXCEPTION,_LEVEL1+2
+		BRA.S	.finish
+
+.type_2		TST.W	SCL_BUSY
+		BNE.S	.scl_store
+		
+.scl_prestore	BSR	SCL_LNSET_A
+		BRA.S	.scl_done
+
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ Scale to image buffer.						   บ
+; ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน
+; บ Entry: A0=Graphic. D4=Ixpos D5=Iypos D6=Iwidth/Iheight		   บ
+; บ 		       D0=Ixmax+1/Ixmin D7=Iymax+1/Iymin		   บ
+; บ 		       D1=Dall(total lines for back wall)		   บ
+; บ 		       D2=Dbot(line differance between front and back wall)บ
+; บ 		       D3=Dtop(line differance between front and back wall)บ
+; บ  Exit: 								   บ
+; บ  Used: 								   บ
+; ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน
+; บ 									   บ
+; บ Graphic fixed data format:						   บ
+; บ 									   บ
+; บ Gwidth*$800.L							   บ
+; บ Mxpos*$8.W								   บ
+; บ Gheight*$800.L							   บ
+; บ Mypos*$8.W								   บ
+; บ GRaddr.L								   บ
+; บ 									   บ
+; บ [Buffered data uses 42 byte entry]					   บ
+; บ 									   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+;D0=Ixmax/min D1=Dall D2=Dbot D3=Dtop D4=Ixpos D5=Iypos D6=Iwidth/Iheight D7=Iymax/min
+
+SCALE_ANGULAR	MOVE.L	SCL_GR(A0),A1
+		TST.W	GR_ACTIVE(A1)
+		BLE	ALLOC_CHK
+
+		MOVE.L	D0,A3
+		MOVE.L	SCL_HEIGHT(A0),D0	;D0=Graphic real height(*$800).	
+		DIVS	D6,D0			;D0=Ystep.
+		BVC.S	.angle
+		CLR.W	D0
+		ROL.L	D0
+  		ADD.W	#$7FFF,D0
+		
+.angle		TST.W	D2
+		BPL.S	.angle_calc
+		SUB.W	D2,D6
+.angle_calc	SWAP	D6
+		MOVE.W	D3,-(SP)
+		MULS	D0,D3
+		DIVS	D6,D3		;D3=Yangle_init
+		MULS	D0,D2
+		DIVS	D6,D2
+		SUB.W	D3,D2
+	  	EXT.L	D2
+	 	ASL.L	#8,D2
+		DIVS	D1,D2		
+		MOVE.W	D2,A5		;A5=Yangle_step
+		SWAP	D6
+		
+		MOVEQ	#0,D1
+		MOVE.W	SCL_MAPY(A0),D1	;D1=Map ypos(*$8)
+		ADD.W	GR_MAP_YOFF(A1),D1
+		SWAP	D1
+		MOVE.W	(SP)+,D2
+		BMI.S	.do_y
+		SUB.W	D2,D5
+		ADD.W	D2,D6
+		MULS	D0,D2
+	 	ASL.L	#8,D2
+		SUB.L	D2,D1
+		MOVEQ	#0,D2		;D2=Ydiff_top
+
+.do_y		CMP.W	D7,D5
+		BPL.S	.y_pos
+.y_neg		SUB.W	D7,D5
+		ADD.W	D5,D6
+		BLE	.end		;Not on-screen.
+		SUB.W	D5,D2		;D2=Ydiff adjustment for clip.
+		MULS	D0,D5
+	 	ASL.L	#8,D5
+		SUB.L	D5,D1		;D1=Mypos.
+		MOVE.W	D7,D5		;D5=Iypos.
+.y_pos		SWAP	D7
+		SUB.W	D5,D7		;D7=Maximum print width.
+		BLE	.end		;Not on-screen.
+		CMP.W	D6,D7
+ 		BCC.S	.y_skp
+		MOVE.W	D7,D6		;D6=Iheight.
+
+.y_skp		MOVE.W	A5,D7
+		MULS	D2,D7	
+		ASL.L	#8,D7
+		SWAP	D3
+		CLR.W	D3
+		ADD.L	D7,D3		;D3=Yangle_init
+   		MOVE.W	D0,A4		;A4=Ystep
+		
+;D0= D1=Mypos D2= D3=Yangle D4=Ixpos D5=Iypos D6=Iheight/Iwidth D7=
+
+.do_x		MOVE.L	SCL_WIDTH(A0),D2	;D2=Graphic real width(*$800).	
+		MOVE.W	SCL_MAPX(A0),D0		;D0=Map xpos(*$8)
+		ADD.W	GR_MAP_XOFF(A1),D0
+		SWAP	D6
+		DIVS	D6,D2			;D2=Xstep.
+
+		BVC.S	.x_calc
+		CLR.W	D2
+		ROL.L	D2
+  		ADD.W	#$7FFF,D2
+.x_calc		MOVE.L	A3,D7
+		CMP.W	D7,D4
+		BPL.S	.x_pos
+.x_neg		SUB.W	D7,D4
+		ADD.W	D4,D6
+		BLE	.end		;Not on-screen.
+		NEG.W	D4
+		MOVE.W	A5,D7
+		MULS	D4,D7
+		ASR.L	#8,D7
+		ADD.W	D7,A4		;Adjusted Ystep
+		
+		SWAP	D3
+		MOVE.W	D3,D7
+		SWAP	D3
+   	  	MULS	D4,D7
+		LSL.L	#8,D7
+     	    	ADD.L	D7,D1		;Adjusted Ymap
+		MULS	D2,D4
+	 	ASR.L	#8,D4
+		ADD.W	D4,D0		;D0=Mxpos.
+		MOVE.L	A3,D7
+		MOVE.W	D7,D4		;D4=Ixpos.
+.x_pos		SWAP	D7
+		SUB.W	D4,D7		;D7=Maximum print width.
+		BLE	.end		;Not on-screen.
+.x_chk		CMP.W	D6,D7
+		BCC.S	.do_setup
+		MOVE.W	D7,D6		;D6=Iwidth.
+
+;D0=Mxpos D1=Mypos D2=Xstep D3=Yangle D4=Ixpos D5=Iypos D6=Iheight/Iwidth D7=
+
+.do_setup	MOVE.W	D5,D7
+		SWAP	D5
+		MOVE.W	D4,D5
+		AND.W	#7,D4
+		EOR.W	D4,D5
+		LSL.L	#3,D5		;Ixpos*MaxYchars(fixed to 24)
+		ADD.W	D5,D7
+		ADD.W	D5,D5
+		ADD.W	D7,D5
+		ADD.W	IMG_BADDR,D5
+		AND.W	#$FFF8,D5
+		SWAP	D5
+		OR.W	D4,D5		;D5=SROT_BUFF/BOFF
+		SWAP	D6		;D6=SROT_HDOT/VDOT
+		MOVE.L	D5,A2
+		MOVE.L	D6,A3
+		 
+		SWAP	D0
+		SWAP	D1
+		MOVE.W	D1,D0		;D0=Mxpos/Mypos(HI)
+		SWAP	D1		;D1=Mypos(LO)
+		SWAP	D2
+		SWAP	D3
+		MOVE.W	D3,D2		;D2=Xstep/Angle(HI)
+		SWAP	D3		;D3=Angle(LO)
+		MOVE.L	A4,D5
+		MOVE.L	A5,D7
+
+		LEA	SCL_LNEND_B+8(PC),A4
+		ADD.W	D6,D6
+		ADD.W	A3,D6
+		LSL.W	#2,D6
+		SUB.W	D6,A4		;A4=JMP line addr.
+
+		LEA	SWORD_RAM+SCL_TRACE_ADDR*4,A5
+		MOVE.W	SCL_TRC_AT,D6
+		LSL.W	#2,D6
+		LEA	(A5,D6.W),A5	;A5=Trace addr.
+
+		ASL.L	#8,D5
+		MOVE.W	D5,D4		;D4=Ystep(LO)
+		SWAP	D5		;D5=Ystep(HI)
+		ASL.L	#8,D7
+		MOVE.W	D7,D6		;D6=Astep(LO)
+		SWAP	D7		;D7=Astep(HI)
+
+; Prebuffer control.
+
+		MOVE.L	SCL_MAKE_AT,A6
+		MOVE.W	#$2100,SR
+		TST.W	RSC_BUSY		;Check road 
+		BNE.S	.type_2	
+
+.type_1		CMP.W	#1,SCL_BUSY
+		BCS.S	.scl_prestart
+		BEQ.S	.scl_prestore
+	
+.scl_store	MOVE.L	#SCL_TYPE_B,(A6)+
+		MOVEM.L	D0/D2/A4/A5,(A6)	;Most common.	
+		LEA	16(A6),A6
+		MOVEM.W	D1/D3-D7,(A6)
+		LEA	12(A6),A6
+.scl_done	MOVE.L	A2,(A6)+
+		MOVE.L	A3,(A6)+
+		MOVE.W	SCL_TRC_AT,(A6)
+		ADD.W	#SCL_TRACE_ADDR,(A6)+
+		MOVE.L	#SCL_DONE,(A6)
+		MOVE.L	A6,SCL_MAKE_AT		;Next data buffer.
+
+.finish		ADDQ.W	#1,SCL_BUSY
+		MOVE.W	#$2000,SR
+		EOR.W	#$180,SCL_TRC_AT	;Next trace buffer.
+.end		RTS
+
+.scl_prestart	BSR	SCL_LNSET_B
+		LEA	(SROT_BUFF).W,A6
+		MOVE.L	A2,(A6)+
+		MOVE.L	A3,(A6)+
+		MOVE.W	SCL_TRC_AT,D0
+		ADD.W	#SCL_TRACE_ADDR,D0
+		MOVE.W	D0,(A6)			;Start scale
+		MOVE.L	#SCL_EXCEPTION,_LEVEL1+2
+		BRA.S	.finish
+
+.type_2		TST.W	SCL_BUSY
+		BNE.S	.scl_store
+		
+.scl_prestore	BSR	SCL_LNSET_B
+		BRA.S	.scl_done
+
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ Rotational scale to image buffer.					   บ
+; ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน
+; บ Entry: A0=Graphic. D3=Rheight/width D4=Ixpos D5=Iypos D6=Iheight/width บ
+; บ 		       D0=Ixmax+1/Ixmin D7=Iymax+1/Iymin D1=SIN/COS	   บ
+; บ  Exit: 								   บ
+; บ  Used: 								   บ
+; ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน
+; บ 									   บ
+; บ Graphic fixed data format:						   บ
+; บ 									   บ
+; บ Gwidth*$800.L							   บ
+; บ Mxpos*$8.W								   บ
+; บ Gheight*$800.L							   บ
+; บ Mypos*$8.W								   บ
+; บ GRaddr.L								   บ
+; บ 									   บ
+; บ [Buffered data uses 36 byte entry]					   บ
+; บ 									   บ
+; ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน
+; บ 									   บ
+; บ Rheight/Rwidth: Real scale sizes. 					   บ
+; บ Iheight/Iwidth: Print sizes. (Used to adjust print window)		   บ
+; บ 									   บ
+; บ SIN/COS: SIN range    0-89:$0000-$7FFF   90-179:$7FFF-$0000 	   บ
+; บ 		       180-269:$0000-$8001  270-359:$8001-$0000		   บ
+; บ 									   บ
+; บ 	     COS range    0-89:$7FFF-$0000   90-179:$0000-$8001 	   บ
+; บ 		       180-269:$8001-$0000  270-359:$0000-$7FFF		   บ
+; บ 									   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+SCALE_ROTATE	MOVE.L	SCL_GR(A0),A1
+		TST.W	GR_ACTIVE(A1)
+		BLE	ALLOC_CHK		;Graphic unusable.
+
+;D0=Ixmax/min D1=SIN/COS D2= D3=Rheight/Rwidth D4=Ixpos D5=Iypos D6=Iheight/Iwidth D7=Iymax/min
+
+.do_x		MOVE.L	SCL_WIDTH(A0),D2	;D2=Graphic real width(*$800).	
+		DIVS	D3,D2			;D2=Xstep.
+		BVC.S	.x_calc
+		CLR.W	D2
+		ROL.L	D2
+  		ADD.W	#$7FFF,D2
+
+.x_calc		NEG.W	D2
+		MOVE.W	D6,D3
+		CMP.W	D0,D4
+		BPL.S	.x_pos
+.x_neg		SUB.W	D0,D4
+		ADD.W	D4,D6
+		BLE	.end		;Not on-screen.
+		ADD.W	D4,D3
+		ADD.W	D4,D3
+		MOVE.W	D0,D4		;D4=Ixpos.
+.x_pos		NEG.W	D3
+		SWAP	D0
+		SUB.W	D4,D0		;D0=Maximum print width.
+		BLE	.end		;Not on-screen.
+		CMP.W	D6,D0
+		BCC.S	.do_y
+		MOVE.W	D0,D6		;D6=Iwidth.
+
+;D0= D1=SIN/COS D2=Xstep D3=Rheight/Iwidth D4=Ixpos D5=Iypos D6=Iheight/Pwidth D7=Iymax/min
+
+.do_y	  	MOVE.L	SCL_HEIGHT(A0),D0	;D0=Graphic real height(*$800).	
+		SWAP	D3
+		SWAP	D6
+		DIVS	D3,D0		;D0=Ystep.
+		BVC.S	.y_calc
+	 	CLR.W	D0
+	  	ROL.L	D0
+  	   	ADD.W	#$7FFF,D0
+
+.y_calc		MOVE.W	D6,D3
+		CMP.W	D7,D5
+		BPL.S	.y_pos
+.y_neg		SUB.W	D7,D5
+		ADD.W	D5,D6
+		BLE	.end		;Not on-screen.
+		ADD.W	D5,D3
+		ADD.W	D5,D3
+		MOVE.W	D7,D5		;D5=Iypos.
+.y_pos		NEG.W	D3
+		SWAP	D7
+		SUB.W	D5,D7		;D7=Maximum print width.
+		BLE	.end		;Not on-screen.
+		CMP.W	D6,D7
+		BCC.S	.do_setup
+		MOVE.W	D7,D6		;D6=Iheight.
+
+;D0=Ystep D1=SIN/COS D2=Xstep D3=Rwidth/Rheight D4=Ixpos D5=Iypos D6=Pwidth/Pheight D7=
+
+.do_setup	MOVE.W	D5,D7
+		SWAP	D5
+		MOVE.W	D4,D5
+		AND.W	#7,D4
+		EOR.W	D4,D5
+		LSL.L	#3,D5		;Ixpos*MaxYchars(fixed to 24)
+		ADD.W	D5,D7
+		ADD.W	D5,D5
+		ADD.W	D7,D5
+		ADD.W	IMG_BADDR,D5
+		AND.W	#$FFF8,D5
+		SWAP	D5
+		OR.W	D4,D5
+		MOVE.L	D5,A3			;A3=SROT_BUFF/BOFF
+		MOVE.L	D6,A6			;A6=SROT_HDOT/VDOT
+
+		LEA	SCL_LNEND_C+6(PC),A4
+		MOVE.W	D6,D7
+		ADD.W	D7,D7
+		ADD.W	D6,D7
+		LSL.W	#2,D7
+		SUB.W	D7,A4			;A4=Start addr.	
+		
+		LEA	SWORD_RAM+SCL_TRACE_ADDR*4,A5
+		MOVE.W	SCL_TRC_AT,D7
+		LSL.W	#2,D7
+		LEA	(A5,D7.W),A5		;A5=Trace addr.
+
+; Calculate rotation co-ords.
+
+		MOVE.W	D0,D4
+		MOVE.W	D2,D5
+		MULS	D1,D2	;D2=COS*Xstep
+		MULS	D1,D4	;D4=COS*Ystep
+		MOVE.L	D4,D7	;D7=COS*Ystep
+		SWAP	D1
+		MULS	D1,D5	;D5=SIN*Xstep 
+		MULS	D1,D0	;D0=SIN*Ystep
+		MOVE.L	D5,D1	;D1=SIN*Xstep
+
+		ASR.L	#7,D4	;Map Ystep
+		ASR.L	#7,D5	;Map Xstep
+		ADD.L	D0,D0
+		SWAP	D0	
+		NEG.W	D0	;DeltaY
+		ADD.L	D2,D2
+		SWAP	D2	;DeltaX
+		MOVE.W	D2,D6
+		SWAP	D6
+		MOVE.W	D0,D6	;D6=DX\DY
+
+		ADD.L	D7,D7
+		SWAP	D7
+		MULS	D3,D7	
+		ASL.L	#7,D7	;D7=$80*(((COS*Ystep)/$8000)*-Rheight)
+		ADD.L	D1,D1
+		SWAP	D1
+		MULS	D3,D1
+		ASL.L	#7,D1	;D1=$80*(((SIN*Xstep)/$8000)*-Rheight)
+		SWAP	D3
+		MULS	D3,D0
+		ASL.L	#7,D0	;D0=$80*(((SIN*Ystep)/$8000)*-Rwidth)
+		MULS	D3,D2
+		ASL.L	#7,D2	;D2=$80*(((COS*Xstep)/$8000)*-Rwidth)
+
+		ADD.L	D2,D1
+		MOVE.W	D1,D2
+		SWAP	D1	
+		SWAP	D2			;D2=Mxpos(LO)\--
+		ADD.W	SCL_MAPX(A0),D1	
+		ADD.W	GR_MAP_XOFF(A1),D1	;D1=Mxpos(HI)
+
+		ADD.L	D0,D7
+		MOVE.W	D7,D3			;D3=Mypos(LO)
+		SWAP	D7
+		MOVE.W	D7,D2
+		ADD.W	SCL_MAPY(A0),D2	
+		ADD.W	GR_MAP_YOFF(A1),D2	;D2=Mxpos(LO)\Mypos(HI)
+
+		MOVE.L	D4,D0			;D4=Mystep(LO)
+		MOVE.W	D5,D0			
+		SWAP	D0			;D0=Mxstep(LO)\Mystep(HI)
+		SWAP	D5			;D5=Mxstep(HI)
+
+; Prebuffer control.
+
+		MOVE.W	SCL_TRC_AT,D7
+		ADD.W	#SCL_TRACE_ADDR,D7	;D7=SROT_TRACE 
+
+		MOVE.L	SCL_MAKE_AT,A2
+		MOVE.W	#$2100,SR
+		TST.W	RSC_BUSY		;Check road 
+		BNE.S	.type_2	
+
+.type_1		CMP.W	#1,SCL_BUSY
+		BCS.S	.scl_prestart
+		BEQ.S	.scl_prestore
+	
+.scl_store	MOVE.L	#SCL_TYPE_C,(A2)+
+		MOVEM.L	D0/D2/D6/A4/A5,(A2)
+		LEA	20(A2),A2
+		MOVE.W	D1,(A2)+
+		MOVE.W	D3,(A2)+
+		MOVE.W	D4,(A2)+
+		MOVE.W	D5,(A2)+
+.scl_done	MOVE.L	A3,(A2)+
+		MOVE.L	A6,(A2)+
+		MOVE.W	D7,(A2)+
+		MOVE.L	#SCL_DONE,(A2)
+		MOVE.L	A2,SCL_MAKE_AT		;Next data buffer.
+
+.finish		ADDQ.W	#1,SCL_BUSY
+		MOVE.W	#$2000,SR
+		EOR.W	#$180,SCL_TRC_AT	;Next trace buffer.
+.end		RTS
+
+.scl_prestart	BSR	SCL_LNSET_C
+		LEA	(SROT_BUFF).W,A2
+		MOVE.L	A3,(A2)+
+		MOVE.L	A6,(A2)+
+		MOVE.W	D7,(A2)
+		MOVE.L	#SCL_EXCEPTION,_LEVEL1+2
+		BRA.S	.finish
+
+.type_2		TST.W	SCL_BUSY
+		BNE.S	.scl_store
+		
+.scl_prestore	BSR	SCL_LNSET_C
+		BRA.S	.scl_done
+
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ Scale interrupt control/image setup.				   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+SCL_EXCEPTION	SUBQ.W	#1,SCL_BUSY
+		BEQ.S	SCL_END
+
+SCL_EXSTART	MOVEM.L	A5-A6,-(SP)	
+		MOVE.L	SCL_PRINT_AT,A6
+		LEA	(SROT_BUFF).W,A5
+		MOVE.L	(A6)+,(A5)+	;Set BUFF/BOFF
+		MOVE.L	(A6)+,(A5)+	;Set HDOT/VDOT
+   		MOVE.W	(A6)+,(A5)	;Set TRACE (start scale)
+		MOVE.L	(A6)+,A5
+		JMP	(A5)		;SCL command.
+
+SCL_DONE	SUBQ.L	#4,A6
+SCL_EXIT	MOVE.L	A6,SCL_PRINT_AT
+		MOVEM.L	(SP)+,A5-A6
+		RTE
+
+SCL_END		TST.W	SCL_SWAPIT	;Check for screen swap flag.
+		BLE.S	.end
+		CLR.W	SCL_SWAPIT
+		MOVEM.L	A0/A1/D0,-(SP)
+		BSR	SWAP_SCREEN
+		MOVEM.L	(SP)+,A0/A1/D0
+.end		RTE
+
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ Normal X/Y scale							   บ
+; ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน
+; บ Entry: A4=JMP A5=Trace						   บ
+; บ Entry: D0=Ystep(LO) D1=Mxpos/Mypos D2=Xstep/0 D3=Mypos(LO) D4=Ystep(LO)บ
+; บ  Exit: 								   บ
+; บ  Used: D0-D4/A4-A5							   บ
+; ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน
+; บ Sets up next trace data.						   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+SCL_TYPE_A	MOVEM.L	A4/D0-D4,-(SP)	;Preset next scale trace data
+		MOVEM.L	(A6)+,D1/D2/A4/A5
+		MOVEM.W	(A6)+,D0/D3/D4
+		MOVE.L	A6,SCL_PRINT_AT
+		ADDQ.W	#1,ACC_COUNT
+.access_wait	BTST	#0,SMEM_MODE
+	    	BNE.S	.access_wait
+		JSR	(A4)
+	 	MOVEM.L	(SP)+,A4-A6/D0-D4
+		RTE
+
+SCL_LNSET_A	ADDQ.W	#1,ACC_COUNT
+.access_wait	BTST	#0,SMEM_MODE
+	    	BNE.S	.access_wait
+		JMP	(A4)
+
+		MOVE.L	D1,(A5)+
+		MOVE.L	D2,(A5)+
+		REPT	SCL_TRC_LINES-1
+		ADD.W	D4,D3	
+		ADDX.W	D0,D1
+		MOVE.L	D1,(A5)+
+		MOVE.L	D2,(A5)+
+		ENDR
+
+SCL_LNEND_A	SUBQ.W	#1,ACC_COUNT	;Access off
+		RTS
+
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ Angular scale (Building sides).					   บ
+; ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน
+; บ Entry: A4=JMP A5=Trace buffer					   บ
+; บ  	   D0=Mxpos/Mypos(HI) D1=Mypos(LO) D2=Xstep/Angle(HI) D3=Angle(LO) บ
+; บ  	   D4=Ystep(LO) D5=Ystep(HI) D6=Astep(LO) D7=Astep(HI)		   บ
+; บ  Exit: 								   บ
+; บ  Used: A6-A5/D0-D7							   บ
+; ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน
+; บ Sets up next trace data.						   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+SCL_TYPE_B	MOVEM.L	A4/D0-D7,-(SP)	;Preset next scale trace data
+		MOVEM.L	(A6)+,D0/D2/A4/A5
+		MOVEM.W	(A6)+,D1/D3-D7
+		MOVE.L	A6,SCL_PRINT_AT
+		ADDQ.W	#1,ACC_COUNT
+.access_wait	BTST	#0,SMEM_MODE
+	    	BNE.S	.access_wait
+		JSR	(A4)
+	 	MOVEM.L	(SP)+,A4-A6/D0-D7
+		RTE
+
+SCL_LNSET_B	ADDQ.W	#1,ACC_COUNT
+.access_wait	BTST	#0,SMEM_MODE
+	    	BNE.S	.access_wait
+		JMP	(A4)
+
+		MOVE.L	D0,(A5)+
+		MOVE.L	D2,(A5)+
+		REPT	SCL_TRC_LINES-1
+		ADD.W	D4,D1	
+		ADDX.W	D5,D0
+		ADD.W	D6,D3	
+		ADDX.W	D7,D2
+		MOVE.L	D0,(A5)+
+		MOVE.L	D2,(A5)+
+		ENDR
+
+SCL_LNEND_B	SUBQ.W	#1,ACC_COUNT	;Access off
+		RTS
+	
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ Rotational X/Y scale.						   บ
+; ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน
+; บ Entry: A4=JMP A5=Trace						   บ
+; บ Entry: D0=Xstep(LO)/Ystep(HI) D1=Mxpos(HI) D2=Xpos(LO)/Ypos(HI)	   บ
+; บ 	   D3=Ypos(LO) D4=Ystep(LO) D5=Xstep(HI) D6=DX/DY		   บ
+; บ  Exit: 								   บ
+; บ  Used: D0-D6/A4-A5							   บ
+; ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน
+; บ Sets up next trace data.						   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+SCL_TYPE_C	MOVEM.L	A4/D0-D6,-(SP)	;Preset next scale trace data
+		MOVEM.L	(A6)+,D0/D2/D6/A4/A5
+		MOVEM.W	(A6)+,D1/D3/D4/D5
+		MOVE.L	A6,SCL_PRINT_AT
+		ADDQ.W	#1,ACC_COUNT
+.access_wait	BTST	#0,SMEM_MODE
+	    	BNE.S	.access_wait
+		JSR	(A4)
+	 	MOVEM.L	(SP)+,A4-A6/D0-D6
+		RTE
+
+SCL_LNSET_C	ADDQ.W	#1,ACC_COUNT
+.access_wait	BTST	#0,SMEM_MODE
+	    	BNE.S	.access_wait
+		JMP	(A4)
+
+		MOVE.W	D1,(A5)+
+		MOVE.W	D2,(A5)+
+		MOVE.L	D6,(A5)+
+		REPT	SCL_TRC_LINES-1
+		ADD.W	D4,D3	
+		ADDX.L	D0,D2
+		ADDX.W	D5,D1
+		MOVE.W	D1,(A5)+
+		MOVE.W	D2,(A5)+
+		MOVE.L	D6,(A5)+
+		ENDR
+
+SCL_LNEND_C	SUBQ.W	#1,ACC_COUNT	;Access off
+		RTS
+
+; --------------------------------------------------------------------------
+

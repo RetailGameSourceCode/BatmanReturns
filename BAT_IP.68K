@@ -1,0 +1,1592 @@
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ MAIN-CPU Initial program.						   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+		ORG	$FFFF0000
+
+; --------------------------------------------------------------------------
+
+;		INCLUDE	CONVERT.68K
+;		BRA	*
+
+; --------------------------------------------------------------------------
+
+IP_START	CLR.L	MCOM_MDATA+0
+ 		CLR.L	MCOM_MDATA+4
+		CLR.L	MCOM_MDATA+8
+		CLR.L	MCOM_MDATA+12
+
+		MOVE.B	MCOM_SFLAG,D0
+.ack_run	CMP.B	MCOM_SFLAG,D0
+ 		BEQ.S	.ack_run
+
+		MOVE.W	#$2700,SR
+
+		IF	SOUND_INC
+		BTST	#1,MMEM_MODE
+		BNE.S	.clr_skp
+		CLR.W	MWORD_RAM+WRAM_SND_XBUFF
+.clr_skp
+		ENDIF
+
+		LEA	VDPData,A0
+		LEA	4(A0),A1
+		MOVEQ	#0,D0
+		MOVE.L	#$40000000,(A1)
+		MOVE.W	#$4000-1,D7
+.vram_clr	MOVE.L	D0,(A0)
+		DBRA	D7,.vram_clr
+		MOVE.L	#$C0000000,(A1)
+		MOVE.W	#$20-1,D7
+.cram_clr	MOVE.L	D0,(A0)
+		DBRA	D7,.cram_clr
+
+		LEA	VDP_DATA(PC),A0
+		BSR	VDP_SETUP
+		LEA	CLOUD_DMA(PC),A0
+	 	BSR	DO_DMA
+		LEA	PANEL_DMA(PC),A0
+	 	BSR	DO_DMA
+		LEA	BACKGR_DMA(PC),A0
+	 	BSR	DO_DMA
+
+		BSR	SET_BM_CHARS
+
+		LEA	BACKGR_CLOUD,A1
+		MOVE.L	#($4000!($3FFF&IMG_CLOUD_MAP))*$10000+IMG_CLOUD_MAP>>14,4(A0)
+		MOVE.W	#(20*$20)-1,D0
+.ctlp		MOVE.W	(A1)+,D1
+		ADD.W	#IMG_CLOUD_PDAT!(IMG_CLOUD_VRAM/$20),D1
+		MOVE.W	D1,(A0)
+		DBRA	D0,.ctlp
+
+		LEA	PANEL_MAP,A1
+		MOVE.L	#($4000!($3FFF&IMG_PANEL_MAP))*$10000+IMG_PANEL_MAP>>14,4(A0)
+ 		MOVE.W	#128-1,D0
+.ptlp		MOVE.W	(A1)+,D1
+ 		ADD.W	#IMG_PANEL_PDAT!(IMG_PANEL_VRAM/$20),D1
+  		MOVE.W	D1,(A0)
+   		DBRA	D0,.ptlp
+
+		WVSRAM	0
+	  	MOVE.L	#$000001E0,(A0)	;Clear vertical scroll
+
+; - Z80 startup and download main code. ------------------------------------
+
+		IF	SOUND_INC
+
+		MOVE.W	#$100,Z80Reset	; Z80 bus reset off
+
+		MOVE.W	#$100,Z80BusReq	; Z80 bus request on
+.hzlp		BTST.B	#0,Z80BusReq	; spin on bus grant
+		BNE.S	.hzlp
+	
+		LEA	Z80_CODE,A0	;copy from 68k to z80 addr space
+		LEA	Z80Ram,A1
+		MOVE.W	#Z80_CLEN-1,D0	;length to move
+.lzlp1		MOVE.B	(A0)+,(A1)+
+		DBRA	D0,.lzlp1
+		MOVE.W	#($2000-Z80_CLEN)-1,D0	;length to move
+.lzlp2		CLR.B	(A1)+		; zero fill remainder of 8k block
+		DBRA	D0,.lzlp2
+
+;Start the Z80
+		MOVE.W	#$0,Z80Reset	;Z80 bus reset on (assumes bus request on)
+		MOVEQ	#15,D0	  	;a loop > 26 uS
+.szlp		SUBQ.l	#1,D0
+		BNE.S	.szlp
+		MOVE.W	#$0,Z80BusReq	;Z80 bus request off
+		MOVE.W	#$100,Z80Reset	;Z80 bus reset off
+		ENDIF
+
+; --------------------------------------------------------------------------
+
+		IF	TESTPR
+		MOVE.W	#%11000*$800+$000,D0
+		MOVE.W	#$17,D1
+		BSR	HEX_PRINT_SET
+		ENDIF
+
+		MOVE.L	#FRAME_WAIT,(MVBL_ADDR).W
+		MOVE.W	#$2000,SR
+.wait
+		IF	SNASMCD_DEV
+		TRAP	#0
+		ENDIF
+
+		BRA	.wait
+
+; --------------------------------------------------------------------------
+
+MVBL_ADDR	EQU	$FFFFFD08
+
+MAIN_SND_XBUFF	DS.B	66
+
+PALETTE_DLD	DS.W	64
+
+MRAM_DATA	DS.B	WRAM_DLEN
+MVBL_CNT	DC.L	0
+IDMA_ADDR	DC.L	0
+
+BACKGR_DATA	DC.L	BACKGR_DAT_A
+BGR_CHANGE_FROM	DC.L	0
+BGR_CHANGE_TO	DC.W	0
+BGR_CHANGE_CNT	DC.W	0
+BGR_CURRENT	DC.W	0
+HSMAP		DC.W	0
+
+; --------------------------------------------------------------------------
+
+FRAME_WAIT	BSET	#0,MIFL2
+
+		MOVEM.L	A0-A3/D0,-(SP)
+		MOVE.W	MCOM_SDATA+SCOM_FRAME,D0
+		BMI	IP_EXIT
+		CMP.W	MCOM_MDATA+MCOM_FRAME,D0
+		BNE	FRAME_0
+
+		MOVEM.L	A4-A6/D1-D7,-(SP)
+.wait		BTST	#1,MMEM_MODE		;Wait for WORDRAM.
+		BNE.S	.wait
+		
+		IF	SOUND_INC
+		LEA	MAIN_SND_XBUFF,A2
+		LEA	MWORD_RAM+WRAM_SND_XBUFF,A3
+		MOVE.W	(A3),(A2)+
+		CLR.W	(A3)+			;Flag received.
+		MOVEM.L	(A3)+,A4-A5/D1-D6
+		MOVEM.L	A4-A5/D1-D6,(A2)
+		MOVEM.L	(A3)+,A4-A5/D1-D6
+		MOVEM.L	A4-A5/D1-D6,$20(A2)
+		ENDIF
+		
+		BSET	#1,MMEM_MODE		;Hand it back.
+
+DMA_RET		IF	TESTRAST
+		WCRAM	0
+		MOVE.W	#0,VDPData
+		ENDIF
+		
+		IF	SOUND_INC
+		MOVE.W	#$100,Z80BusReq		;Z80 bus request on
+.z80w0		BTST.B	#0,Z80BusReq   		;wait for bus grant
+		BNE.S	.z80w0
+		ENDIF
+		
+		BSR	JOY0_READ		;Do joypads while Z80 halted.
+	 	MOVE.W	D0,MCOM_MDATA+MCOM_JOY0
+ 	  	BSR	JOY1_READ
+	   	MOVE.W	D0,MCOM_MDATA+MCOM_JOY1
+
+		IF	SOUND_INC
+		LEA	Z80Ram+$36,A4 		;A4-> Z80 Write Pointer
+		LEA	Z80Ram+$1C40,A5		;A5-> Z80 FIFO
+		MOVE.B	(A4),D1	      		;Read FIFO index from Z80 ram
+		AND.W	#$3F,D1			;mod 64
+		LEA	MAIN_SND_XBUFF,A3	;A3-> SUB to MAIN Xfer Buffer
+		MOVE.W	(A3)+,D2
+		BRA.S	.z80start
+
+.z80loop	MOVE.B	(A3)+,(A5,D1.W)		;write into FIFO
+		ADDQ.B	#1,D1	      		;inc write index
+		AND.W	#$3F,D1			;mod 64
+.z80start	DBRA	D2,.z80loop		
+
+		MOVE.B	D1,(A4)	      		;Done so update FIFO pointer
+
+		MOVE.W	#0,Z80BusReq  		;Release Z80 (bus req off)
+		ENDIF
+
+		ADDQ.L	#1,MVBL_CNT
+		
+		MOVEM.L	(SP)+,A4-A6/D1-D7
+		MOVEM.L	(SP)+,A0-A3/D0
+		RTE
+		
+IP_EXIT		MOVE.W	#$2700,SR
+.mem_wait	BTST	#1,MMEM_MODE			;Wait for WORDRAM.
+		BNE.S	.mem_wait
+		MOVE.W	#-1,MCOM_MDATA+MCOM_FRAME	;Sync to SUB.
+.sub_wait	CMP.W	#-2,MCOM_SDATA+SCOM_FRAME	;Wait for SUB.
+		BNE	.sub_wait
+		JMP	LOAD_MAIN			;Exit.
+
+; --------------------------------------------------------------------------
+
+FCTRL_LIST	DC.L	IMG_DMA_A0
+		DC.L	IMG_DMA_A1
+		DC.L	IMG_DMA_A2
+		DC.L	IMG_DMA_A3
+		DC.L	IMG_DMA_A4
+		DC.L	IMG_DMA_A5
+
+FRAME_0		IF	TESTRAS0
+		WCRAM	0
+		MOVE.W	#$888,VDPDATA
+		ENDIF
+
+		MOVE.W	D0,MCOM_MDATA+MCOM_FRAME
+		MOVE.W	#1,MCOM_MDATA+MCOM_FBUSY
+		LSL.W	#2,D0
+		MOVE.L	FCTRL_LIST-4(PC,D0.W),A2
+
+		LEA	VDPData,A0
+		LEA	4(A0),A1
+		MOVE.W	#REG01!%00110100,(A1)
+
+		MOVE.L	#REG20*$10000+REG19+$B00E0,(A1)
+		MOVE.L	(A2)+,(A1)
+		MOVE.W	(A2)+,(A1)
+		MOVE.L	(A2)+,D0
+.wait		BTST	#1,MMEM_MODE	;Wait for WORDRAM 
+		BNE.S	.wait
+	  	MOVE.L	D0,(A1)
+		BCLR	#7,D0
+	 	MOVE.L	D0,(A1)
+	  	MOVE.L	(A2)+,A3
+	   	MOVE.L	(A3),(A0)
+	   	MOVE.W	#REG01!%01100100,(A1)
+
+		MOVEM.L	A4-A6/D1-D7,-(SP)
+		MOVE.L	(A2)+,A6
+		MOVE.L	A2,IDMA_ADDR
+
+		LEA	$46C0(A3),A3		;Transfer non-dma data.
+		LEA	IMG_COPY_BUFFER,A2
+		MOVEQ	#20-1,D7
+.tlp		MOVEM.L	(A3)+,A4-A5/D1-D6
+		MOVEM.L	A4-A5/D1-D6,(A2)
+		MOVEM.L	(A3)+,A4-A5/D1-D6
+		MOVEM.L	A4-A5/D1-D6,$20(A2)
+		MOVEM.L	(A3)+,A4-A5/D1-D6
+		MOVEM.L	A4-A5/D1-D6,$40(A2)
+		MOVEM.L	(A3)+,A4-A5/D1-D6
+		MOVEM.L	A4-A5/D1-D6,$60(A2)
+		MOVEM.L	(A3)+,A4-A5/D1-D6
+		MOVEM.L	A4-A5/D1-D6,$80(A2)
+		MOVEM.L	(A3)+,A4-A5/D1-D6
+		MOVEM.L	A4-A5/D1-D6,$A0(A2)
+		MOVEM.L	(A3)+,A4-A5/D1-D6
+		MOVEM.L	A4-A5/D1-D6,$C0(A2)
+		MOVEM.L	(A3)+,A4-A5/D1-D6
+		MOVEM.L	A4-A5/D1-D6,$E0(A2)
+		MOVEM.L	(A3)+,A4-A5/D1-D6
+		MOVEM.L	A4-A5/D1-D6,$100(A2)
+		MOVEM.L	(A3)+,A4-A5/D1-D6
+		MOVEM.L	A4-A5/D1-D6,$120(A2)
+		LEA	10*$20(A2),A2
+		DBRA	D7,.tlp
+		MOVEM.L	(A3)+,A4-A5/D1-D6
+		MOVEM.L	A4-A5/D1-D6,(A2)
+		MOVEM.L	(A3)+,A4-A5/D1-D6
+		MOVEM.L	A4-A5/D1-D6,$20(A2)
+
+		LEA	MRAM_DATA,A2		;Transfer control data.
+		LEA	WRAM_DATA_M,A3
+		MOVE.W	#(WRAM_DLEN/2)-1,D7
+.dtran_lp	MOVE.W	(A3)+,(A2)+
+		DBRA	D7,.dtran_lp
+
+		IF	SOUND_INC
+		LEA	MAIN_SND_XBUFF,A2
+		LEA	MWORD_RAM+WRAM_SND_XBUFF,A3
+		MOVE.W	(A3),(A2)+
+		CLR.W	(A3)+			;Flag received.
+		MOVEM.L	(A3)+,A4-A5/D1-D6
+		MOVEM.L	A4-A5/D1-D6,(A2)
+		MOVEM.L	(A3)+,A4-A5/D1-D6
+		MOVEM.L	A4-A5/D1-D6,$20(A2)
+		ENDIF
+
+		BSET	#1,MMEM_MODE
+		MOVE.L	#FRAME_1,(MVBL_ADDR).W	;Next VBL exception. 
+ 	
+		LEA	IMG_COPY_BUFFER,A2
+		MOVE.L	A6,A3
+		MOVEQ	#14-1,D0
+		MOVEQ	#1-1,D1
+  		BSR	IMG_TO_SCR
+
+		BSR	BACKGR_BMAP
+	  	BSR	HSCROLL_DLD
+		BSR	PALETTE_CTRL
+
+		IF	TESTPR
+		MOVEQ	#2,D1
+		MOVE.W	#$EE00,D0
+		LEA	MRAM_DATA+WRAM_TEST0,A0
+		BSR	HEX_PRINT
+	  	MOVE.W	#$EE0A,D0
+	 	LEA	MRAM_DATA+WRAM_TEST1,A0
+		BSR	HEX_PRINT
+	  	MOVE.W	#$EE14,D0
+	 	LEA	MRAM_DATA+WRAM_TEST2,A0
+		BSR	HEX_PRINT
+	  	MOVE.W	#$EE1E,D0
+	 	LEA	MRAM_DATA+WRAM_TEST3,A0
+		BSR	HEX_PRINT
+		MOVE.W	#$EEC0,D0
+	 	LEA	MRAM_DATA+WRAM_TEST4,A0
+		BSR	HEX_PRINT
+	  	MOVE.W	#$EECA,D0
+	 	LEA	MRAM_DATA+WRAM_TEST5,A0
+		BSR	HEX_PRINT
+	  	MOVE.W	#$EED4,D0
+	 	LEA	MRAM_DATA+WRAM_TEST6,A0
+		BSR	HEX_PRINT
+	  	MOVE.W	#$EEDE,D0
+	 	LEA	MRAM_DATA+WRAM_TEST7,A0
+		BSR	HEX_PRINT
+	  	MOVE.W	#$EE36,D0
+	   	LEA	MVBL_CNT+2,A0
+		BSR	HEX_PRINT
+	  	CLR.L	MVBL_CNT
+		ENDIF
+		
+		IF	GTESTPR
+		LEA	MRAM_DATA+WRAM_GTEST0,A0
+	  	MOVE.W	#IMG_MAP1+66,D0
+		MOVEQ	#16-1,D7
+.loop		BSR	HEX_PRINT
+		ADD.W	#IMG_MAP0-IMG_MAP1,D0
+		BSR	HEX_PRINT
+		SUB.W	#(IMG_MAP0-IMG_MAP1)-64,D0
+		ADDQ.L	#2,A0
+		DBRA	D7,.loop
+		ENDIF
+
+		BRA	DMA_RET
+
+; --------------------------------------------------------------------------
+
+FRAME_1	 	BSET	#0,MIFL2
+		
+		MOVEM.L	A0-A3/D0,-(SP)
+		
+		IF	TESTRAS1
+		WCRAM	0
+		MOVE.W	#$008,VDPDATA
+		ENDIF
+
+		MOVE.L	IDMA_ADDR,A2
+		LEA	VDPData,A0
+		LEA	4(A0),A1
+		MOVE.W	#REG01!%00110100,(A1)
+		MOVE.L	#REG20*$10000+REG19+$B00E0,(A1)
+		MOVE.L	(A2)+,(A1)
+		MOVE.W	(A2)+,(A1)
+		MOVE.L	(A2)+,D0
+.wait		BTST	#1,MMEM_MODE	;Wait for WORDRAM 
+		BNE.S	.wait
+	  	MOVE.L	D0,(A1)
+		BCLR	#7,D0
+	 	MOVE.L	D0,(A1)
+	  	MOVE.L	(A2)+,A3
+	   	MOVE.L	(A3),(A0)
+	   	MOVE.W	#REG01!%01100100,(A1)
+
+		MOVE.L	A2,IDMA_ADDR
+
+		MOVEM.L	A4-A6/D1-D7,-(SP)
+
+		IF	SOUND_INC
+		LEA	MAIN_SND_XBUFF,A2
+		LEA	MWORD_RAM+WRAM_SND_XBUFF,A3
+		MOVE.W	(A3),(A2)+
+		CLR.W	(A3)+			;Flag received.
+		MOVEM.L	(A3)+,A4-A5/D1-D6
+		MOVEM.L	A4-A5/D1-D6,(A2)
+		MOVEM.L	(A3)+,A4-A5/D1-D6
+		MOVEM.L	A4-A5/D1-D6,$20(A2)
+		ENDIF
+
+		BSET	#1,MMEM_MODE
+		MOVE.L	#FRAME_2,(MVBL_ADDR).W	;Next VBL exception. 
+
+		MOVEQ	#64,D0			;Scan line sync.
+		DBRA	D0,*
+
+		LEA	IMG_COPY_BUFFER+$440,A2
+		LEA	(IMG_VRAM+$4B00)*4+1,A3
+		MOVEQ	#4-1,D0
+		MOVEQ	#7-1,D1
+  		BSR	IMG_TO_SCR
+		LEA	IMG_COPY_BUFFER+$1C0,A2
+		LEA	(IMG_VRAM+$4880)*4+1,A3
+		MOVEQ	#8-1,D0
+		MOVEQ	#8-1,D1
+  		BSR	IMG_TO_SCR
+		MOVEQ	#1-1,D0
+		MOVEQ	#2-1,D1
+  		BSR	IMG_TO_SCR
+
+		BSR	BACKGR_SPR
+
+		MOVE.W	#REG13!IMG_HSCROLL0>>10,D0
+		NOT.W	HSMAP
+		BEQ.S	.hset
+		MOVE.W	#REG13!IMG_HSCROLL1>>10,D0
+.hset		MOVE.W	D0,(A1)
+
+		BRA	DMA_RET
+
+; --------------------------------------------------------------------------
+
+FRAME_2	 	BSET	#0,MIFL2
+
+		MOVEM.L	A0-A3/D0,-(SP)
+
+		IF	TESTRAS2
+		WCRAM	0
+		MOVE.W	#$088,VDPDATA
+		ENDIF
+
+		LEA	VDPData,A0
+		LEA	4(A0),A1
+
+		MOVE.W	#REG01!%00110100,(A1)
+
+		MOVE.L	#$40000010,(A1)
+		MOVE.L	IDMA_ADDR,A2
+		MOVE.W	(A2)+,(A0)
+		MOVE.W	#$1E0+$40+$60,D0
+		SUB.W	MRAM_DATA+WRAM_PX_YPOS,D0
+		MOVE.W	D0,(A0)
+
+		MOVE.L	#REG20*$10000+REG19+$500D0,(A1)
+		MOVE.L	(A2)+,(A1)
+		MOVE.W	(A2)+,(A1)
+		MOVE.L	(A2)+,D0
+.wait		BTST	#1,MMEM_MODE	;Wait for WORDRAM 
+		BNE.S	.wait
+	  	MOVE.L	D0,(A1)
+		BCLR	#7,D0
+	 	MOVE.L	D0,(A1)
+	  	MOVE.L	(A2)+,A3
+	   	MOVE.L	(A3),(A0)
+	   	
+		MOVE.L	#REG20*$10000+REG19+$40,(A1)
+		MOVE.L	#(REG22+($FF&(PALETTE_DLD>>9)))*$10000+REG21+($FF&(PALETTE_DLD>>1)),(A1)
+		MOVE.W	#(REG23+($7F&(PALETTE_DLD>>17))),(A1)
+		MOVE.L	#$C0000080,(A1)
+
+		MOVE.L	#REG20*$10000+REG19+$500D0,(A1)
+		MOVE.L	(A2)+,(A1)
+		MOVE.W	(A2)+,(A1)
+		MOVE.L	(A2)+,D0
+	  	MOVE.L	D0,(A1)
+		BCLR	#7,D0
+	 	MOVE.L	D0,(A1)
+	  	MOVE.L	(A2)+,A3
+	   	MOVE.L	(A3),(A0)
+
+		MOVE.W	#REG01!%01100100,(A1)
+
+		MOVEM.L	A4-A6/D1-D7,-(SP)
+
+		IF	SOUND_INC
+		LEA	MAIN_SND_XBUFF,A2
+		LEA	MWORD_RAM+WRAM_SND_XBUFF,A3
+		MOVE.W	(A3),(A2)+
+		CLR.W	(A3)+			;Flag received.
+		MOVEM.L	(A3)+,A4-A5/D1-D6
+		MOVEM.L	A4-A5/D1-D6,(A2)
+		MOVEM.L	(A3)+,A4-A5/D1-D6
+		MOVEM.L	A4-A5/D1-D6,$20(A2)
+		ENDIF
+
+		BSET	#1,MMEM_MODE
+
+		MOVE.L	#FRAME_WAIT,(MVBL_ADDR).W	;Next VBL exception. 
+
+		LEA	IMG_COPY_BUFFER+$8C0,A2
+		LEA	(IMG_VRAM+$4F80)*4+1,A3
+		MOVEQ	#1-1,D0
+		MOVEQ	#6-1,D1
+		BSR	IMG_TO_SCR
+		LEA	IMG_COPY_BUFFER+$2E0,A2
+		LEA	(IMG_VRAM+$49A0)*4+1,A3
+		MOVEQ	#11-1,D0
+		MOVEQ	#8-1,D1
+		BSR	IMG_TO_SCR
+
+		CLR.W	MCOM_MDATA+MCOM_FBUSY		;Screen complete. 
+		BSR	PANEL_DLD
+		BRA	DMA_RET
+
+; --------------------------------------------------------------------------
+
+PALETTE_CTRL	LEA	PALETTE_DLD,A2
+		LEA	PALETTE_A,A3
+		MOVE.W	MCOM_SDATA+SCOM_PFADER,D6
+		MOVEQ	#64-1,D7
+
+.slev_lp	MOVE.W	(A3)+,D0
+		MOVE.W	D0,D1
+		MOVE.W	D1,D2
+		AND.W	#$F,D0
+		LSR.W	#4,D1
+		AND.W	#$F,D1
+		LSR.W	#8,D2
+		AND.W	#$F,D2
+
+.do_r		SUB.W	D6,D0
+		BPL.S	.r_mchk
+		MOVEQ	#0,D0
+.r_mchk		CMP.W	#$E,D0
+		BLE.S	.do_g
+		MOVEQ	#$E,D0
+
+.do_g		SUB.W	D6,D1
+		BPL.S	.g_mchk
+		MOVEQ	#0,D1
+.g_mchk		CMP.W	#$E,D1
+		BLE.S	.do_b
+		MOVEQ	#$E,D1
+
+.do_b		SUB.W	D6,D2
+		BPL.S	.b_mchk
+		MOVEQ	#0,D2
+.b_mchk		CMP.W	#$E,D2
+		BLE.S	.set
+		MOVEQ	#$E,D2
+.set
+		LSL.W	#4,D2
+		OR.B	D1,D2
+		LSL.W	#4,D2
+		OR.B	D0,D2
+		MOVE.W	D2,(A2)+
+		DBRA	D7,.slev_lp
+
+		RTS
+
+; --------------------------------------------------------------------------
+
+HSCROLL_DLD	LEA	PARRALEX_DATA_A,A2
+		TST.W	(A2)
+		BEQ.S	.end
+
+		MOVE.W	#AUTOINC!4,(A1)
+		MOVE.L	#($4000!($3FFF&(IMG_HSCROLL1+2)))*$10000+(IMG_HSCROLL1+2)>>14,D0
+		TST.W	HSMAP
+		BEQ.S	.hset
+		MOVE.L	#($4000!($3FFF&(IMG_HSCROLL0+2)))*$10000+(IMG_HSCROLL0+2)>>14,D0
+.hset		MOVE.L	D0,(A1)
+
+		MOVE.L	MRAM_DATA+WRAM_PX_XPOS,D3
+		MOVE.L	D3,D4
+		ASR.L	#8,D3
+		MOVE.W	#160,D0
+
+		MOVE.W	#$0060,D2
+		SUB.W	MRAM_DATA+WRAM_PX_YPOS,D2
+.calc		MOVE.W	(A2)+,D1
+		SUB.W	D2,D1
+		BGT.S	.start
+		NEG.W	D1
+		MOVE.W	D1,D2
+		ADDQ.L	#2,A2
+		BRA.S	.calc
+
+.next		MOVE.W	(A2)+,D1
+		SUBQ.W	#1,D1
+.start		MOVE.L	D3,D2
+		DIVS	(A2),D2
+		ASR.L	#8,D2
+		MOVE.B	D4,D2
+		DIVS	(A2)+,D2
+.loop		MOVE.W	D2,(A0)
+		SUBQ.W	#1,D0
+		DBEQ	D1,.loop
+		BNE.S	.next
+
+		MOVE.W	#AUTOINC!2,(A1)
+.end		RTS
+
+; --------------------------------------------------------------------------
+
+IMG_TO_SCR	
+
+.down		MOVE.L	A2,A4	
+		MOVE.L	A3,A5	
+		MOVE.W	D1,D2
+
+.accross0	MOVE.L	A5,D3
+		ROR.W	#2,D3
+		SWAP	D3
+		MOVE.L	D3,(A1)
+		MOVE.L	(A4)+,(A0)
+		MOVE.L	(A4)+,(A0)
+		LEA	$300*4(A5),A5	
+		LEA	$2F8(A4),A4
+		DBRA	D2,.accross0
+
+		LEA	$8(A2),A4
+		LEA	$8*4(A3),A3
+		MOVE.L	A3,A5	
+		MOVE.W	D1,D2
+		
+.accross1	MOVE.L	A5,D3
+		ROR.W	#2,D3
+		SWAP	D3
+		MOVE.L	D3,(A1)
+		MOVE.L	(A4)+,(A0)
+		MOVE.L	(A4)+,(A0)
+		LEA	$300*4(A5),A5	
+		LEA	$2F8(A4),A4
+		DBRA	D2,.accross1
+		
+		LEA	$10(A2),A4
+		LEA	$8*4(A3),A3
+		MOVE.L	A3,A5	
+		MOVE.W	D1,D2
+		
+.accross2	MOVE.L	A5,D3
+		ROR.W	#2,D3
+		SWAP	D3
+		MOVE.L	D3,(A1)
+		MOVE.L	(A4)+,(A0)
+		MOVE.L	(A4)+,(A0)
+		LEA	$300*4(A5),A5	
+		LEA	$2F8(A4),A4
+		DBRA	D2,.accross2
+
+		LEA	$18(A2),A4
+		LEA	$8*4(A3),A3
+		MOVE.L	A3,A5	
+		MOVE.W	D1,D2
+		
+.accross3	MOVE.L	A5,D3
+		ROR.W	#2,D3
+		SWAP	D3
+		MOVE.L	D3,(A1)
+		MOVE.L	(A4)+,(A0)
+		MOVE.L	(A4)+,(A0)
+		LEA	$300*4(A5),A5	
+		LEA	$2F8(A4),A4
+		DBRA	D2,.accross3
+
+		LEA	$20(A2),A2
+		LEA	$8*4(A3),A3
+		DBRA	D0,.down
+		RTS
+
+; --------------------------------------------------------------------------
+
+BACKGR_BMAP	TST.W	BGR_CHANGE_CNT
+		BNE	BACKGR_CHANGE
+		MOVE.W	MRAM_DATA+WRAM_BGR_DLD,D0
+		CMP.W	BGR_CURRENT,D0
+;		BNE	BGR_CHANGE_SET
+
+BGR_BMAP	MOVE.L	MRAM_DATA+WRAM_PX_XPOS,D0
+		ASR.L	#8,D0
+		AND.W	#$1FF,D0
+		MOVE.W	D0,D3
+		NEG.W	D3
+		AND.W	#7,D3
+		BEQ	.end
+		LSL.W	#2,D3		;D3=Rotation amount.
+
+		LSR.W	#2,D0
+		MOVE.W	D0,D4
+		AND.W	#6,D4		;D4=Char offset.
+
+		MOVE.L	BACKGR_DATA,A3	;A3=Block data.
+		LSR.W	#3,D0
+		LSL.W	D0
+		LEA	16(A3,D0.W),A2			;A2=Block map addr.
+		LEA	288-IMG_BACKGR_VRAM(A3),A3	;A3=Graphic data.
+
+		MOVEQ	#16-1,D6
+		MOVE.W	#96,D7
+
+		MOVE.W	MRAM_DATA+WRAM_PX_YPOS,D0
+		SUB.W	#$60,D0
+		BPL.S	.ready
+		ADD.W	D0,D7
+		BLE	.end
+.lncalc		ADD.W	D0,D6
+		BPL.S	.skp
+		MOVE.W	D6,D0
+		MOVEQ	#16-1,D6
+		LEA	48(A2),A2
+		BRA.S	.lncalc
+.skp		MOVEQ	#0,D0
+.ready		MOVE.W	#192,D1
+		SUB.W	D0,D1
+		SUB.W	D7,D1
+		BPL.S	.set
+		ADD.W	D1,D7
+		BLE.S	.end
+.set		LEA	IMG_COPY_BUFFER+$1640,A4
+		LSL.W	#2,D0
+		LEA	(A4,D0.W),A4			;Image buffer line. 	
+
+		LEA	MASK_DATA,A6
+		MOVEQ	#0,D2
+		BRA.S	.start
+
+.loop		MOVE.L	(A5)+,D0
+		LSR.L	D3,D0
+		MOVE.L	D0,D1
+		ROL.L	#8,D1
+		MOVE.B	(A4),D2
+		AND.B	(A6,D2.W),D1
+		OR.B	D1,(A4)+
+		SWAP	D0
+		MOVE.B	(A4),D2
+		AND.B	(A6,D2.W),D0
+		OR.B	D0,(A4)+
+		SWAP	D1
+		MOVE.B	(A4),D2
+		AND.B	(A6,D2.W),D1
+		OR.B	D1,(A4)+
+		SWAP	D0
+		MOVE.B	(A4),D2
+		AND.B	(A6,D2.W),D0
+		OR.B	D0,(A4)+
+
+		DBRA	D6,.next
+
+.next_block	MOVEQ	#16-1,D6
+		LEA	48(A2),A2
+
+.start		MOVE.W	(A2),D0
+		CMP.W	#$7F8,D0
+		BNE.S	.cont
+		LEA	16*4(A4),A4
+		SUB.W	#16,D7
+		BPL.S	.next_block
+		BRA.S	.end
+
+.cont		ADD.W	D4,D0
+		LSL.W	#5,D0
+		LEA	(A3,D0.W),A5
+
+.next		DBRA	D7,.loop
+.end   		RTS
+
+MASK_DATA	HEX	FFF0F0F0F0F0F0F0F0F0F0F0F0F0F0F0
+		HEX	0F000000000000000000000000000000
+		HEX	0F000000000000000000000000000000
+		HEX	0F000000000000000000000000000000
+		HEX	0F000000000000000000000000000000
+		HEX	0F000000000000000000000000000000
+		HEX	0F000000000000000000000000000000
+		HEX	0F000000000000000000000000000000
+		HEX	0F000000000000000000000000000000
+		HEX	0F000000000000000000000000000000
+		HEX	0F000000000000000000000000000000
+		HEX	0F000000000000000000000000000000
+		HEX	0F000000000000000000000000000000
+		HEX	0F000000000000000000000000000000
+		HEX	0F000000000000000000000000000000
+		HEX	0F000000000000000000000000000000
+
+; --------------------------------------------------------------------------
+
+BACKGR_SPR	MOVE.L	#($4000!($3FFF&IMG_SPRITE))*$10000+IMG_SPRITE>>14,(A1)
+		TST.W	BGR_CHANGE_CNT
+		BNE	.done		;Dont print while changing.
+
+		MOVE.W	MRAM_DATA+WRAM_PX_YPOS,D7
+		ADD.W	#$80-$60,D7
+		SWAP	D7
+		MOVE.L	MRAM_DATA+WRAM_PX_XPOS,D0
+		ASR.L	#8,D0
+		AND.W	#$1FF,D0
+
+		MOVE.W	D0,D4
+		AND.W	#7,D4
+		NEG.W	D4
+		ADD.W	#$80,D4		;D4=Xpos.
+		
+		MOVE.W	D0,D7
+		NOT.W	D7
+		AND.W	#$18,D7		
+		MOVE.W	D7,D3
+		ADD.W	#8,D3		;D3=Xpos add.
+		LSL.W	#7,D7
+		ADD.W	#$100,D7	;D7=First sprite hsize.
+
+		LSR.W	#2,D0
+		MOVE.W	D0,D5
+		AND.W	#6,D5		;D5=Char offset.
+
+		MOVE.L	BACKGR_DATA,A3	;A3=Block data.
+		LSR.W	#3,D0
+		LSL.W	D0
+		LEA	(A3,D0.W),A2	;A2=Block map addr.
+
+		MOVE.L	D7,D2
+		MOVE.W	#$0D01,D2	;D2=H4V2,Link
+		MOVEQ	#6-1,D6
+		
+.trans_lp	MOVE.L	A2,A3
+		MOVE.W	D4,D1
+
+		MOVE.B	D2,D7
+		MOVE.L	D7,(A0)		;Set ypos/size.
+		MOVE.W	(A3)+,D0
+		ADD.W	D5,D0
+		MOVE.W	D0,(A0)		;Set char.
+		MOVE.W	D1,(A0)		;Set xpos.
+		ADD.W	D3,D1
+		ADDQ.B	#1,D2
+
+		MOVE.L	D2,(A0)		;Set ypos/size.
+		MOVE.W	(A3)+,(A0)	;Set char.
+		MOVE.W	D1,(A0)		;Set xpos.
+		ADDQ.B	#1,D2
+		MOVE.L	D2,(A0)		;Set ypos/size.
+		MOVE.W	(A3)+,(A0)	;Set char.
+		ADD.W	#$20,D1
+		MOVE.W	D1,(A0)		;Set xpos.
+		ADDQ.B	#1,D2
+		MOVE.L	D2,(A0)		;Set ypos/size.
+		MOVE.W	(A3)+,(A0)	;Set char.
+		ADD.W	#$20,D1
+		MOVE.W	D1,(A0)		;Set xpos.
+		ADDQ.B	#1,D2
+		MOVE.L	D2,(A0)		;Set ypos/size.
+		MOVE.W	(A3)+,(A0)	;Set char.
+		ADD.W	#$20,D1
+		MOVE.W	D1,(A0)		;Set xpos.
+		ADDQ.B	#1,D2
+		MOVE.L	D2,(A0)		;Set ypos/size.
+		MOVE.W	(A3)+,(A0)	;Set char.
+		ADD.W	#$20,D1
+		MOVE.W	D1,(A0)		;Set xpos.
+		ADDQ.B	#1,D2
+		MOVE.L	D2,(A0)		;Set ypos/size.
+		MOVE.W	(A3)+,(A0)	;Set char.
+		ADD.W	#$20,D1
+		MOVE.W	D1,(A0)		;Set xpos.
+		ADDQ.B	#1,D2
+		MOVE.L	D2,(A0)		;Set ypos/size.
+		MOVE.W	(A3)+,(A0)	;Set char.
+		ADD.W	#$20,D1
+		MOVE.W	D1,(A0)		;Set xpos.
+		ADDQ.B	#1,D2
+		MOVE.L	D2,(A0)		;Set ypos/size.
+		MOVE.W	(A3)+,(A0)	;Set char.
+		ADD.W	#$20,D1
+		MOVE.W	D1,(A0)		;Set xpos.
+		ADDQ.B	#1,D2
+
+		ADD.L	#$100000,D2
+		ADD.L	#$100000,D7
+		LEA	48(A2),A2
+		DBRA	D6,.trans_lp
+
+.done		MOVE.L	#0,(A0)		;Last sprite.
+		MOVE.L	#0,(A0)
+		RTS
+
+; --------------------------------------------------------------------------
+
+BGR_CHANGE_SET	MOVE.W	D0,BGR_CURRENT
+		LEA	BACKGR_DLIST,A2
+		LEA	(A2,D0.W),A2
+		MOVE.L	(A2),A2
+		MOVE.L	A2,BACKGR_DATA
+		MOVE.W	#8,BGR_CHANGE_CNT
+		LEA	288(A2),A2
+		MOVE.W	#$3FF&IMG_BACKGR_VRAM,D0
+		MOVE.W	D0,BGR_CHANGE_TO
+		BRA.S	BGRC_FIRST
+
+BACKGR_CHANGE	SUBQ.W	#1,BGR_CHANGE_CNT
+		BEQ	BGR_BMAP
+		MOVE.L	BGR_CHANGE_FROM,A2
+		MOVE.W	BGR_CHANGE_TO,D0
+
+BGRC_FIRST	SWAP	D0
+		CLR.W	D0
+		ROL.L	#2,D0
+		SWAP	D0
+		LSR.W	#2,D0
+		OR.W	#$4000,D0
+		SWAP	D0
+		MOVE.L	D0,(A1)
+
+		MOVE.W	#(40*8)-1,D0
+.loop		MOVE.L	(A2)+,(A0)
+		DBRA	D0,.loop
+
+		MOVE.L	A2,BGR_CHANGE_FROM
+		ADD.W	#40*$20,BGR_CHANGE_TO
+		RTS
+
+; --------------------------------------------------------------------------
+		
+IMG_SCR0	EQU	MWORD_RAM+SSCR0_ADDR*4
+IMG_SCR1	EQU	MWORD_RAM+SSCR1_ADDR*4
+IMG_SCR2	EQU	MWORD_RAM+SSCR2_ADDR*4
+IMG_PDAT	EQU	%10000*$800
+IMG_VRAM	EQU	$52A0		;(Needs $90C0 bytes)
+IMG_MAP0	EQU	$F400		;To $F9FF
+IMG_MAP1	EQU	$E800		;To $EDFF
+IMG_WINDOW	EQU	$EE00		;To $EEFF
+IMG_SPRITE	EQU	$FA00		;To $FBFF
+IMG_HSCROLL0	EQU	$FC00		;To $FEFF 
+IMG_HSCROLL1	EQU	$E400		;To $E6FF 
+IMG_COPY_BUFFER	EQU	$FFD000-$1940
+IMG_CLOUD_MAP	EQU	$EF00		;To $F3FF
+IMG_CLOUD_VRAM	EQU	$2800		;(Needs $1D60 bytes)
+IMG_CLOUD_PDAT	EQU	%00100*$800
+IMG_BACKGR_VRAM	EQU	$0000		;(Needs $2800 bytes)
+IMG_BACKGR_PDAT	EQU	%00000*$800
+IMG_PANEL_MAP	EQU	$EE00		;To $EEFF
+IMG_PANEL_VRAM	EQU	$4560		;(Needs $0D40 bytes)
+IMG_PANEL_PDAT	EQU	%11000*$800
+
+IMG_DMA_A0	DC.W	REG21+(((IMG_SCR0+2)>>1)&$FF)
+		DC.W	REG22+(((IMG_SCR0+2)>>9)&$FF)
+		DC.W	REG23+((IMG_SCR0+2)>>17)
+		DC_DWVR	(IMG_VRAM+$6000)
+		DC.L	IMG_SCR0
+ 		DC.L	(IMG_VRAM+$8F80)*4+1
+IMG_DMA_B0	DC.W	REG21+(((IMG_SCR0+$2F02)>>1)&$FF)
+		DC.W	REG22+(((IMG_SCR0+$2F02)>>9)&$FF)
+		DC.W	REG23+((IMG_SCR0+$2F02)>>17)
+		DC_DWVR	(IMG_VRAM+$77C0)
+		DC.L	IMG_SCR0+$2F00
+IMG_DMA_C0	DC.W	640
+		DC.W	REG21+(((IMG_SCR0+$17C2)>>1)&$FF)
+		DC.W	REG22+(((IMG_SCR0+$17C2)>>9)&$FF)
+		DC.W	REG23+((IMG_SCR0+$17C2)>>17)
+		DC_DWVR	(IMG_VRAM+$17C0)
+		DC.L	IMG_SCR0+$17C0
+		DC.W	REG21+(((IMG_SCR0+$BA0+$17C2)>>1)&$FF)
+		DC.W	REG22+(((IMG_SCR0+$BA0+$17C2)>>9)&$FF)
+		DC.W	REG23+((IMG_SCR0+$BA0+$17C2)>>17)
+		DC_DWVR	(IMG_VRAM+$BA0+$17C0)
+		DC.L	IMG_SCR0+$BA0+$17C0
+
+IMG_DMA_A1	DC.W	REG21+(((IMG_SCR1+2)>>1)&$FF)
+		DC.W	REG22+(((IMG_SCR1+2)>>9)&$FF)
+		DC.W	REG23+((IMG_SCR1+2)>>17)
+		DC_DWVR	IMG_VRAM
+		DC.L	IMG_SCR1
+ 		DC.L	(IMG_VRAM+$46C0)*4+1
+IMG_DMA_B1	DC.W	REG21+(((IMG_SCR1+$2F02)>>1)&$FF)
+		DC.W	REG22+(((IMG_SCR1+$2F02)>>9)&$FF)
+		DC.W	REG23+((IMG_SCR1+$2F02)>>17)
+		DC_DWVR	(IMG_VRAM+$2F00)
+		DC.L	IMG_SCR1+$2F00
+IMG_DMA_C1	DC.W	256
+		DC.W	REG21+(((IMG_SCR1+$17C2)>>1)&$FF)
+		DC.W	REG22+(((IMG_SCR1+$17C2)>>9)&$FF)
+		DC.W	REG23+((IMG_SCR1+$17C2)>>17)
+		DC_DWVR	(IMG_VRAM+$17C0)
+		DC.L	IMG_SCR1+$17C0
+		DC.W	REG21+(((IMG_SCR1+$BA0+$17C2)>>1)&$FF)
+		DC.W	REG22+(((IMG_SCR1+$BA0+$17C2)>>9)&$FF)
+		DC.W	REG23+((IMG_SCR1+$BA0+$17C2)>>17)
+		DC_DWVR	(IMG_VRAM+$BA0+$17C0)
+		DC.L	IMG_SCR1+$BA0+$17C0
+
+IMG_DMA_A2	DC.W	REG21+(((IMG_SCR2+2)>>1)&$FF)
+		DC.W	REG22+(((IMG_SCR2+2)>>9)&$FF)
+		DC.W	REG23+((IMG_SCR2+2)>>17)
+		DC_DWVR	(IMG_VRAM+$6000)
+		DC.L	IMG_SCR2
+ 		DC.L	(IMG_VRAM+$8F80)*4+1
+IMG_DMA_B2	DC.W	REG21+(((IMG_SCR2+$2F02)>>1)&$FF)
+		DC.W	REG22+(((IMG_SCR2+$2F02)>>9)&$FF)
+		DC.W	REG23+((IMG_SCR2+$2F02)>>17)
+		DC_DWVR	(IMG_VRAM+$77C0)
+		DC.L	IMG_SCR2+$2F00
+IMG_DMA_C2	DC.W	640
+		DC.W	REG21+(((IMG_SCR2+$17C2)>>1)&$FF)
+		DC.W	REG22+(((IMG_SCR2+$17C2)>>9)&$FF)
+		DC.W	REG23+((IMG_SCR2+$17C2)>>17)
+		DC_DWVR	(IMG_VRAM+$17C0)
+		DC.L	IMG_SCR2+$17C0
+		DC.W	REG21+(((IMG_SCR2+$BA0+$17C2)>>1)&$FF)
+		DC.W	REG22+(((IMG_SCR2+$BA0+$17C2)>>9)&$FF)
+		DC.W	REG23+((IMG_SCR2+$BA0+$17C2)>>17)
+		DC_DWVR	(IMG_VRAM+$BA0+$17C0)
+		DC.L	IMG_SCR2+$BA0+$17C0
+
+IMG_DMA_A3	DC.W	REG21+(((IMG_SCR0+2)>>1)&$FF)
+		DC.W	REG22+(((IMG_SCR0+2)>>9)&$FF)
+		DC.W	REG23+((IMG_SCR0+2)>>17)
+		DC_DWVR	IMG_VRAM
+		DC.L	IMG_SCR0
+ 		DC.L	(IMG_VRAM+$46C0)*4+1
+IMG_DMA_B3	DC.W	REG21+(((IMG_SCR0+$2F02)>>1)&$FF)
+		DC.W	REG22+(((IMG_SCR0+$2F02)>>9)&$FF)
+		DC.W	REG23+((IMG_SCR0+$2F02)>>17)
+		DC_DWVR	(IMG_VRAM+$2F00)
+		DC.L	IMG_SCR0+$2F00
+IMG_DMA_C3	DC.W	256
+		DC.W	REG21+(((IMG_SCR0+$17C2)>>1)&$FF)
+		DC.W	REG22+(((IMG_SCR0+$17C2)>>9)&$FF)
+		DC.W	REG23+((IMG_SCR0+$17C2)>>17)
+		DC_DWVR	(IMG_VRAM+$17C0)
+		DC.L	IMG_SCR0+$17C0
+		DC.W	REG21+(((IMG_SCR0+$BA0+$17C2)>>1)&$FF)
+		DC.W	REG22+(((IMG_SCR0+$BA0+$17C2)>>9)&$FF)
+		DC.W	REG23+((IMG_SCR0+$BA0+$17C2)>>17)
+		DC_DWVR	(IMG_VRAM+$BA0+$17C0)
+		DC.L	IMG_SCR0+$BA0+$17C0
+
+IMG_DMA_A4	DC.W	REG21+(((IMG_SCR1+2)>>1)&$FF)
+		DC.W	REG22+(((IMG_SCR1+2)>>9)&$FF)
+		DC.W	REG23+((IMG_SCR1+2)>>17)
+		DC_DWVR	(IMG_VRAM+$6000)
+		DC.L	IMG_SCR1
+ 		DC.L	(IMG_VRAM+$8F80)*4+1
+IMG_DMA_B4	DC.W	REG21+(((IMG_SCR1+$2F02)>>1)&$FF)
+		DC.W	REG22+(((IMG_SCR1+$2F02)>>9)&$FF)
+		DC.W	REG23+((IMG_SCR1+$2F02)>>17)
+		DC_DWVR	(IMG_VRAM+$77C0)
+		DC.L	IMG_SCR1+$2F00
+IMG_DMA_C4	DC.W	640
+		DC.W	REG21+(((IMG_SCR1+$17C2)>>1)&$FF)
+		DC.W	REG22+(((IMG_SCR1+$17C2)>>9)&$FF)
+		DC.W	REG23+((IMG_SCR1+$17C2)>>17)
+		DC_DWVR	(IMG_VRAM+$17C0)
+		DC.L	IMG_SCR1+$17C0
+		DC.W	REG21+(((IMG_SCR1+$BA0+$17C2)>>1)&$FF)
+		DC.W	REG22+(((IMG_SCR1+$BA0+$17C2)>>9)&$FF)
+		DC.W	REG23+((IMG_SCR1+$BA0+$17C2)>>17)
+		DC_DWVR	(IMG_VRAM+$BA0+$17C0)
+		DC.L	IMG_SCR1+$BA0+$17C0
+
+IMG_DMA_A5	DC.W	REG21+(((IMG_SCR2+2)>>1)&$FF)
+		DC.W	REG22+(((IMG_SCR2+2)>>9)&$FF)
+		DC.W	REG23+((IMG_SCR2+2)>>17)
+		DC_DWVR	IMG_VRAM
+		DC.L	IMG_SCR2
+ 		DC.L	(IMG_VRAM+$46C0)*4+1
+IMG_DMA_B5	DC.W	REG21+(((IMG_SCR2+$2F02)>>1)&$FF)
+		DC.W	REG22+(((IMG_SCR2+$2F02)>>9)&$FF)
+		DC.W	REG23+((IMG_SCR2+$2F02)>>17)
+		DC_DWVR	(IMG_VRAM+$2F00)
+		DC.L	IMG_SCR2+$2F00
+IMG_DMA_C5	DC.W	256
+		DC.W	REG21+(((IMG_SCR2+$17C2)>>1)&$FF)
+		DC.W	REG22+(((IMG_SCR2+$17C2)>>9)&$FF)
+		DC.W	REG23+((IMG_SCR2+$17C2)>>17)
+		DC_DWVR	(IMG_VRAM+$17C0)
+		DC.L	IMG_SCR2+$17C0
+		DC.W	REG21+(((IMG_SCR2+$BA0+$17C2)>>1)&$FF)
+		DC.W	REG22+(((IMG_SCR2+$BA0+$17C2)>>9)&$FF)
+		DC.W	REG23+((IMG_SCR2+$BA0+$17C2)>>17)
+		DC_DWVR	(IMG_VRAM+$BA0+$17C0)
+		DC.L	IMG_SCR2+$BA0+$17C0
+
+; --------------------------------------------------------------------------
+
+PANEL_SCORE	EQU	IMG_PANEL_MAP+2*33
+PANEL_LIFE	EQU	IMG_PANEL_MAP+2*51
+PANEL_SPEED	EQU	IMG_PANEL_MAP+2*55
+PANEL_PDAMAGE	EQU	IMG_PANEL_MAP+2*42
+PANEL_EDAMAGE	EQU	IMG_PANEL_MAP+2*74
+PANEL_SPDNUM	EQU	IMG_PANEL_MAP+2*55
+MAP_NUMS	EQU	$100
+MAP_SPEED	EQU	$180
+MAP_PDAMAGE	EQU	$116
+MAP_EDAMAGE_A	EQU	$156
+MAP_EDAMAGE_B	EQU	$216
+MAP_SPDNUMS	EQU	$200
+
+PANEL_DLD	LEA	PANEL_MAP(PC),A2
+
+.pr_pdamage	MOVE.L	#PANEL_PDAMAGE*4+1,D1
+		MOVE.W	#MAP_PDAMAGE+4,D2
+		MOVE.W	MRAM_DATA+WRAM_PDAMAGE,D4
+		BSR	.pr_damage
+
+.pr_edamage	MOVE.L	#PANEL_EDAMAGE*4+1,D1
+		MOVE.W	#MAP_EDAMAGE_A+4,D2
+		MOVE.W	MRAM_DATA+WRAM_EDAMAGE,D4
+		CMP.W	#12,D4
+		BCS.S	.ped
+		SUB.W	#11,D4
+		MOVE.W	#MAP_EDAMAGE_B+4,D2
+.ped		BSR	.pr_damage
+
+.pr_speed	MOVE.L	#PANEL_SPEED*4+1,D1
+		MOVE.W	#MAP_SPEED+4,D2
+		MOVE.W	MRAM_DATA+WRAM_SPEED,D4
+		LEA	.dld_x2(PC),A4
+		MOVEQ	#16,D5
+		BSR	.pr_bar
+
+.pr_life	MOVE.L	#PANEL_LIFE*4+1,D1
+		LEA	MRAM_DATA+WRAM_LIFE+1(PC),A3
+		LEA	.dld_x2(PC),A4
+		MOVE.W	#MAP_NUMS,D4
+		MOVE.W	#MAP_NUMS+2,D5
+		MOVEQ	#1-1,D7
+		BSR	.pr_last
+
+.pr_spdnum	MOVE.L	#PANEL_SPDNUM*4+1,D1
+		MOVE.W	#MAP_SPDNUMS,D4
+		MOVEQ	#0,D5
+		MOVE.W	MRAM_DATA+WRAM_SPDNUM,D5
+		DIVU	#100,D5
+		BEQ.S	.pr_sn1
+		ADDQ.W	#2,D4
+.pr_sn1		MOVE.W	D5,D2
+		LSL.W	D2
+		ADD.W	D4,D2
+		BSR	.dld_x1	
+		CLR.W	D5
+		SWAP	D5
+		DIVU	#10,D5
+		BEQ.S	.pr_sn2
+		ADDQ.W	#2,D4
+.pr_sn2		MOVE.W	D5,D2
+		LSL.W	D2
+		ADD.W	D4,D2
+		BSR.S	.dld_x1	
+		SWAP	D5
+		MOVE.W	D5,D2
+		LSL.W	D2
+		ADD.W	#MAP_SPDNUMS+2,D2
+		BSR.S	.dld_x1
+
+.pr_score	MOVE.L	#PANEL_SCORE*4+1,D1
+		LEA	MRAM_DATA+WRAM_SCORE+1(PC),A3
+		LEA	.dld_x2(PC),A4
+		MOVE.W	#MAP_NUMS,D4
+		MOVE.W	#MAP_NUMS+2,D5
+		MOVEQ	#6-1,D7
+
+.pr_leadzero_lp	MOVE.B	(A3),D2
+		LSR.B	#4,D2
+		BNE.S	.pr_num0
+		MOVE.W	D4,D2
+		JSR	(A4)
+		SUBQ.W	#1,D7
+		BEQ.S	.pr_last
+.pr_odd		MOVE.B	(A3)+,D2
+		BNE.S	.pr_num1
+		MOVE.W	D4,D2
+		JSR	(A4)
+		DBRA	D7,.pr_leadzero_lp
+		RTS
+
+.pr_standard	MOVE.B	(A3),D2
+		LSR.W	#4,D2
+.pr_num0	AND.W	#$F,D2
+		LSL.W	D2
+		ADD.W	D5,D2
+		JSR	(A4)
+.pr_last	MOVE.B	(A3)+,D2
+.pr_num1	AND.W	#$0F,D2
+		LSL.W	D2
+		ADD.W	D5,D2
+		JSR	(A4)
+		SUBQ.W	#2,D7
+		BPL.S	.pr_standard
+		RTS
+
+.dld_x2		MOVE.W	(A2,D2.W),D0
+		BSR.S	.dld
+		ADD.L	#$40*4,D1
+		MOVE.W	$40(A2,D2.W),D0
+		BSR.S	.dld
+		SUB.L	#$3E*4,D1
+		RTS
+.dld_x1		MOVE.W	(A2,D2.W),D0
+		BSR.S	.dld
+		ADDQ.W	#$02*4,D1
+		RTS
+.dld		BEQ.S	.end
+		MOVE.L	D1,D3
+		ROR.W	#2,D3
+		SWAP	D3
+		MOVE.L	D3,(A1)
+		ADD.W	#IMG_PANEL_PDAT!(IMG_PANEL_VRAM/$20),D0
+		MOVE.W	D0,(A0)
+.end		RTS
+
+.pr_damage	MOVEQ	#12,D5
+		LEA	.dld_x1(PC),A4
+.pr_bar		SUB.W	D4,D5
+.pr_dlp		SUBQ.W	#2,D4
+		BCS.S	.pr_dlast
+		JSR	(A4)
+		ADDQ.W	#6,D2
+		BRA.S	.pr_dlp
+.pr_dlast	ADDQ.W	#1,D4
+		BNE.S	.pr_dclr
+		SUBQ.W	#2,D2
+		JSR	(A4)
+		ADDQ.W	#8,D2
+.pr_dclr	SUBQ.W	#4,D2
+		BRA.S	.pr_dclrstart
+.pr_dclrlp	JSR	(A4)
+		ADDQ.W	#6,D2
+.pr_dclrstart	SUBQ.W	#2,D5
+		BPL.S	.pr_dclrlp
+		RTS
+
+; --------------------------------------------------------------------------
+
+SET_BM_CHARS	LEA	VDPData,A0
+		MOVE.W	#IMG_PDAT!(IMG_VRAM/$20),D0
+		MOVE.L	#IMG_MAP1*4+1,D1
+		MOVEQ	#24-1,D3
+		MOVE.L	#$40*4,D4
+
+		MOVE.W	#(768)-1,D2
+		BSR.S	.bm_char
+
+		MOVE.L	#IMG_MAP0*4+1,D1
+		MOVE.W	#(190)-1,D2
+		BSR.S	.bm_char
+		SUB.W	#768,D0
+		MOVE.W	#(186)-1,D2
+		BSR.S	.bm_char
+		ADD.W	#768-186,D0
+		MOVE.W	#(190+14)-1,D2
+		BSR.S	.bm_char
+		SUB.W	#768-186,D0
+		MOVE.W	#(188)-1,D2
+
+.bm_char	MOVE.L	D1,D5
+		ROR.W	#2,D5
+		SWAP	D5
+		MOVE.L	D5,4(A0)
+	 	MOVE.W	D0,(A0)
+		ADDQ.W	#1,D0
+		ADD.L	D4,D1
+		DBRA	D3,.skp
+		MOVEQ	#24-1,D3
+	 	SUB.L	#$5FE*4,D1
+.skp		DBRA	D2,.bm_char
+		RTS
+
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ VDP Register block initialize.					   บ
+; ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน
+; บ Entry: A0=Register list.						   บ
+; บ  Exit: 								   บ
+; บ  Used: A01/D012							   บ
+; ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน
+; บ Only sets 0,1,2,3,4,5,7,10,11,12,13,16,17,19			   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+VDP_SETUP	MOVE.W	#$8000,D0		; Set VDP registers 0-18
+		MOVE.W	#$0100,D1	
+		LEA	VDPCtrl,A1
+		MOVEQ	#6-1,D2			
+		BSR.S	.Loop0			; 0-5
+		ADD.W	D1,D0			; Skip 6		
+		MOVE.B	(A0)+,D0  
+		MOVE.W	D0,(A1)			; 7
+		MOVE.W	#$8A00,D0		; Skip 8&9
+		MOVEQ	#4-1,D2			
+		BSR.S	.Loop0			; 10-13
+		ADD.W	D1,D0			; Skip 14
+		ADD.W	D1,D0			; Skip 15
+		MOVEQ	#3-1,D2	  		; 16-18
+.Loop0		MOVE.B	(A0)+,D0  
+		MOVE.W	D0,(A1)
+		ADD.W	D1,D0
+		DBRA	D2,.Loop0
+		RTS		
+		
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ DMA control								   บ
+; ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน
+; บ Entry: A0=data							   บ
+; บ  Exit: 								   บ
+; บ  Used: A01/D0							   บ
+; ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน
+; บ Use DMA format MACRO's.						   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+DO_DMA		LEA	VDPCtrl,A1
+		MOVE.W	#REG01!%01110100,(A1)
+		MOVE.L	#(REG19*$10000)!REG20,D0
+		MOVE.B	(A0)+,D0
+		SWAP	D0
+		MOVE.B	(A0)+,D0
+		MOVE.L	D0,(A1)
+		MOVE.W	(A0)+,(A1)
+		MOVE.L	#(REG23*$10000)!REG22,D0
+		MOVE.B	(A0)+,D0
+		SWAP	D0
+		MOVE.B	(A0)+,D0
+		MOVE.L	D0,(A1)
+		MOVE.W	(A0)+,(A1)
+		MOVE.W	(A0)+,(A1)
+       		RTS
+
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ Joystick read routine.						   บ
+; ฬออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออน
+; บ 									   บ
+; บ Exit: D0=Joy value.	  Uses: A0/D01					   บ
+; บ 									   บ
+; บ Bit7 = Start.							   บ
+; บ Bit6 = A.								   บ
+; บ Bit5 = B.								   บ
+; บ Bit4 = C.								   บ
+; บ Bit3 = Up.								   บ
+; บ Bit2 = Down.							   บ
+; บ Bit1 = Left.							   บ
+; บ Bit0 = Right.							   บ
+; บ 									   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+JOY1_READ	LEA	Data2,A3
+		BRA.S	JOY_READ
+
+JOY0_READ	LEA	Data1,A3
+
+JOY_READ	MOVE.B	#$40,Ctrl1-Data1(A3)
+		MOVE.B	#0,(A3)
+		NOP
+		NOP
+		NOP
+		NOP
+		MOVE.B	(A3),D0
+		MOVE.B	#$40,(A3)
+		NOT.B	D0
+		LSL.B	#2,D0
+		OR.B	#$3F,D0
+		MOVE.B	(A3),D1
+		AND.W	#$3F,D1
+		EOR.B	D0,D1			;D1=SACBRLDU
+
+		MOVE.W	D1,D0	   		;Use USER definition.
+		AND.B	#$0F,D0
+		MOVE.B	JOY_DEFTAB(PC,D0.W),D0
+		AND.B	#$0F,D0
+		LSR.B	#4,D1
+		MOVE.B	JOY_DEFTAB(PC,D1.W),D1
+		AND.B	#$F0,D1
+		OR.B	D1,D0
+
+		RTS
+
+JOY_START	EQU	$80
+JOY_A		EQU	$40
+JOY_B		EQU	$20
+JOY_C		EQU	$10
+JOY_UP		EQU	$08
+JOY_DOWN 	EQU	$04
+JOY_LEFT 	EQU	$02
+JOY_RIGHT	EQU	$01
+
+JS		EQU	JOY_START
+JA		EQU	JOY_A
+JB		EQU	JOY_B
+JC		EQU	JOY_C
+JU		EQU	JOY_UP
+JD		EQU	JOY_DOWN
+JL		EQU	JOY_LEFT
+JR		EQU	JOY_RIGHT
+
+JOY_DEFTAB	DC.B	0,JB!JU,JC!JD,JC!JB!JU!JD
+		DC.B	JA!JL,JA!JB!JL!JU,JA!JC!JL!JD,JA!JC!JB!JL!JD!JU
+		DC.B	JS!JR,JS!JB!JR!JU,JS!JC!JR!JD,JS!JC!JB!JR!JU!JD
+		DC.B	JS!JA!JR!JL,JS!JA!JR!JB!JL!JU
+		DC.B	JS!JA!JC!JR!JL!JD,JS!JA!JC!JB!JR!JL!JD!JU
+
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ DATA								   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+CLOUD_DMA	DMAvram	$1270,(BACKGR_CLOUD+1280),IMG_CLOUD_VRAM
+PANEL_DMA	DMAvram	$0D40,PANEL_CHARS,IMG_PANEL_VRAM
+BACKGR_DMA	DMAvram	$1400,(BACKGR_DAT_A+288),IMG_BACKGR_VRAM
+
+VDP_DATA	DC.B	%00000100		;  0 HInt,HVCnt
+		DC.B	%01100100		;  1 Disp,VInt,DMA,V28
+		DC.B	$E000>>10		;  2 ScrBaseA
+		DC.B	$E800>>10		;  3 ScrBaseW
+		DC.B	$E000>>13		;  4 ScrBaseB
+		DC.B	$FA00>>9		;  5 SprBase
+		DC.B	%00000000		;  7 Border
+		DC.B	$FF			; 10 HIntCnt
+		DC.B	%00000011		; 11 ExInt,VS,HS
+		DC.B	%00001000		; 12 SWidth,Shadow
+		DC.B	$FC00>>10		; 13 HSBase
+		DC.B	%00110000		; 16 Scroll Size
+		DC.B	$00			; 17 WindowH
+		DC.B	$98			; 18 WindowV
+		
+; --------------------------------------------------------------------------
+
+		IF	TESTPR
+		INCLUDE	\SOURCE\DEVBIOS\HEXPRINT.68K
+		ENDIF
+
+		INCLUDE	PANEL.EQU
+
+; - Level one. -------------------------------------------------------------
+
+		IF	LEVEL=1
+		
+PALETTE_A
+
+;Bitmap.
+		DC.W	$000,$664,$CCC,$888,$666,$444,$222,$000
+  		DC.W	$0CC,$06E,$02C,$008,$204,$608,$404,$202
+;Background.
+		DC.W	$000,$A0C,$A0A,$A08,$A06,$A04,$A02,$800
+		DC.W	$600,$400,$200,$000,$020,$020,$020,$020
+;Panel.		
+		DC.W	$000,$000,$400,$422,$644,$C66,$A88,$CAA
+		DC.W	$000,$624,$00C,$06C,$0AC,$000,$EEE,$022
+		
+		DC.W	$000,$000,$400,$422,$0A0,$600,$6EE,$2E0
+		DC.W	$06C,$060,$E62,$C20,$CAA,$00C,$EEE,$0AC
+
+PARRALEX_DATA_A	DC.W	17,-$140	
+		DC.W	15,-$1A0	
+		DC.W	13,-$200	
+		DC.W	11,-$260	
+		DC.W	10,-$2C0	
+		DC.W	9,-$320		
+		DC.W	8,-$380		
+		DC.W	7,-$3E0		
+		DC.W	$7FFF,-$440	
+
+BACKGR_DLIST	DC.L	BACKGR_DAT_A
+
+BACKGR_CLOUD	INCLUDE	LEVEL_1\CLOUD.EQU
+BACKGR_DAT_A	INCBIN	LEVEL_1\BACKGR1A.BIN
+
+; - Level two. -------------------------------------------------------------
+		
+		ELSEIF	LEVEL=2
+
+PALETTE_A
+
+;Bitmap.
+		DC.W	$000,$246,$CCC,$888,$666,$444,$222,$000
+  		DC.W	$0CC,$06E,$02C,$008,$204,$6A6,$262,$040
+;Background.
+		DC.W	$404,$ECA,$CA8,$A86,$666,$444,$222,$000
+		DC.W	$020,$EEC,$CAA,$A88,$866,$644,$422,$220
+;Panel.		
+		DC.W	$000,$000,$400,$422,$644,$C66,$A88,$CAA
+		DC.W	$000,$624,$00C,$06C,$0AC,$000,$EEE,$022
+		
+		DC.W	$000,$000,$400,$422,$0A0,$600,$6EE,$2E0
+		DC.W	$06C,$060,$E62,$C20,$CAA,$00C,$EEE,$0AC
+
+PARRALEX_DATA_A	DC.W	24,-$400	
+		DC.W	55,-$200	
+		DC.W	$7FFF,-$400	
+
+BACKGR_DLIST	DC.L	BACKGR_DAT_A
+		DC.L	BACKGR_DAT_B
+
+BACKGR_CLOUD	INCLUDE	LEVEL_2\CLOUD.EQU
+BACKGR_DAT_A	;INCBIN	LEVEL_2\BACKGR2A.BIN
+BACKGR_DAT_B	INCBIN	LEVEL_2\BACKGR2B.BIN
+						   
+; - Level three. -----------------------------------------------------------
+
+		ELSEIF	LEVEL=3
+		
+PALETTE_A
+
+;Bitmap.
+		DC.W	$000,$246,$CCC,$888,$666,$444,$222,$000
+  		DC.W	$0CC,$06E,$02C,$008,$204,$6A6,$262,$040
+;Background.
+		DC.W	$000,$AAC,$88C,$66A,$448,$446,$426,$424
+		DC.W	$204,$202,$002,$000,$020,$020,$020,$020
+;Panel.		
+		DC.W	$000,$000,$400,$422,$644,$C66,$A88,$CAA
+		DC.W	$000,$624,$00C,$06C,$0AC,$000,$EEE,$022
+		
+		DC.W	$000,$000,$400,$422,$0A0,$600,$6EE,$2E0
+		DC.W	$06C,$060,$E62,$C20,$CAA,$00C,$EEE,$0AC
+
+PARRALEX_DATA_A	DC.W	17,-$120	
+		DC.W	15,-$180	
+		DC.W	13,-$1E0	
+		DC.W	11,-$240	
+		DC.W	10,-$2A0	
+		DC.W	9,-$300		
+		DC.W	8,-$360		
+		DC.W	7,-$3C0		
+		DC.W	$7FFF,-$420	
+
+BACKGR_DLIST	DC.L	BACKGR_DAT_A
+
+BACKGR_CLOUD	INCLUDE	LEVEL_3\CLOUD.EQU
+BACKGR_DAT_A	INCBIN	LEVEL_3\BACKGR3A.BIN
+
+; - Level four. ------------------------------------------------------------
+
+		ELSEIF	LEVEL=4
+		
+PALETTE_A
+
+;Bitmap.
+		DC.W	$000,$042,$CCC,$888,$666,$444,$222,$000
+  		DC.W	$0CC,$06E,$02C,$008,$002,$024,$246,$264
+;Background.
+		DC.W	$000,$A0C,$A0A,$A08,$A06,$A04,$A02,$800
+		DC.W	$600,$400,$200,$000,$020,$020,$020,$020
+;Panel.		
+		DC.W	$000,$000,$400,$422,$644,$C66,$A88,$CAA
+		DC.W	$000,$624,$00C,$06C,$0AC,$000,$EEE,$022
+		
+		DC.W	$000,$000,$400,$422,$0A0,$600,$6EE,$2E0
+		DC.W	$06C,$060,$E62,$C20,$CAA,$00C,$EEE,$0AC
+
+BACKGR_DLIST	DC.L	BACKGR_DAT_A
+
+PARRALEX_DATA_A
+BACKGR_CLOUD	
+BACKGR_DAT_A	DS.B	288	
+		 
+; - Level five. ------------------------------------------------------------
+
+		ELSEIF	LEVEL=5
+
+PALETTE_A
+
+;Bitmap.
+		DC.W	$000,$622,$CCC,$888,$666,$444,$222,$000
+  		DC.W	$0CC,$06E,$02C,$008,$046,$068,$08C,$864
+;Background.
+		DC.W	$000,$A0C,$A0A,$A08,$A06,$A04,$A02,$800
+		DC.W	$600,$400,$200,$000,$020,$020,$020,$020
+;Panel.		
+		DC.W	$000,$000,$400,$422,$644,$C66,$A88,$CAA
+		DC.W	$000,$624,$00C,$06C,$0AC,$000,$EEE,$022
+		
+		DC.W	$000,$000,$400,$422,$0A0,$600,$6EE,$2E0
+		DC.W	$06C,$060,$E62,$C20,$CAA,$00C,$EEE,$0AC
+
+BACKGR_DLIST	DC.L	BACKGR_DAT_A
+
+PARRALEX_DATA_A
+BACKGR_CLOUD	
+BACKGR_DAT_A	DS.B	288
+
+; --------------------------------------------------------------------------
+
+		ENDIF
+
+; - Z80 initialization code. -----------------------------------------------
+
+		IF	SOUND_INC
+		INCLUDE	SOUNDMAI.INC
+		EVEN
+
+		ENDIF
+
+; --------------------------------------------------------------------------
+
+IP_END		
+
+

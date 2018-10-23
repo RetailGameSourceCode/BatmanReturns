@@ -1,0 +1,366 @@
+; ============================================================================
+;
+; ============================================================================
+
+		MOVE.W	#8,D0
+	   	ADD.W	D0,PITCH
+ 	 	AND.W	#$3FE,PITCH
+	    	ADD.W	D0,ROLL
+ 	   	AND.W	#$3FE,ROLL
+  	     	ADD.W	D0,HDG
+   	     	AND.W	#$3FE,HDG
+
+MAKE_CRT	MOVEQ	#15*6-1,D6
+		LEA	SHAPE1,A0
+
+.LOOP		
+		MOVEQ	#0,D0
+		MOVEQ	#0,D1
+		MOVEQ	#0,D2
+		MOVE.W	ZEOL,D0
+ 		MOVE.W	XEOL,D1
+  		MOVE.W	YEOL,D2
+		SWAP	D0
+		SWAP	D1
+		SWAP	D2
+		ASR.L	#2,D0
+
+		MOVE.W	(A0)+,D3
+		MOVE.W	T1,D4
+		MULS	D3,D4
+		ADD.L	D4,D1
+		MOVE.W	T4,D4
+		MULS	D3,D4
+		ADD.L	D4,D2
+		MULS	T7,D3
+		ADD.L	D3,D0
+
+		MOVE.W	(A0)+,D3
+		MOVE.W	T2,D4
+		MULS	D3,D4
+		ADD.L	D4,D1
+		MOVE.W	T5,D4
+		MULS	D3,D4
+		ADD.L	D4,D2
+		MULS	T8,D3
+		ADD.L	D3,D0
+		
+		MOVE.W	(A0)+,D3
+		MOVE.W	T3,D4
+		MULS	D3,D4
+		ADD.L	D4,D1
+		MOVE.W	T6,D4
+		MULS	D3,D4
+		ADD.L	D4,D2
+		MULS	T9,D3
+		ADD.L	D3,D0
+		
+		SWAP	D0
+		ROL.L	#2,D0
+		ASR.L	#6,D1
+		ASR.L	#6,D2
+
+		TST.W	D0
+	 	BMI.S	.nex
+		BEQ.S	.skp0
+		DIVS	D0,D1
+.skp0		ADD.W	#320/2,D1
+		CMP.W	#320,D1
+ 	  	BCC.S	.nex
+
+		TST.W	D0
+		BEQ.S	.skp1
+	 	DIVS	D0,D2
+.skp1		ADD.W	#192/2,D2
+		CMP.W	#192,D2
+	   	BCC.S	.nex
+
+		MOVE.W	SROT_VCELL-1,D0
+		ADDQ.W	#1,D0
+		MOVE.W	D1,D3
+		AND.W	#$FFF8,D1
+		MULU	D0,D1
+		ADD.W	D2,D1
+		ADD.W	IMG_BADDR,D1
+		LSL.L	#2,D1
+		ADD.L	#$80000,D1
+		MOVE.L	D1,A6
+		LEA	TGRS,A5
+		AND.W	#7,D3
+		LSL.W	#2,D3
+ 		
+	  	BSR	ACCESS_REQ
+	  	MOVE.L	(A5,D3.W),D3
+	  	OR.L	D3,(A6)
+		BSR	ACCESS_OFF
+
+.nex		
+		DBRA	D6,.LOOP
+		RTS
+
+TGRS		
+		HEX	70000000
+		HEX	07000000
+		HEX	00700000
+		HEX	00070000
+		HEX	00007000
+		HEX	00000700
+		HEX	00000070
+		HEX	00000007
+
+SHAPE1		DC.W	-10*5,17*5,0
+		DC.W	-8*5,15*5,6*5
+		DC.W	0,13*5,10*5
+		DC.W	8*5,10*5,6*5
+		DC.W	10*5,8*5,0
+		DC.W	8*5,5*5,-6*5
+		DC.W	0,3*5,-10*5
+		DC.W	-8*5,0,-6*5
+		DC.W	-10*5,-3*5,0
+		DC.W	-8*5,-5*5,6*5
+		DC.W	0,-8*5,10*5
+		DC.W	8*5,-10*5,6*5
+		DC.W	10*5,-13*5,0
+		DC.W	8*5,-15*5,-6*5
+		DC.W	0,-17*5,-10*5
+
+SHAPE		DC.W	20*5,-17*5,10*5
+		DC.W	10*5,-17*5,10*5
+		DC.W	0,-17*5,10*5
+		DC.W	-10*5,-17*5,10*5
+		DC.W	-20*5,-17*5,10*5
+		DC.W	15*5,-17*5,5*5
+		DC.W	5*5,-17*5,5*5
+		DC.W	-5*5,-17*5,5*5
+		DC.W	-15*5,-17*5,5*5
+		DC.W	10*5,-17*5,0
+		DC.W	0,-17*5,0
+		DC.W	-10*5,-17*5,0
+		DC.W	5*5,-17*5,-5*5
+		DC.W	-5*5,-17*5,-5*5
+		DC.W	0,-17*5,-10*5
+
+SHAPEX		DC.W	20*5,17*5,10*5
+		DC.W	10*5,17*5,10*5
+		DC.W	0,17*5,10*5
+		DC.W	-10*5,17*5,10*5
+		DC.W	-20*5,17*5,10*5
+		DC.W	15*5,17*5,5*5
+		DC.W	5*5,17*5,5*5
+		DC.W	-5*5,17*5,5*5
+		DC.W	-15*5,17*5,5*5
+		DC.W	10*5,17*5,0
+		DC.W	0,17*5,0
+		DC.W	-10*5,17*5,0
+		DC.W	5*5,17*5,-5*5
+		DC.W	-5*5,17*5,-5*5
+		DC.W	0,17*5,-10*5
+
+SHAPEXX		DC.W	20*5,17*7,10*5
+		DC.W	10*5,17*7,10*5
+		DC.W	0,17*7,10*5
+		DC.W	-10*5,17*7,10*5
+		DC.W	-20*5,17*7,10*5
+		DC.W	15*5,17*7,5*5
+		DC.W	5*5,17*7,5*5
+		DC.W	-5*5,17*7,5*5
+		DC.W	-15*5,17*7,5*5
+		DC.W	10*5,17*7,0
+		DC.W	0,17*7,0
+		DC.W	-10*5,17*7,0
+		DC.W	5*5,17*7,-5*5
+		DC.W	-5*5,17*7,-5*5
+		DC.W	0,17*7,-10*5
+
+SHAPEXXX	DC.W	20*5,-17*7,10*5
+		DC.W	10*5,-17*7,10*5
+		DC.W	0,-17*7,10*5
+		DC.W	-10*5,-17*7,10*5
+		DC.W	-20*5,-17*7,10*5
+		DC.W	15*5,-17*7,5*5
+		DC.W	5*5,-17*7,5*5
+		DC.W	-5*5,-17*7,5*5
+		DC.W	-15*5,-17*7,5*5
+		DC.W	10*5,-17*7,0
+		DC.W	0,-17*7,0
+		DC.W	-10*5,-17*7,0
+		DC.W	5*5,-17*7,-5*5
+		DC.W	-5*5,-17*7,-5*5
+		DC.W	0,-17*7,-10*5
+
+SHAPE1A		DC.W	-10,17,0
+		DC.W	-8,15,6
+		DC.W	0,13,10
+		DC.W	8,10,6
+		DC.W	10,8,0
+		DC.W	8,5,-6
+		DC.W	0,3,-10
+		DC.W	-8,0,-6
+		DC.W	-10,-3,0
+		DC.W	-8,-5,6
+		DC.W	0,-8,10
+		DC.W	8,-10,6
+		DC.W	10,-13,0
+		DC.W	8,-15,-6
+		DC.W	0,-17,-10
+
+; ============================================================================
+;                                  DATA
+; ============================================================================
+
+ZEOL		DC.W	$200
+XEOL		DC.W	0
+YEOL		DC.W	0
+
+PITCH		DC.W	$0
+ROLL		DC.W	$0
+HDG		DC.W	$0
+
+T4		DC.W	0
+T1		DC.W	0
+T7		DC.W	0
+T5		DC.W	0
+T6		DC.W	0
+T8		DC.W	0
+T2		DC.W	0
+T9		DC.W	0
+T3		DC.W	0
+
+; ============================================================================
+;                            TRIG CALCULATION
+; ============================================================================
+
+TRANSFORM	LEA	SIN_LOOKUP(PC),A5
+		LEA	$100(A5),A6
+		LEA	T4(PC),A0
+		MOVE.W	#$3FE,D7
+
+		MOVE.W	PITCH,D6		;Y-AXIS Rotation
+		MOVE.W	ROLL,D5			;X-AXIS Rotation
+		MOVE.W	HDG,D4			;Z-AXIS Rotation
+		
+		MOVE.W	(A5,D5.W),(A0)+		;SET T4 SIN(R)
+
+; --- HEADING AND ROLL CALC ---
+
+		MOVE.W	D4,D0
+		ADD.W	D5,D0			;DO H+R
+		AND.W	D7,D0
+		MOVE.W	(A5,D0.W),D1		;D1=SIN(H+R)
+		EXT.L	D1
+		MOVE.W	(A6,D0.W),A2		;A2=COS(H+R)
+
+		MOVE.W	D4,D0
+		SUB.W	D5,D0			;DO H-R
+		AND.W	D7,D0
+		MOVE.W	(A5,D0.W),A1		;A1=SIN(H-R)
+		MOVE.W	(A6,D0.W),D2		;D2=COS(H-R)
+		EXT.L	D2
+		
+		MOVE.L	D2,D0
+		ADD.L	A2,D0
+		LSR.L	#1,D0			;(COS(H-R)+COS(H+R))/2
+		MOVE.W	D0,(A0)+		;SET T1
+
+		SUB.L	A2,D2
+		LSR.L	#1,D2			;D2=(COS(H-R)-COS(H+R))/2
+		
+		MOVE.L	D1,D0
+		ADD.L	A1,D0
+		LSR.L	#1,D0
+		NEG.W	D0			;-(SIN(H+R)+SIN(H-R))/2
+		MOVE.W	D0,(A0)+		;SET T7
+
+		SUB.L	A1,D1
+		LSR.L	#1,D1			;D1=(SIN(H+R)-SIN(H-R))/2
+
+; --- PITCH AND ROLL CALC ---
+
+		MOVE.W	D5,D0
+		ADD.W	D6,D0			;DO R+P
+		AND.W	D7,D0
+		MOVE.W	(A5,D0.W),D3		;D3=SIN(R+P)
+		EXT.L	D3
+		MOVE.W	(A6,D0.W),D0		;D0=COS(R+P)
+		EXT.L	D0
+
+		SUB.W	D6,D5			;DO R-P
+		AND.W	D7,D5
+		MOVE.W	(A5,D5.W),A1		;A1=SIN(R-P)
+		MOVE.W	(A6,D5.W),A2		;A2=COS(R-P)
+		
+		ADD.L	A2,D0	
+		LSR.L	#1,D0			;(COS(R+P)+COS(R-P))/2
+		MOVE.W	D0,(A0)+		;SET T5
+
+		SUB.L	A1,D3		
+		LSR.L	#1,D3
+		NEG.W	D3			;-(SIN(R+P)-SIN(R-P))/2
+		MOVE.W	D3,(A0)+		;SET T6
+
+; --- HEADING AND PITCH CALC ---
+
+		MOVE.W	D4,D0
+		ADD.W	D6,D0			;DO H+P
+		AND.W	D7,D0
+		MOVE.W	(A5,D0.W),D3		;D3=SIN(H+P)
+		EXT.L	D3
+		MOVE.W	(A6,D0.W),A2		;A2=COS(H+P)
+
+		SUB.W	D6,D4			;DO H-P
+		AND.W	D7,D4
+		MOVE.W	(A5,D4.W),A1		;A1=SIN(H-P)
+		MOVE.W	(A6,D4.W),D4		;D4=COS(H-P)
+		EXT.L	D4
+		
+		MOVE.L	D4,D0
+		ADD.L	A2,D0
+		LSR.L	#1,D0			;D0=(COS(H-P)+COS(H+P))/2 [T9]
+
+		SUB.L	A2,D4
+ 		LSR.L	#1,D4			;D4=(COS(H-P)-COS(H+P))/2 [T2]
+		
+		MOVE.L	D3,D5
+		ADD.L	A1,D5
+  		LSR.L	#1,D5			;D5=(SIN(H-P)+SIN(H+P)/2  [T3]
+
+		SUB.L	A1,D3
+   		LSR.L	#1,D3			;D3=(SIN(H+P)-SIN(H-P))/2 [T8]
+
+; --- DO THE MULTS ---
+		
+		MOVE.W	(A6,D6.W),D7
+		MULS	D2,D7
+		SWAP	D7
+		ROL.L	#1,D7
+		ADD.W	D7,D3
+		MOVE.W	D3,(A0)+		;SET T8
+		
+		MOVE.W	(A6,D6.W),D7
+		MULS	D1,D7
+		SWAP	D7
+	 	ROL.L	#1,D7
+		SUB.W	D7,D4
+		MOVE.W	D4,(A0)+		;SET T2
+
+		MULS	(A5,D6.W),D2
+		SWAP	D2
+	  	ROL.L	#1,D2
+		SUB.W	D2,D0
+		MOVE.W	D0,(A0)+		;SET T9
+
+		MULS	(A5,D6.W),D1
+		SWAP	D1
+	   	ROL.L	#1,D1
+		ADD.W	D1,D5
+		MOVE.W	D5,(A0)			;SET T3
+
+		RTS
+
+; ============================================================================
+
+SIN_LOOKUP	INCBIN	SINTAB.BIN
+		
+; ============================================================================
+
+

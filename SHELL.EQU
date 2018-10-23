@@ -1,0 +1,115 @@
+load_titlepage	equ	0	;titlepage
+load_options	equ	1	;options screen
+load_tween1	equ	2	;going to driving module
+load_tween2	equ	3	;going to sewer module
+load_continue	equ	4	;penguin
+load_gameover1	equ	5	;penguin
+load_finale1	equ	6	;full game ending
+load_finale2	equ	7	;driving only game ending
+load_demo1	equ	8	;platform demo
+load_demo2	equ	9	;driving demo
+load_gameover2	equ	10	;catwoman
+load_training	equ	11	;training mode message
+load_contdrv1	equ	12	;continue driving
+load_contdrv2	equ	13	;continue sewer
+
+load_driving1	equ	16	;load driving module #1
+load_driving2	equ	17	;load driving module #2
+load_driving3	equ	18	;load driving module #3
+load_driving4	equ	19	;load driving module #4
+load_driving5	equ	20	;load driving module #5
+
+load_platform1	equ	21	;load platform module #1
+load_platform2	equ	22	;load platform module #2
+load_platform3	equ	23	;load platform module #3
+load_platform4	equ	24	;load platform module #4
+load_platform5	equ	25	;load platform module #5
+load_platform6	equ	26	;load platform module #6
+
+load_data	equ	$602c	;.w
+load_rout	equ	$6036	
+
+music_data1	equ	$602c	;.w/.b	
+music_data2	equ	$602d	;.b
+music_rout	equ	$603a
+
+fader		equ	-1	
+pause		equ	-2
+
+load_main	equ	$fffffb00
+
+tween1_data	equ	$6fa0	;.b
+tween2_data	equ	$6fa1	;.b
+
+
+;
+; CALLING EXAMPLES SUB SIDE
+;
+;
+;load		move.w	#load_driving1,load_data
+;		jsr	load_rout
+;
+;music		move.w	#,music_data1
+;		jsr	music_rout
+;
+;fader		move.w	#fader,music_data1
+;		jsr	music_rout
+;		jsr	wait_5secs	;wait fro 5 seconds
+;		move.w	#pause,music_data1
+;		jsr	music_rout
+;		move.w	#,music_data1
+;		jsr	music_rout
+;		
+				
+
+
+;; ** DATA AREAS ** ;;
+
+; $6f80		-		GAME VARS
+;
+; $6f90		-		OPTION SCREEN VARS
+;		-	$6f90	GAME TYPE (0-2) 
+;				0 = platform only
+;				1 = driving only
+;				2 = full game
+;		-	$6f91	DIFFICULTY (0-2)
+;				0 = training (unlimited continues)
+;				1 = normal (3 continues)
+;				2 = hard (1 continue)
+;		-	$6f92	DRIVING CONTROL (0-5)
+;				0 =  	
+;				1 =  	
+;				2 =  	
+;				3 =  	
+;				4 =  	
+;				5 =  	
+;		-	$6f93	PLATFORM CONTROL (0-5)
+;				0 =  	
+;				1 =  	
+;				2 =  	
+;				3 =  	
+;				4 =  	
+;				5 =  	
+;		-	$6f94	LIVES (copied to GAME VARS)
+;		-	$6f95	MUSIC (0/1)
+;				0 = off
+;				1 = on
+;		-	$6f96	SFX (0/1)
+;				0 = off
+;				1 = on
+;
+; $6fa0		-		SHELL VARS
+;		-	$6fa0	TWEEN #1 (0-2)
+;				0 = going to driving module #1	
+;				1 = going to driving module #2	
+;				2 = going to driving module #3	
+;		-	$6fa1	TWEEN #2 (0-1)
+;				0 = going to sewer module #1	
+;				1 = going to sewer module #2	
+;		-	$6fa2	CONTINUE (store return load #)
+;		-	$6fa4	MISC #1
+;		-	$6fa5	MISC #2
+;		-	$6fa6	MISC #3
+;		-	$6fa7	MISC #4
+
+

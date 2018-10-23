@@ -1,0 +1,891 @@
+
+; --------------------------------------------------------------------------
+
+LEVEL		=	4
+STAGE		=	1		
+
+TESTMODE	=	NO
+
+TESTPR		=	YO&TESTMODE
+GTESTPR		=	NO&TESTPR
+
+TESTRAST	=	NO&TESTMODE
+TESTRAS0	=	NO&TESTRAST
+TESTRAS1	=	YO&TESTRAST
+TESTRAS2	=	NO&TESTRAST
+			    
+PALVERSION	=	NO
+
+SOUND_INC	=	YO
+CD_DA		=	NO
+BATCD_SHELL	=	NO
+
+SNASMCD_DEV	=	YO
+
+CDAD_STATS	=	NO
+SFX_MASTER_LEV	=	110
+FM_INC		=	YO
+MONO_SFX	=	NO
+CSFX		=	YO
+CSFX1		=	YO
+BMSFX		=	YO
+CDAD_STATS	=	NO
+
+TIME		=	YO
+SLOWMOTION	=	YO
+ENEMYS		=	YO
+REVERSE		=	NO
+DAMAGE		=	YO
+
+BENDS		=	YO
+HILLS		=	YO
+WAVES		=	YO
+
+; --------------------------------------------------------------------------
+
+		IF	BENDS
+TURN_INTENSITY	EQU	8000
+		ELSE
+TURN_INTENSITY	EQU	0
+		ENDIF
+
+		IF	HILLS
+HILL_INTENSITY	EQU	10000
+		ELSE
+HILL_INTENSITY	EQU	0
+		ENDIF
+
+		IF	LEVEL<4
+VIEW_PATCHES	EQU	32
+		ELSE
+VIEW_PATCHES	EQU	40
+		ENDIF
+
+; --------------------------------------------------------------------------
+
+SCORE_ENEMY	EQU	$000500
+SCORE_MIDBOSS	EQU	$002000
+SCORE_ENDBOSS	EQU	$005000
+SCORE_SMALLOBJ	EQU	$000200
+SCORE_ROADOBJ	EQU	$000100
+
+; --------------------------------------------------------------------------
+
+VC		EQU	$80
+SFX_BASHBLD_A	EQU	VC!2	;BASH BUILDING "A"
+SFX_BASHPOLE_A	EQU	VC!44	;BASH POLE "A" [metallic]
+SFX_BASHPOLE_B	EQU	VC!75	;BASH POLE "B" [wooden]
+SFX_BASHTREE_A	EQU	VC!45	;BASH TREE/BUSH "A"
+
+SFX_BASHOBJ_A	EQU	VC!5	;BASH OBJECT "A"
+SFX_BASHOBJ_B	EQU	VC!29	;BASH OBJECT "B"
+
+SFX_BRFIRE_A	EQU	10	;BAT-ROCKET FIRE
+
+SFX_BITSGND_A	EQU	VC!11	;EXPLOSION METALIC PARTS HIT GROUND "A"
+SFX_BITSGND_B	EQU	VC!47	;EXPLOSION METALIC PARTS HIT GROUND "B"
+SFX_BITSGND_C	EQU	VC!48	;EXPLOSION METALIC PARTS HIT GROUND "C"
+SFX_BITSGND_D	EQU	VC!28	;EXPLOSION METALIC PARTS HIT GROUND "D"
+SFX_BITSGND_E	EQU	VC!37	;EXPLOSION METALIC PARTS HIT GROUND "A"
+SFX_BITSGND_F	EQU	VC!38	;EXPLOSION METALIC PARTS HIT GROUND "B"
+SFX_BITSGND_G	EQU	VC!39	;EXPLOSION METALIC PARTS HIT GROUND "C"
+SFX_BITSGND_H	EQU	VC!40	;EXPLOSION METALIC PARTS HIT GROUND "D"
+
+SFX_EXPLDBOSS_A	EQU	12	;EXPLOSION BOSS FINAL
+SFX_EXPLDCAR_A	EQU	13	;EXPLOSION CAR FINAL
+SFX_EXPLDDAM_A	EQU	14	;EXPLOSION DAMAGE
+SFX_EXPLDBLD_A	EQU	15	;EXPLOSION BUILD-UP TO FINAL
+
+SFX_ROCKET_A   	EQU	VC!34	;BIKER LAUNCHS ROCKET AT BATMOBILE
+
+SFX_FTFLMHIT_A	EQU	41	;FIRETRUCK FLAME HIT BATMOBILE
+SFX_FTFLAME_A	EQU	43	;FIRETRUCK FLAME THROWER
+;SFX_FTFLAME_A	EQU	VC!43	;FIRETRUCK FLAME THROWER
+
+SFX_TRUCKHORN_A	EQU	49	;BIG TRUCKS "GET OUTTA THE WAY" HORN
+SFX_TRUCKHORN_B	EQU	89	;
+SFX_TRUCKHORN_C	EQU	90	;
+SFX_TRUCKHORN_D	EQU	91	;
+
+
+; --------------------------------------------------------------------------
+; LEVELS 1,2,3 SFX
+;=================
+
+SFX_BDFIRE_A	EQU	6	;BAT-DISC FIRE
+SFX_BDHIT_A	EQU	54	;BAT-DISC HIT OBJECT 
+SFX_BDHIT_B	EQU	42	;BAT-DISC HIT GROUND/BUILDING
+SFX_BMLAND_A	EQU	16	;BATMOBILE LANDING THUD
+
+SFX_EBIKE_A	EQU	18	;ENGINE BIKE 
+SFX_EBASHER_A	EQU	19	;ENGINE BASHER
+SFX_EVILLAN_A	EQU	20	;ENGINE VILLAN red/ flamethrower
+SFX_EJACK_A	EQU	21	;ENGINE JACK'N'BOX
+SFX_EFTRUCK_A	EQU	22	;ENGINE FIRETRUCK
+SFX_ETANKER_A	EQU	23	;ENGINE FUEL TANKER 
+SFX_ECANNON_A	EQU	24	;ENGINE CANNON
+SFX_EMINICAN_A	EQU	25	;ENGINE MINI-CANNON
+SFX_EPCVAN_A	EQU	26	;ENGINE PROFANE CANISTER VAN
+SFX_EICETRUCK_A	EQU	27	;ENGINE ICETRUCK
+
+SFX_MLTVAIR_A	EQU	33	;MOLOTOV-COCKTAIL IN AIR 
+SFX_JBDOOR_A	EQU	35	;J'N'B DOOR CLOSE
+SFX_JBSPRING_A	EQU	30	;J'N'B SPRING OUT
+SFX_JBSPRING_B	EQU	31	;J'N'B SPRING IN
+SFX_JBSPRING_C	EQU	32	;J'N'B SPRING LEFT/RIGHT
+SFX_JACKHEAD_A	EQU	56
+SFX_FTLADDER_A	EQU	VC!36	;FIRETRUCK LADDER OPEN/CLOSE 
+SFX_FTAXEAIR_A	EQU	VC!55	;FIRETRUCK AXE IN AIR
+SFX_FTAXEHIT_A	EQU	VC!56	;FIRETRUCK AXE HIT
+
+SFX_TRASHHIT_A 	EQU	VC!46	;CAR HITS TRASHCAN
+SFX_TRASHGND_A 	EQU	VC!50	;TRASHCAN HITS GROUND
+SFX_TRASHGND_B 	EQU	VC!51	;TRASHCAN HITS GROUND
+SFX_TRASHGND_C 	EQU	VC!52	;TRASHCAN HITS GROUND
+SFX_TRASHGND_D 	EQU	VC!53	;TRASHCAN HITS GROUND
+SFX_CONEHIT_A  	EQU	57	;CAR HITS CONE
+SFX_CONEGND_A 	EQU	58	;CONE HITS GROUND
+SFX_CONEGND_B 	EQU	59	;CONE HITS GROUND
+SFX_CONEGND_C 	EQU	60	;CONE HITS GROUND
+SFX_CONEGND_D 	EQU	61	;CONE HITS GROUND
+SFX_BLOCKHIT_A 	EQU	VC!82	;CAR HITS ROAD BLOCKAGE
+SFX_BLOCKGND_A	EQU	VC!83	;ROAD BLOCKAGE HITS GROUND
+SFX_BLOCKGND_B	EQU	VC!84	;ROAD BLOCKAGE HITS GROUND
+SFX_BLOCKGND_C	EQU	VC!85	;ROAD BLOCKAGE HITS GROUND
+SFX_BLOCKGND_D	EQU	VC!86	;ROAD BLOCKAGE HITS GROUND
+SFX_WLIGHTHIT_A	EQU	VC!57	;CAR HITS ROAD WORKLIGHT
+SFX_WLIGHTGND_A	EQU	VC!58	;ROAD WORKLIGHT HITS GROUND
+SFX_WLIGHTGND_B	EQU	VC!59	;ROAD WORKLIGHT HITS GROUND
+SFX_WLIGHTGND_C	EQU	VC!60	;ROAD WORKLIGHT HITS GROUND
+SFX_WLIGHTGND_D	EQU	VC!61	;ROAD WORKLIGHT HITS GROUND
+
+SFX_CIRCUS_A   	EQU	VC!88	;CIRCUS ORGAN MUSIC IN DISTANCE
+SFX_BATNOISE_A 	EQU	VC!76	;BAT SQUEAKS FOR TUNNEL
+SFX_CANFIRE_A  	EQU	VC!77	;CANNON BOSS FIRES
+SFX_MCANFIRE_A 	EQU	VC!78	;MINI-CANNON FIRES
+
+SFX_POWERUP_A	EQU	VC!79	;COLLECT POWERUP
+SFX_AAARG_A	EQU	VC!80	;ENEMY GUY FALLS OFF LADDER
+SFX_GUYGND_A	EQU	VC!81	;ENEMY GUY HITS GROUND
+SFX_ICEDROP_A	EQU	VC!73	;ICE TRUCK DROPS ICE BLOCK
+SFX_ICEBREAK_A	EQU	VC!74	;ICE BLOCK FALLS TO BITS
+SFX_ICEGND_A	EQU	VC!69	;ICE BITS HIT GROUND
+SFX_ICEGND_B	EQU	VC!70	;ICE BITS HIT GROUND
+SFX_ICEGND_C	EQU	VC!71	;ICE BITS HIT GROUND
+SFX_ICEGND_D	EQU	VC!72	;ICE BITS HIT GROUND
+SFX_TARGETHIT_A	EQU	64	;ICE TRUCK TARGET HIT
+SFX_PCDROP_A	EQU	VC!62	;PROFANE CANISTER RELEASED
+SFX_PCGND_A	EQU	63	;PROFANE CANISTER HITS GROUND
+
+;--------------------------------------------------------------------------
+; LEVELS 4,5 SFX
+;=================
+
+SFX_ETOYBOAT_A	EQU	18	;csfx ENGINE SMALL TOY BOATS
+SFX_EBOAT_A	EQU	19	;csfx ENGINE BOAD
+SFX_EJETSKI_A	EQU	20	;csfx ENGINE JETSKI
+SFX_ESKULL_A	EQU	21	;csfx ENGINE SKULL
+SFX_EDUCK_A	EQU	22	;csfx ENGINE DUCKBOAT
+
+SFX_ERHOLE_A	EQU	27	;csfx ROTATING HOLE
+
+SFX_SPLASH_A	EQU	16	;LANDING WATER SPLASH
+SFX_BSFIRE_A	EQU	VC!6	;BATSKI SMALL ROCKET FIRE
+SFX_BSHIT_A	EQU	VC!54	;BATSKI SMALL ROCKET HIT OBJECT 
+SFX_BSHIT_B	EQU	VC!42	;BATSKI SMALL ROCKET HIT GROUND/BUILDING
+SFX_METWALL_A	EQU	VC!44	;BATSKI HITS SEWER METALIC WALL
+SFX_METPIPE_A	EQU	VC!46	;BATSKI HITS SEWER PIPE
+SFX_METRHOLE_A	EQU	VC!47	;BATSKI HITS SEWER ROTATING HOLE
+SFX_METCRUNCH_A	EQU	VC!48	;BATSKI HITS CUNCHING DOORS
+SFX_BASHBOUY_A	EQU	49	;BATSKI HITS BOUY
+SFX_BASHICE_A	EQU	50	;BATSKI HITS ICEBERG
+SFX_RAMP_A	EQU	62	;BATSKI JUMPS FROM RAMP
+
+SFX_BOUYBELL_A	EQU	VC!89	;BELL "DONNNGGG" FOR SWINGING BOUY
+SFX_LAZERFIRE_A	EQU	VC!77	;SKULL FIRES LAZER
+SFX_LAZERHIT_A	EQU	VC!41	;LAZER HITS BATSKI
+SFX_SKULLOPEN_A	EQU	VC!35	;SKULL MOUTH OPENS
+SFX_SKULLCLOS_A	EQU	VC!36	;SKULL MOUTH CLOSES
+SFX_DOORCLANG_A	EQU	VC!45	;CRUNCHER DOORS BASH TOGETHER WHEN CLOSING 
+SFX_BERGBREAK_A	EQU	VC!74	;ICE BERG GETS BLOWN UP	
+SFX_WATERPLOP_A	EQU	VC!31	;BITS PLOP INTO WATER
+SFX_WATERPLOP_B	EQU	VC!32	;BITS PLOP INTO WATER
+SFX_WATERPLOP_C	EQU	VC!33	;BITS PLOP INTO WATER
+SFX_WATERPLOP_D	EQU	VC!90	;BITS PLOP INTO WATER
+
+;SFX__A		EQU	0
+
+; - SHELL EQUATES ----------------------------------------------------------
+
+batmob_tween1_music	equ	0
+batski_tween2_music	equ	1
+batman_titles_music	equ	2
+batman_gameover_music	equ	3
+batman_continue_music	equ	4
+batman_contdrv1_music	equ	5
+batman_contdrv2_music	equ	6
+batman_options_music	equ	7
+batman_finale1_music	equ	8
+batman_finale2_music	equ	9
+batman_training_music	equ	10
+batman_gameover2_music	equ	11
+
+drive_1_music		equ	12		
+drive_2_music		equ	13		
+drive_3_music		equ	14		
+drive_4_music		equ	15		
+drive_5_music		equ	16		
+drive_boss_music	equ	17
+
+PLATFORM_MUSIC		EQU	18	;TO 27
+	
+
+
+load_titlepage	equ	0	;titlepage
+load_options	equ	1	;options screen
+load_tween1	equ	2	;going to driving module
+load_tween2	equ	3	;going to sewer module
+load_continue	equ	4	;penguin
+load_gameover1	equ	5	;penguin
+load_finale1	equ	6	;full game ending
+load_finale2	equ	7	;driving only game ending
+load_demo1	equ	8	;platform demo
+load_demo2	equ	9	;driving demo
+load_gameover2	equ	10	;catwoman
+load_training	equ	11	;training mode message
+load_contdrv1	equ	12	;continue driving
+load_contdrv2	equ	13	;continue sewer
+
+load_driving1	equ	16	;load driving module #1
+load_driving2	equ	17	;load driving module #2
+load_driving3	equ	18	;load driving module #3
+load_driving4	equ	19	;load driving module #4
+load_driving5	equ	20	;load driving module #5
+
+load_platform1	equ	21	;load platform module #1
+load_platform2	equ	22	;load platform module #2
+load_platform3	equ	23	;load platform module #3
+load_platform4	equ	24	;load platform module #4
+load_platform5	equ	25	;load platform module #5
+load_platform6	equ	26	;load platform module #6
+
+shell_data	equ	$602c	;.w
+shell_rout	equ	$6036	
+
+music_data1	equ	$602c	;.w/.b	
+music_data2	equ	$602d	;.b
+music_rout	equ	$603a
+
+fader		equ	-1	
+pause		equ	-2
+
+load_main	equ	$fffffb00
+
+load_next	equ	0
+gameover	equ	1
+quit_game	equ	2
+
+tween1_flg	equ	-1
+tween2_flg	equ	-2
+chk_training	equ	-3
+
+shl_game_type	equ	$6f90
+shl_difficulty	equ	$6f91
+shl_tween1	equ	$6fa0
+shl_tween2	equ	$6fa1
+shl_last	equ	$6fa2
+shl_continue	equ	$6fa8
+shl_order_dex	equ	$6faa
+shl_flag1	equ	$6fac
+
+shl_game_type	equ	$6f90
+shl_difficulty	equ	$6f91
+shl_drive_ctrl	equ	$6f92
+shl_plat_ctrl	equ	$6f93
+shl_lives	equ	$6f94
+shl_music	equ	$6f95
+shl_sfx		equ	$6f96
+shl_cheat1	equ	$6f97
+shl_cheat2	equ	$6f98
+shl_cheat3	equ	$6f99
+shl_tween1	equ	$6fa0
+shl_tween2	equ	$6fa1
+shl_last	equ	$6fa2
+shl_continue	equ	$6fa8
+shl_order_dex	equ	$6faa
+shl_flag1	equ	$6fac
+
+hard_continues	equ	1
+norm_continues	equ	3
+train_continues	equ	-1
+
+;
+; CALLING EXAMPLES SUB SIDE
+;
+;
+;load_next	move.w	#load_next,shell_data
+;		jsr	shell_rout
+;
+;gameover	move.w	#gameover,shell_data
+;		jsr	shell_rout
+;
+;quit		move.w	#quit_game,shell_data
+;		jsr	shell_rout
+;
+;music		move.w	#TUNE#(0-19),music_data1
+;		jsr	music_rout
+;
+;fader		move.w	#fader,music_data1
+;		jsr	music_rout
+;		jsr	wait_5secs	;wait fro 5 seconds
+;		move.w	#pause,music_data1
+;		jsr	music_rout
+;		move.w	#TUNE#(0-19),music_data1
+;		jsr	music_rout
+;		
+
+
+;; ** DATA AREAS ** ;;
+
+; $6f80		-		GAME VARS
+;
+; $6f90		-		OPTION SCREEN VARS
+;		-	$6f90	GAME TYPE (0-2) 
+;				0 = platform only
+;				1 = driving only
+;				2 = full game
+;		-	$6f91	DIFFICULTY (0-3)
+;				0 = training (unlimited continues)
+;				1 = normal (3 continues)
+;				2 = hard (1 continue)
+;				3 = cheat mode				
+;		-	$6f92	DRIVING CONTROL (0-5)
+;				0 = A:fire B:turbo C:missile  	
+;				1 = A:fire B:missile C:turbo 	
+;				2 = A:turbo B:fire C:missile 	
+;				3 = A:turbo B:missile C:fire 	
+;				4 = A:missile B:fire C:turbo 	
+;				5 = A:missile B:turbo C:fire 	
+;		-	$6f93	PLATFORM CONTROL (0-5)
+;				0 = A:weapon B:hand C:jump 	
+;				1 = A:weapon B:jump C:hand 	
+;				2 = A:hand B:weapon C:jump 	
+;				3 = A:hand B:jump C:weapon 	
+;				4 = A:jump B:weapon C:hand 	
+;				5 = A:jump B:hand C:weapon 	
+;		-	$6f94	LIVES (copied to GAME VARS)
+;		-	$6f95	MUSIC (0/1)
+;				0 = off
+;				1 = on
+;		-	$6f96	SFX (0/1)
+;				0 = off
+;				1 = on
+;		-	$6f97	CHEAT #1 FLAG
+;				0 = off
+;				1 = on
+;		-	$6f98	CHEAT #2 FLAG
+;				0 = off
+;				1 = on
+;		-	$6f99	CHEAT #3 FLAG
+;				0 = off
+;				1 = on
+;
+;
+; $6fa0		-		SHELL VARS
+;		-	$6fa0	TWEEN #1 (0-2)
+;				0 = going to driving module #1	
+;				1 = going to driving module #2	
+;				2 = going to driving module #3	
+;		-	$6fa1	TWEEN #2 (0-1)
+;				0 = going to sewer module #1	
+;				1 = going to sewer module #2	
+;		-	$6fa2	LAST (store return load #)
+;		-	$6fa4	POWER ON FLAG ("ChIg")
+;		-	$6fa8	CONTINUES
+;		-	$6faa	ORDER_DEX (game run index)	
+;		-	$6fac	FLAG1
+;		-	$6fad	FLAG2
+
+; --------------------------------------------------------------------------
+
+SMAP_ADDR_HARD	EQU	($A0000-SWORD_RAM)/4
+SSCR0_ADDR	EQU	($A0000-SWORD_RAM)/4
+SSCR1_ADDR	EQU	($A6000-SWORD_RAM)/4
+SSCR2_ADDR	EQU	($AC000-SWORD_RAM)/4
+RSC_TRACE_ADDR	EQU	($80000-SWORD_RAM)/4
+SCL_TRACE_ADDR	EQU	($B2000-SWORD_RAM)/4
+SMAP_ADDR	EQU	($B2C00-SWORD_RAM)/4
+SLINE0		EQU	(SMAP_ADDR-SMAP_ADDR_HARD)/8
+
+WRAM_SND_XBUFF	EQU	($BFF00-SWORD_RAM)
+
+RSWIDTH		EQU	400
+RSHEIGHT	EQU	192
+RTILT		EQU	96
+ZSTEP		EQU	128
+
+; --------------------------------------------------------------------------
+
+MCOM_FRAME	EQU	0
+MCOM_FBUSY	EQU	2
+MCOM_JOY0	EQU	4
+MCOM_JOY1	EQU	6
+
+SCOM_FRAME	EQU	0
+SCOM_PFADER	EQU	2
+
+; --------------------------------------------------------------------------
+
+WRAM_DATA_M	EQU	MWORD_RAM+$10 
+WRAM_DATA_S	EQU	SWORD_RAM+$10	 
+	
+		RSRESET
+
+WRAM_SCORE	RS.B	4
+WRAM_LIFE	RS.W	1
+WRAM_SPEED	RS.W	1
+WRAM_SPDNUM	RS.W	1
+WRAM_PDAMAGE	RS.W	1
+WRAM_EDAMAGE	RS.W	1
+WRAM_PX_XPOS	RS.L	1
+WRAM_PX_YPOS	RS.W	1
+WRAM_BGR_DLD	RS.W	1
+		IF	TESTMODE
+WRAM_TEST0	RS.W	1
+WRAM_TEST1	RS.W	1
+WRAM_TEST2	RS.W	1
+WRAM_TEST3	RS.W	1
+WRAM_TEST4	RS.W	1
+WRAM_TEST5	RS.W	1
+WRAM_TEST6	RS.W	1
+WRAM_TEST7	RS.W	1
+		IF	GTESTPR
+WRAM_GTEST0	RS.W	1
+WRAM_GTEST1	RS.W	1
+WRAM_GTEST2	RS.W	1
+WRAM_GTEST3	RS.W	1
+WRAM_GTEST4	RS.W	1
+WRAM_GTEST5	RS.W	1
+WRAM_GTEST6	RS.W	1
+WRAM_GTEST7	RS.W	1
+WRAM_GTEST8	RS.W	1
+WRAM_GTEST9	RS.W	1
+WRAM_GTESTA	RS.W	1
+WRAM_GTESTB	RS.W	1
+WRAM_GTESTC	RS.W	1
+WRAM_GTESTD	RS.W	1
+WRAM_GTESTE	RS.W	1
+WRAM_GTESTF	RS.W	1
+		ENDIF
+		ENDIF
+WRAM_DLEN	RS.B	0
+
+		IF	WRAM_DLEN>$70
+		INFORM	3,"WRAM area too large (Size=$%h)",WRAM_DLEN		
+		ENDIF
+
+; --------------------------------------------------------------------------
+
+RC_FREP		MACRO
+		IF	NARG=1
+		DC.W	$8000,\1-*
+		MEXIT
+		ENDIF
+		DC.W	$8000!\2,\1-*
+		ENDM
+RC_BREP		MACRO
+		IF	NARG=1
+		DC.W	$9000,\1-*
+		MEXIT
+		ENDIF
+		DC.W	$9000!\2,\1-*
+		ENDM
+RC_FGO		MACRO
+		IF	NARG=1
+		DC.W	$A000,\1-*
+		MEXIT
+		ENDIF
+		DC.W	$A000!\2,\1-*
+		ENDM
+RC_BGO		MACRO
+		IF	NARG=1
+		DC.W	$B000,\1-*
+		MEXIT
+		ENDIF
+		DC.W	$B000!\2,\1-*
+		ENDM
+RC_FLAG		MACRO
+		IF	NARG=1
+		DC.W	$C000,\1
+		MEXIT
+		ENDIF
+		DC.W	$C000!\2,\1
+		ENDM
+
+RCLR		EQU	$80	
+RREP		EQU	$A0	
+RNEXT		EQU	$C0	
+RFOR		EQU	$E0	
+
+HSD		EQU	0	;Hill opperators
+HMD		EQU	256/4	
+HSU		EQU	512/4
+HMU		EQU	768/4
+HUD		EQU	0
+HFULL		EQU	32/4
+HHALF		EQU	16/4
+HMID		EQU	8/4
+
+MAPSECT		MACRO
+		IF	NARG<>6
+		INFORM	3,"Macro parameter error."
+		ENDIF
+		DC.W	\1-*,\2-*,\3-*,\4-*,\5-*,\6-*
+		ENDM
+
+RCSET		MACRO
+		IF	NARG>6
+		INFORM	3,"Too many arguments (NARG=%d)",NARG
+		ENDIF
+		DC.B	NARG
+		DC.B	($FF&(\1>>16))
+		DC.B	($FF&(\1>>8))
+		DC.B	($FF&\1)
+		DC.B	($FF&(\2>>16))
+		DC.B	($FF&(\2>>8))
+		DC.B	($FF&\2)
+		REPT	(NARG-2)
+		DC.B	($FF&(\3>>8))
+		DC.B	($FF&\3)
+		SHIFT
+		ENDR
+		ENDM
+
+; --------------------------------------------------------------------------
+
+SIGNSET		MACRO	*
+		IF	NARG<1
+		INFORM	3,"Macro parameter error."
+		ENDIF
+\*		EQU	sindex
+sadr\#sindex	;=	*
+sindex		=	sindex+1
+sdetcnt		=	0
+		DC.L	\1
+		IF	NARG=1
+		DC.L	0
+		MEXIT
+		ENDIF
+		DC.L	\2
+		ENDM
+
+SIGNDET		MACRO
+		IF	NARG<>9
+		INFORM	3,"Macro parameter error."
+		ENDIF
+sdetcnt		=	sdetcnt+1
+sval0\#sdetcnt	=	\2
+sval3\#sdetcnt	=	\3
+sval1\#sdetcnt	=	(\4*$100)+((\5*XRATIO_TO)/XRATIO_FROM)
+sval4\#sdetcnt	=	(\6*XRATIO_TO)/XRATIO_FROM			
+sval2\#sdetcnt	=	(\7*$100)+((\8*YRATIO_TO)/YRATIO_FROM)
+sval5\#sdetcnt	=	(\9*YRATIO_TO)/YRATIO_FROM			
+sval6\#sdetcnt	=	\1
+		ENDM
+
+SIGNGRS		MACRO
+		DC.W	sdetcnt
+sdetset		=	0
+		REPT	sdetcnt
+sdetset		=	sdetset+1		
+		DC.W	sval0\#sdetset
+		DC.L	sval1\#sdetset
+		DC.L	sval2\#sdetset
+		DC.W	sval3\#sdetset
+		DC.L	sval4\#sdetset
+		DC.L	sval5\#sdetset
+		DC.L	sval6\#sdetset
+		ENDR
+		DC.W	NARG
+		REPT	NARG
+		DC.L	GLIST+\1
+		SHIFT
+		ENDR
+		ENDM
+		    
+SIGNLIST	MACRO
+SICOUNT		=	0
+		REPT	SINDEX	
+		DC.W	SADR\#SICOUNT-*
+SICOUNT		=	SICOUNT+1
+	 	ENDR
+		ENDM
+
+PDATA0		MACRO	*
+		IF	NARG<>3
+		INFORM	3,"Macro parameter error."
+		ENDIF
+\*		EQU	SINDEX/2
+PADR\#SINDEX	;=	*
+SINDEX		=	SINDEX+1
+		DC.L	\1
+		DC.B	\2
+		DC.B	\3
+		ENDM
+
+PDATA1		MACRO	*
+		IF	NARG<>3
+		INFORM	3,"Macro parameter error."
+		ENDIF
+PADR\#SINDEX	;=	*
+SINDEX		=	SINDEX+1
+		DC.L	\1
+		DC.B	\2
+		DC.B	\3
+		ENDM
+
+PSCALER		MACRO
+		IF	NARG<>5
+		INFORM	3,"Macro parameter error."
+		ENDIF
+		DC.W	\1*$8
+		DC.W	(SLINE0+\2)*$8
+		DC.L	\3*$800
+		DC.W	\4
+		DC.L	GLIST+\5
+		ENDM
+
+PATCHLIST	MACRO
+SICOUNT		=	0
+		REPT	SINDEX	
+		DC.W	PADR\#SICOUNT-*
+SICOUNT		=	SICOUNT+1
+	 	ENDR
+		ENDM
+
+; --------------------------------------------------------------------------
+
+XYRATIO		MACRO
+		IF	NARG<>4
+		INFORM	3,"Macro parameter error."
+		ENDIF
+XRATIO_FROM	=	\1
+XRATIO_TO	=	\2*$100
+YRATIO_FROM	=	\3
+YRATIO_TO	=	\4*$100
+		ENDM
+
+RATIO		MACRO
+		IF	NARG<>3
+		INFORM	3,"Macro parameter error."
+		ENDIF
+		IF	\1=0
+		DC.L	0
+		MEXIT
+		ENDIF
+		DC.L	(\3*\2*$100)/\1
+		ENDM
+
+XYPOS		MACRO
+		IF	NARG<>2
+		INFORM	3,"Macro parameter error."
+		ENDIF
+		DC.L	\1*$100
+		DC.L	\2*$100
+		ENDM
+
+PLACER		MACRO
+		IF	NARG<>4
+		INFORM	3,"Macro parameter error."
+		ENDIF
+		DC.L	\1*$100
+		DC.L	(\2*YRATIO_TO)/YRATIO_FROM
+		DC.L	(\3*XRATIO_TO)/XRATIO_FROM
+		DC.L	(\4*YRATIO_TO)/YRATIO_FROM
+		ENDM
+
+XSIZE		MACROS
+		DC.L	(\1*XRATIO_TO)/XRATIO_FROM
+YSIZE		MACROS
+		DC.L	(\1*YRATIO_TO)/YRATIO_FROM
+
+XYSIZE		MACRO
+		IF	NARG<>2
+		INFORM	3,"Macro parameter error."
+		ENDIF
+		DC.L	(\1*XRATIO_TO)/XRATIO_FROM
+		DC.L	(\2*YRATIO_TO)/YRATIO_FROM
+		ENDM
+
+XTOX		MACRO
+		IF	NARG<>2
+		INFORM	3,"Macro parameter error."
+		ENDIF
+		DC.L	(\1*XRATIO_TO)/XRATIO_FROM
+		DC.L	(\2*XRATIO_TO)/XRATIO_FROM
+		ENDM
+
+YTOY		MACRO
+		IF	NARG<>2
+		INFORM	3,"Macro parameter error."
+		ENDIF
+		DC.L	(\1*YRATIO_TO)/YRATIO_FROM
+		DC.L	(\2*YRATIO_TO)/YRATIO_FROM
+		ENDM
+
+SCALER		MACRO
+		IF	NARG<>5
+		INFORM	3,"Macro parameter error."
+		ENDIF
+		DC.L	\3*$800
+		DC.W	\1*$8
+		DC.L	\4*$800
+		DC.W	(SLINE0+\2)*$8
+		DC.L	GLIST+\5
+		ENDM
+
+SCALERM		MACRO
+		IF	NARG<>5
+		INFORM	3,"Macro parameter error."
+		ENDIF
+		DC.L	\3*-$800
+		DC.W	((\3+\1)*$8)-1
+		DC.L	\4*$800
+		DC.W	(SLINE0+\2)*$8
+		DC.L	GLIST+\5
+		ENDM
+
+; --------------------------------------------------------------------------
+	
+OBJCNTR		MACRO
+		IF	NARG<>4
+		INFORM	3,"Macro parameter error."
+		ENDIF
+OBJ_CX1		=	\1
+OBJ_CY1		=	\2
+OBJ_CX2		=	\3
+OBJ_CY2		=	\4
+OBJ_CXOFF	=	(((\3+\1*2)*XRATIO_TO)/XRATIO_FROM)/2
+OBJ_CYOFF	=	((\4+\2)*YRATIO_TO)/-YRATIO_FROM
+		ENDM
+
+OBJSCL		MACRO
+		IF	NARG<>7
+		INFORM	3,"Macro parameter error."
+		ENDIF
+		DC.L	-OBJ_CXOFF+((\1*XRATIO_TO)/XRATIO_FROM)	
+		DC.L	OBJ_CYOFF+((\2*YRATIO_TO)/YRATIO_FROM)	
+		DC.L	(\5*XRATIO_TO)/XRATIO_FROM
+		DC.L	(\6*YRATIO_TO)/YRATIO_FROM
+		DC.L	\5*$800
+		DC.W	\3*$8
+		DC.L	\6*$800
+		DC.W	(SLINE0+\4)*$8
+		DC.L	GLIST+\7
+		ENDM
+
+OBJSCLM		MACRO
+		IF	NARG<>7
+		INFORM	3,"Macro parameter error."
+		ENDIF
+		DC.L	OBJ_CXOFF-(((\5+\1)*XRATIO_TO)/XRATIO_FROM)	
+		DC.L	OBJ_CYOFF+((\2*YRATIO_TO)/YRATIO_FROM)	
+		DC.L	(\5*XRATIO_TO)/XRATIO_FROM
+		DC.L	(\6*YRATIO_TO)/YRATIO_FROM
+		DC.L	\5*-$800
+		DC.W	((\5+\3)*$8)-1
+		DC.L	\6*$800
+		DC.W	(SLINE0+\4)*$8
+		DC.L	GLIST+\7
+		ENDM
+
+OBJSCLF		MACRO
+		IF	NARG<>7
+		INFORM	3,"Macro parameter error."
+		ENDIF
+		DC.L	-OBJ_CXOFF+((\1*XRATIO_TO)/XRATIO_FROM)	
+		DC.L	OBJ_CYOFF+((\2*YRATIO_TO)/YRATIO_FROM)	
+		DC.L	(\5*XRATIO_TO)/XRATIO_FROM
+		DC.L	(\6*YRATIO_TO)/YRATIO_FROM
+		DC.L	\5*-$800
+		DC.W	\3*$8
+		DC.L	\6*$800
+		DC.W	(SLINE0+\4)*$8
+		DC.L	GLIST+\7
+		ENDM
+
+OBJOFFS		MACRO
+		IF	NARG<>2
+		INFORM	3,"Macro parameter error."
+		ENDIF
+		DC.L	(\1*XRATIO_TO)/XRATIO_FROM
+		DC.L	(\2*YRATIO_TO)/YRATIO_FROM
+		ENDM
+
+OBJPOS		MACRO
+		IF	NARG<2
+		INFORM	3,"Macro parameter error."
+		ENDIF
+		DC.L	-OBJ_CXOFF+((\1*XRATIO_TO)/XRATIO_FROM)	
+		DC.L	OBJ_CYOFF+((\2*YRATIO_TO)/YRATIO_FROM)	
+		IF	NARG=3
+		DC.W	\3-*
+		ENDIF
+		ENDM
+		
+OBJPOSM		MACRO
+		IF	NARG<2
+		INFORM	3,"Macro parameter error."
+		ENDIF
+		DC.L	OBJ_CXOFF-(((\3+\1)*XRATIO_TO)/XRATIO_FROM)	
+		DC.L	OBJ_CYOFF+((\2*YRATIO_TO)/YRATIO_FROM)	
+		IF	NARG=4
+		DC.W	\4-*
+		ENDIF
+		ENDM
+
+DAMPTS		MACRO
+		IF	NARG<>9
+		INFORM	3,"Macro parameter error."
+		ENDIF
+		DC.W	\7>>4
+		DC.L	-OBJ_CXOFF+(((\2+\2-\8)*XRATIO_TO)/XRATIO_FROM)	
+		DC.L	OBJ_CYOFF+((\9*YRATIO_TO)/YRATIO_FROM)	
+		DC.W	\4>>4
+		DC.L	-OBJ_CXOFF+(((\2+\2-\5)*XRATIO_TO)/XRATIO_FROM)	
+		DC.L	OBJ_CYOFF+((\6*YRATIO_TO)/YRATIO_FROM)	
+		DC.W	\1&$F
+		DC.L	-OBJ_CXOFF+((\2*XRATIO_TO)/XRATIO_FROM)	
+		DC.L	OBJ_CYOFF+((\3*YRATIO_TO)/YRATIO_FROM)	
+		DC.W	\4&$F
+		DC.L	-OBJ_CXOFF+((\5*XRATIO_TO)/XRATIO_FROM)	
+		DC.L	OBJ_CYOFF+((\6*YRATIO_TO)/YRATIO_FROM)	
+		DC.W	\7&$F
+		DC.L	-OBJ_CXOFF+((\8*XRATIO_TO)/XRATIO_FROM)	
+		DC.L	OBJ_CYOFF+((\9*YRATIO_TO)/YRATIO_FROM)	
+		ENDM
+
+DAMPTSM		MACRO
+		IF	NARG<>9
+		INFORM	3,"Macro parameter error."
+		ENDIF
+		DC.W	\7&$F
+		DC.L	OBJ_CXOFF-((\8*XRATIO_TO)/XRATIO_FROM)	
+		DC.L	OBJ_CYOFF+((\9*YRATIO_TO)/YRATIO_FROM)	
+		DC.W	\4&$F
+		DC.L	OBJ_CXOFF-((\5*XRATIO_TO)/XRATIO_FROM)	
+		DC.L	OBJ_CYOFF+((\6*YRATIO_TO)/YRATIO_FROM)	
+		DC.W	\1>>4
+		DC.L	OBJ_CXOFF-((\2*XRATIO_TO)/XRATIO_FROM)	
+		DC.L	OBJ_CYOFF+((\3*YRATIO_TO)/YRATIO_FROM)	
+		DC.W	\4>>4
+		DC.L	OBJ_CXOFF-(((\2+\2-\5)*XRATIO_TO)/XRATIO_FROM)	
+		DC.L	OBJ_CYOFF+((\6*YRATIO_TO)/YRATIO_FROM)	
+		DC.W	\7>>4
+		DC.L	OBJ_CXOFF-(((\2+\2-\8)*XRATIO_TO)/XRATIO_FROM)	
+		DC.L	OBJ_CYOFF+((\9*YRATIO_TO)/YRATIO_FROM)	
+		ENDM
+
+; --------------------------------------------------------------------------
+
+

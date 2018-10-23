@@ -1,0 +1,97 @@
+; ษออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป
+; บ BATMAN RETURNS CD-ROM						   บ
+; ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ
+
+; ROAD OBJECT - LEVEL 3 - "Roadside work light"
+
+; --------------------------------------------------------------------------
+
+WKLT_SETUP	LEA	OBJ_WKLT,A6
+		BSR	O_MTR_SETUP
+	    	BRA	O_MTR_SETFIN
+
+; --------------------------------------------------------------------------
+
+WKLT_HIT	CMP.W	#IDRANGE_CAR,OBJ_ID(A1)
+		BPL	OBJ_DET_NEXT
+		MOVEM.L	D0-D7/A0-A6,-(SP)
+		EXG	A2,A1
+		MOVE.W	DET_MOVE_Z,D0
+		BPL.S	.pos
+		MOVE.W	#-$20,D3
+		BRA.S	WKLT_SPIN
+.pos		ADD.W	OBJ_ZSIZE(A2),D0
+		MOVEQ	#0,D3	       
+
+WKLT_SPIN	MOVE.L	OBJ_ADDR6(A1),A0
+		CLR.W	RDDATA3(A0)
+		BSR	O_CLEAR_S
+		
+		ADD.W	OBJ_ZPOS(A2),D0
+		MOVE.L	OBJ_XPOS(A1),D1
+		MOVE.L	OBJ_YPOS(A1),D2
+		ADD.W	OBJ_SPD(A2),D3
+		ASR.W	D3
+		ADD.W	OBJ_SPD(A2),D3
+		LEA	VIS_WKLT,A0
+		BSR	VIS_RTOBJ_SET
+		MOVE.W	OBJ_XFORCE(A2),D0
+		ADD.W	D0,OBJ_CNT4(A1)
+
+		MOVEM.L	(SP)+,D0-D7/A0-A6
+		JMP	OBJ_DET_NEXT
+
+; --------------------------------------------------------------------------
+
+OBJ_WKLT
+		XYRATIO	100,100,100,110
+		OBJCNTR	0,0,20,32
+
+		DC.L	OBJ_WKLT_SET
+		DC.L	OBJ_WKLT_ANM0
+		DC.L	OBJ_WKLT_ANM0
+		DC.L	0
+
+OBJ_WKLT_ANM0	DC.L	OBJ_WKLT_XVIEW,OBJ_WKLT_YVIEW
+
+		OBJSCL	0,0,0,0,25,30,WKLITE
+		
+OBJ_WKLT_XVIEW	DC.W	0*$20,$20
+		DC.L	-1
+OBJ_WKLT_YVIEW	DC.W	5*$20
+		DC.W	-1
+
+OBJ_WKLT_SET	DC.W	ID_ROADOBJ	;OBJ_ID
+		DC.L	SIGN_NEXT	;OBJ_MOVE_CTRL
+		DC.L	O_CAR_PRINT_S	;OBJ_PRN_CTRL
+		DC.W	$18		;OBJ_ZSIZE
+		XYSIZE	20,32
+		DC.W	0		;OBJ_MASS
+		DC.L	WKLT_HIT	;OBJ_HIT_GOTO
+
+VIS_WKLT	DC.W	0,0,0
+		DC.W	0,0,0
+		DC.W	$0000,$0000
+		DC.L	VIS_RTOBJ_MOVER
+		DC.L	VIS_PRN_ROTATEX
+		DC.L	VIS_WKLT_GRS
+		DC.W	SFX_WLIGHTHIT_A	;SFX
+		DC.W	$200,$000		;Lie angles
+		DC.W	$300,$100		;Lie range.
+		DC.W	900,6			;Ydecay/Zdecay.
+		DC.W	$30,$800		;Spin/Xrand.
+		DC.W	0			;Height range.
+		DC.L	WLHITGR_SFX
+
+WLHITGR_SFX	DC.W	4
+		DC.W	SFX_WLIGHTGND_A
+		DC.W	SFX_WLIGHTGND_B
+		DC.W	SFX_WLIGHTGND_C
+		DC.W	SFX_WLIGHTGND_D
+
+		OBJCNTR	0,0,44,6
+VIS_WKLT_GRS	OBJSCL	0,0,54,40,44,44,WKLSPN
+
+; --------------------------------------------------------------------------
+
+
